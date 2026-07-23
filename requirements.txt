@@ -1,0 +1,16 @@
+openai>=1.40
+sentence-transformers>=3.0
+chromadb>=0.5
+rank-bm25>=0.2.2
+langgraph>=0.2
+langchain-openai>=0.2
+langchain-huggingface>=0.1
+ragas>=0.2
+datasets>=2.19
+gradio>=4.44
+pypdf>=4.2
+requests>=2.31
+python-dotenv>=1.0
+fastapi>=0.111
+uvicorn>=0.30
+pytest>=8.0
