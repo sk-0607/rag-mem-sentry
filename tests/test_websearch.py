@@ -23,3 +23,9 @@ def test_web_search_empty_on_error(monkeypatch):
     def boom(): raise RuntimeError("network")
     monkeypatch.setattr(ws, "DDGS", boom)
     assert ws.web_search("x") == []
+
+def test_web_search_empty_on_malformed_result(monkeypatch):
+    # Test that malformed results (e.g., None or non-dict) return [] gracefully
+    fake = [None, "not-a-dict"]
+    monkeypatch.setattr(ws, "DDGS", lambda: FakeDDGS(fake))
+    assert ws.web_search("x") == []
