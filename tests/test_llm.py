@@ -5,6 +5,15 @@ def test_format_citations():
             {"title": "GCG", "chunk_index": 0}]
     assert llm.format_citations(docs) == ["[PoisonedRAG, chunk#3]", "[GCG, chunk#0]"]
 
+def test_citations_web_vs_corpus_and_dedupe():
+    docs = [
+        {"title": "PoisonedRAG", "chunk_index": 3, "source": "corpus"},
+        {"title": "PoisonedRAG", "chunk_index": 3, "source": "corpus"},  # dup
+        {"paper_id": "arxiv.org", "source": "web"},
+    ]
+    cites = llm.format_citations(docs)
+    assert cites == ["[PoisonedRAG, chunk#3]", "[web: arxiv.org]"]
+
 def test_answer_refuses_when_no_docs():
     out = llm.answer("anything", [])
     assert out["answer"] == "Not grounded in the corpus."

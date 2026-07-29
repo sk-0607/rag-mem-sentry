@@ -34,7 +34,16 @@ def chat(messages, client=None):
 
 
 def format_citations(docs):
-    return [f"[{d['title']}, chunk#{d['chunk_index']}]" for d in docs]
+    seen, out = set(), []
+    for d in docs:
+        if d.get("source") == "web":
+            tag = f"[web: {d['paper_id']}]"
+        else:
+            tag = f"[{d['title']}, chunk#{d['chunk_index']}]"
+        if tag not in seen:
+            seen.add(tag)
+            out.append(tag)
+    return out
 
 
 def _context_block(docs):

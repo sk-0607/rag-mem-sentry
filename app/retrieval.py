@@ -54,5 +54,6 @@ class Retriever:
         rerank_scores = self.reranker.predict(pairs)
         for c, s in zip(cand, rerank_scores):
             c["score"] = float(s)
+            c["source"] = "corpus"
         cand.sort(key=lambda c: c["score"], reverse=True)
         return cand[:k]

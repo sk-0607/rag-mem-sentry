@@ -20,3 +20,4 @@ def test_retriever_returns_scored_docs():
     docs = r.retrieve("what is a prompt injection attack?", k=3)
     assert 1 <= len(docs) <= 3
     assert all("score" in d and d["text"] for d in docs)
+    assert all(d["source"] == "corpus" for d in docs)
