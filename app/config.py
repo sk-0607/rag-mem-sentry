@@ -25,3 +25,8 @@ SPARSE_N = 20     # BM25 candidates
 FUSE_M = 10       # kept after RRF, sent to reranker
 TOP_K = 5         # final docs after rerank
 MAX_RETRIES = 1   # CRAG rewrite+retry budget
+
+# --- Phase 2A: decomposition + web fallback ---
+MAX_SUBQUERIES = 3
+WEB_K = 3
+WEB_ENABLED = True
