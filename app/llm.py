@@ -35,13 +35,16 @@ def chat(messages, client=None):
     raise RuntimeError("Groq rate limit: exhausted retries")
 
 
+def _cite_tag(d):
+    if d.get("source") == "web":
+        return f"[web: {d['paper_id']}]"
+    return f"[{d['title']}, chunk#{d['chunk_index']}]"
+
+
 def format_citations(docs):
     seen, out = set(), []
     for d in docs:
-        if d.get("source") == "web":
-            tag = f"[web: {d['paper_id']}]"
-        else:
-            tag = f"[{d['title']}, chunk#{d['chunk_index']}]"
+        tag = _cite_tag(d)
         if tag not in seen:
             seen.add(tag)
             out.append(tag)
@@ -49,9 +52,7 @@ def format_citations(docs):
 
 
 def _context_block(docs):
-    return "\n\n".join(
-        f"[{d['title']}, chunk#{d['chunk_index']}]\n{d['text']}" for d in docs
-    )
+    return "\n\n".join(f"{_cite_tag(d)}\n{d['text']}" for d in docs)
 
 
 def grade(query, docs, client=None):
@@ -83,13 +84,15 @@ def answer(query, docs, client=None):
         {"role": "system", "content":
          "You are a research assistant. Answer the question using ONLY the "
          "provided context passages, and cite sources inline with the "
-         "[title, chunk#N] tags shown. If — and only if — none of the passages "
-         "are relevant to the question, reply with exactly: "
-         "Not grounded in the corpus."},
+         "bracketed tags exactly as shown above each passage. If — and only "
+         "if — none of the passages are relevant to the question, reply with "
+         "exactly: Not grounded in the corpus."},
         {"role": "user", "content":
          f"Question: {query}\n\nContext:\n{_context_block(docs)}"},
     ]
     text = chat(msg, client)
+    if text == REFUSAL:
+        return {"answer": REFUSAL, "citations": []}
     return {"answer": text, "citations": format_citations(docs)}
 
 

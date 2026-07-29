@@ -6,7 +6,7 @@ def run_agentic(question, retriever=None, llm_module=_llm, graph_builder=_build_
     if retriever is None:
         from app.retrieval import Retriever
         retriever = Retriever()
-    app = graph_builder(retriever)
+    app = graph_builder(retriever, llm_module)
 
     subqs = llm_module.decompose(question)
     sub_results, trace, contexts = [], [], []

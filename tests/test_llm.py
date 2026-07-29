@@ -26,6 +26,25 @@ def test_answer_uses_chat_and_returns_citations(monkeypatch):
     assert out["answer"] == "Prompt injection is X."
     assert out["citations"] == ["[T, chunk#1]"]
 
+def test_answer_prompt_tags_web_docs_by_domain(monkeypatch):
+    seen = {}
+    def fake_chat(messages, client=None):
+        seen["ctx"] = messages[1]["content"]
+        return "grounded answer"
+    monkeypatch.setattr(llm, "chat", fake_chat)
+    docs = [{"title": "PI 101", "chunk_index": 0, "text": "web body",
+             "paper_id": "owasp.org", "source": "web"}]
+    llm.answer("q", docs)
+    assert "[web: owasp.org]" in seen["ctx"]
+    assert "[PI 101, chunk#0]" not in seen["ctx"]
+
+def test_answer_refusal_carries_no_citations(monkeypatch):
+    monkeypatch.setattr(llm, "chat", lambda m, client=None: llm.REFUSAL)
+    docs = [{"title": "T", "chunk_index": 0, "text": "x", "source": "corpus"}]
+    out = llm.answer("q", docs)
+    assert out["answer"] == llm.REFUSAL
+    assert out["citations"] == []
+
 def test_grade_parses_weak(monkeypatch):
     monkeypatch.setattr(llm, "chat", lambda messages, client=None: "WEAK - not relevant")
     assert llm.grade("q", [{"text": "x", "title": "t", "chunk_index": 0}]) == "weak"
