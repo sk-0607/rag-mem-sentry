@@ -47,7 +47,7 @@ def write_results(scores, path):
 
 
 def main():
-    from app.graph import run
+    from app.orchestrator import run_agentic as run
     qa = json.load(open("eval/qa_set.json", encoding="utf-8"))
     # Groq free-tier is TPM-limited; EVAL_N caps the run size for a first pass.
     n = int(os.getenv("EVAL_N", str(len(qa))))

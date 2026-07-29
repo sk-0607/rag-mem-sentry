@@ -6,8 +6,8 @@ def test_health():
     assert client.get("/health").json() == {"status": "ok"}
 
 def test_query(monkeypatch):
-    monkeypatch.setattr(api.graph, "run",
-                        lambda q: {"answer": "A", "citations": [], "path_trace": ["generate"]})
+    monkeypatch.setattr(api.orchestrator, "run_agentic",
+                        lambda q: {"answer": "A", "citations": [], "path_trace": [], "contexts": []})
     client = TestClient(api.app)
     r = client.post("/query", json={"question": "hi"})
     assert r.status_code == 200

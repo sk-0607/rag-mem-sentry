@@ -1,6 +1,6 @@
 import gradio as gr
 
-from app import graph
+from app import orchestrator
 
 
 def format_response(result):
@@ -11,7 +11,7 @@ def format_response(result):
     return result["answer"], side
 
 
-def build_demo(runner=graph.run):
+def build_demo(runner=orchestrator.run_agentic):
     with gr.Blocks(title="Self-Correcting RAG") as demo:
         gr.Markdown("# Self-Correcting RAG\nAsk about AI-security papers. "
                     "Answers are grounded in a retrieved corpus with a "

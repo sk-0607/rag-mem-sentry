@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 
-from app import graph
+from app import orchestrator
 
 app = FastAPI(title="Agentic Research-RAG")
 
@@ -17,4 +17,4 @@ def health():
 
 @app.post("/query")
 def query(q: Query):
-    return graph.run(q.question)
+    return orchestrator.run_agentic(q.question)

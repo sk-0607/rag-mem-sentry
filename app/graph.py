@@ -77,18 +77,3 @@ def build_graph(retriever, llm_module=_llm, web_module=_websearch):
     g.add_edge("generate", END)
     g.add_edge("refuse", END)
     return g.compile()
-
-
-def run(question, retriever=None):
-    if retriever is None:
-        from app.retrieval import Retriever
-        retriever = Retriever()
-    app = build_graph(retriever)
-    state = app.invoke({
-        "query": question, "original_query": question, "docs": [],
-        "grade": "", "retries": 0, "web_tried": False, "answer": "",
-        "citations": [], "path_trace": [],
-    })
-    return {"answer": state["answer"], "citations": state["citations"],
-            "path_trace": state["path_trace"],
-            "contexts": [d["text"] for d in state["docs"]]}
