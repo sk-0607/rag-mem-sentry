@@ -4,8 +4,8 @@ from app import orchestrator
 
 
 def format_response(result):
-    badge = ("🔁 retrieval retried" if "rewrite" in result["path_trace"]
-             else "✅ direct")
+    retried = any(step.split(":")[-1] == "rewrite" for step in result["path_trace"])
+    badge = "🔁 retrieval retried" if retried else "✅ direct"
     cites = "\n".join(f"- {c}" for c in result["citations"]) or "_none_"
     side = f"**Path:** {badge}\n\n**Citations:**\n{cites}"
     return result["answer"], side

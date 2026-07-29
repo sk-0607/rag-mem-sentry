@@ -53,6 +53,10 @@ RAGAS metrics (Gemini as judge, local MiniLM embeddings) on the fixed
 | answer_relevancy | 0.83 |
 | context_precision | 0.77 |
 
+> **Note:** these scores were measured on the earlier single-loop CRAG pipeline,
+> before query decomposition and the web-search fallback were added. They have
+> not yet been re-run against the current orchestrator.
+
 Reproduce with `python -m eval.run_eval` (set `EVAL_N` to cap the run size for a
 quick pass on a tight free-tier budget).
 
