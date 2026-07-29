@@ -3,7 +3,10 @@ from typing import TypedDict
 from langgraph.graph import StateGraph, END
 
 from app import llm as _llm
+from app import websearch as _websearch
 from app import config
+
+REFUSAL = "Not grounded in the corpus."
 
 
 class RAGState(TypedDict):
@@ -12,49 +15,67 @@ class RAGState(TypedDict):
     docs: list
     grade: str
     retries: int
+    web_tried: bool
     answer: str
     citations: list
     path_trace: list
 
 
-def build_graph(retriever, llm_module=_llm):
+def build_graph(retriever, llm_module=_llm, web_module=_websearch):
     def retrieve_node(state):
         docs = retriever.retrieve(state["query"])
+        for d in docs:
+            d["source"] = "corpus"
         return {"docs": docs, "path_trace": state["path_trace"] + ["retrieve"]}
 
     def grade_node(state):
-        if not state["docs"]:
-            g = "weak"
-        else:
-            g = llm_module.grade(state["query"], state["docs"])
+        g = "weak" if not state["docs"] else llm_module.grade(state["query"], state["docs"])
         return {"grade": g, "path_trace": state["path_trace"] + [f"grade:{g}"]}
 
     def rewrite_node(state):
-        new_q = llm_module.rewrite(state["original_query"])
-        return {"query": new_q, "retries": state["retries"] + 1,
+        nq = llm_module.rewrite(state["original_query"])
+        return {"query": nq, "retries": state["retries"] + 1,
                 "path_trace": state["path_trace"] + ["rewrite"]}
+
+    def web_node(state):
+        docs = web_module.web_search(state["query"])
+        for d in docs:
+            d["source"] = "web"
+        return {"docs": docs, "web_tried": True,
+                "path_trace": state["path_trace"] + ["web_fallback"]}
 
     def generate_node(state):
         out = llm_module.answer(state["query"], state["docs"])
         return {"answer": out["answer"], "citations": out["citations"],
                 "path_trace": state["path_trace"] + ["generate"]}
 
+    def refuse_node(state):
+        return {"answer": REFUSAL, "citations": [],
+                "path_trace": state["path_trace"] + ["refuse"]}
+
     def route(state):
-        if state["grade"] == "sufficient" or state["retries"] >= config.MAX_RETRIES:
+        if state["grade"] == "sufficient":
             return "generate"
-        return "rewrite"
+        if state["retries"] < config.MAX_RETRIES:
+            return "rewrite"
+        if not state["web_tried"] and config.WEB_ENABLED:
+            return "web_fallback"
+        return "refuse"
 
     g = StateGraph(RAGState)
-    g.add_node("retrieve", retrieve_node)
-    g.add_node("grade", grade_node)
-    g.add_node("rewrite", rewrite_node)
-    g.add_node("generate", generate_node)
+    for name, fn in [("retrieve", retrieve_node), ("grade", grade_node),
+                     ("rewrite", rewrite_node), ("web_fallback", web_node),
+                     ("generate", generate_node), ("refuse", refuse_node)]:
+        g.add_node(name, fn)
     g.set_entry_point("retrieve")
     g.add_edge("retrieve", "grade")
-    g.add_conditional_edges("grade", route,
-                            {"generate": "generate", "rewrite": "rewrite"})
+    g.add_conditional_edges("grade", route, {
+        "generate": "generate", "rewrite": "rewrite",
+        "web_fallback": "web_fallback", "refuse": "refuse"})
     g.add_edge("rewrite", "retrieve")
+    g.add_edge("web_fallback", "grade")
     g.add_edge("generate", END)
+    g.add_edge("refuse", END)
     return g.compile()
 
 
@@ -65,8 +86,8 @@ def run(question, retriever=None):
     app = build_graph(retriever)
     state = app.invoke({
         "query": question, "original_query": question, "docs": [],
-        "grade": "", "retries": 0, "answer": "", "citations": [],
-        "path_trace": [],
+        "grade": "", "retries": 0, "web_tried": False, "answer": "",
+        "citations": [], "path_trace": [],
     })
     return {"answer": state["answer"], "citations": state["citations"],
             "path_trace": state["path_trace"],
