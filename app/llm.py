@@ -8,6 +8,8 @@ from app import config
 
 load_dotenv()
 
+REFUSAL = "Not grounded in the corpus."
+
 
 def get_client():
     return OpenAI(
@@ -76,7 +78,7 @@ def rewrite(query, client=None):
 
 def answer(query, docs, client=None):
     if not docs:
-        return {"answer": "Not grounded in the corpus.", "citations": []}
+        return {"answer": REFUSAL, "citations": []}
     msg = [
         {"role": "system", "content":
          "You are a research assistant. Answer the question using ONLY the "
@@ -89,3 +91,47 @@ def answer(query, docs, client=None):
     ]
     text = chat(msg, client)
     return {"answer": text, "citations": format_citations(docs)}
+
+
+def decompose(question, client=None):
+    msg = [
+        {"role": "system", "content":
+         "Decompose the user's question into at most 3 standalone sub-questions "
+         "needed to answer it. If it is already atomic, return it unchanged. "
+         "Output one sub-question per line, no numbering or bullets."},
+        {"role": "user", "content": question},
+    ]
+    out = chat(msg, client)
+    lines = [ln.strip(" -*\t").strip() for ln in out.splitlines() if ln.strip()]
+    lines = [ln for ln in lines if ln]
+    if not lines:
+        return [question]
+    return lines[:config.MAX_SUBQUERIES]
+
+
+def synthesize(question, sub_results, client=None):
+    if len(sub_results) == 1:
+        r = sub_results[0]
+        return {"answer": r["answer"], "citations": r["citations"]}
+    if all(r["answer"] == REFUSAL for r in sub_results):
+        return {"answer": REFUSAL, "citations": []}
+
+    seen, cites = set(), []
+    for r in sub_results:
+        for c in r["citations"]:
+            if c not in seen:
+                seen.add(c)
+                cites.append(c)
+
+    blocks = "\n\n".join(
+        f"Sub-question: {r['sub_query']}\nAnswer: {r['answer']}\n"
+        f"Citations: {', '.join(r['citations'])}" for r in sub_results
+    )
+    msg = [
+        {"role": "system", "content":
+         "Combine the sub-question answers into one coherent answer to the "
+         "original question. Preserve the citation tags exactly as given. Do "
+         "not add facts beyond the provided answers."},
+        {"role": "user", "content": f"Original question: {question}\n\n{blocks}"},
+    ]
+    return {"answer": chat(msg, client), "citations": cites}

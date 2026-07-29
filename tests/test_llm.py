@@ -33,3 +33,36 @@ def test_grade_parses_weak(monkeypatch):
 def test_grade_parses_sufficient(monkeypatch):
     monkeypatch.setattr(llm, "chat", lambda messages, client=None: "SUFFICIENT")
     assert llm.grade("q", [{"text": "x", "title": "t", "chunk_index": 0}]) == "sufficient"
+
+def test_decompose_parses_and_caps(monkeypatch):
+    monkeypatch.setattr(llm, "chat",
+                        lambda m, client=None: "sub one\nsub two\nsub three\nsub four")
+    out = llm.decompose("compound q")
+    assert out == ["sub one", "sub two", "sub three"]  # capped at 3
+
+def test_decompose_failsafe_single(monkeypatch):
+    monkeypatch.setattr(llm, "chat", lambda m, client=None: "   ")
+    assert llm.decompose("atomic q") == ["atomic q"]
+
+def test_synthesize_single_passthrough():
+    sr = [{"sub_query": "q", "answer": "A", "citations": ["[T, chunk#0]"],
+           "contexts": [], "path_trace": []}]
+    out = llm.synthesize("q", sr)
+    assert out == {"answer": "A", "citations": ["[T, chunk#0]"]}
+
+def test_synthesize_merges_and_dedupes(monkeypatch):
+    monkeypatch.setattr(llm, "chat", lambda m, client=None: "merged answer")
+    sr = [
+        {"sub_query": "q1", "answer": "a1", "citations": ["[T, chunk#0]"], "contexts": [], "path_trace": []},
+        {"sub_query": "q2", "answer": "a2", "citations": ["[T, chunk#0]", "[web: x.com]"], "contexts": [], "path_trace": []},
+    ]
+    out = llm.synthesize("q", sr)
+    assert out["answer"] == "merged answer"
+    assert out["citations"] == ["[T, chunk#0]", "[web: x.com]"]
+
+def test_synthesize_all_refusals():
+    ref = {"sub_query": "q", "answer": "Not grounded in the corpus.",
+           "citations": [], "contexts": [], "path_trace": []}
+    out = llm.synthesize("q", [ref, dict(ref)])
+    assert out["answer"] == "Not grounded in the corpus."
+    assert out["citations"] == []
