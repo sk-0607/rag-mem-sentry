@@ -45,6 +45,21 @@ def test_answer_refusal_carries_no_citations(monkeypatch):
     assert out["answer"] == llm.REFUSAL
     assert out["citations"] == []
 
+def test_answer_refusal_with_trailing_tag_is_normalized(monkeypatch):
+    # the model sometimes appends a stray citation tag after the refusal
+    monkeypatch.setattr(llm, "chat",
+                        lambda m, client=None: f"{llm.REFUSAL} [T, chunk#3]")
+    docs = [{"title": "T", "chunk_index": 3, "text": "x", "source": "corpus"}]
+    out = llm.answer("q", docs)
+    assert out["answer"] == llm.REFUSAL
+    assert out["citations"] == []
+
+def test_answer_refusal_with_fullwidth_tag_is_normalized(monkeypatch):
+    monkeypatch.setattr(llm, "chat",
+                        lambda m, client=None: f"{llm.REFUSAL} 【T, chunk#3】")
+    docs = [{"title": "T", "chunk_index": 3, "text": "x", "source": "corpus"}]
+    assert llm.answer("q", docs) == {"answer": llm.REFUSAL, "citations": []}
+
 def test_grade_parses_weak(monkeypatch):
     monkeypatch.setattr(llm, "chat", lambda messages, client=None: "WEAK - not relevant")
     assert llm.grade("q", [{"text": "x", "title": "t", "chunk_index": 0}]) == "weak"

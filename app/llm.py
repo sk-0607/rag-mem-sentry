@@ -35,6 +35,11 @@ def chat(messages, client=None):
     raise RuntimeError("Groq rate limit: exhausted retries")
 
 
+def _is_refusal(text):
+    # the model occasionally trails a stray citation tag after the refusal
+    return text.strip().startswith(REFUSAL)
+
+
 def _cite_tag(d):
     if d.get("source") == "web":
         return f"[web: {d['paper_id']}]"
@@ -91,7 +96,7 @@ def answer(query, docs, client=None):
          f"Question: {query}\n\nContext:\n{_context_block(docs)}"},
     ]
     text = chat(msg, client)
-    if text == REFUSAL:
+    if _is_refusal(text):
         return {"answer": REFUSAL, "citations": []}
     return {"answer": text, "citations": format_citations(docs)}
 
