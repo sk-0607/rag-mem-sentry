@@ -23,7 +23,12 @@ def run_agentic(question, retriever=None, llm_module=_llm, graph_builder=_build_
             "path_trace": state["path_trace"],
         })
         trace += [f"sq{i}:{s}" for s in state["path_trace"]]
-        contexts += ctx
+        # A refused sub-query answered from none of its docs, so they must not
+        # reach the eval's `contexts` — RAGAS would score faithfulness and
+        # context_precision against passages the answer never used. The
+        # sub_result above keeps them for tracing.
+        if state["answer"] != _llm.REFUSAL:
+            contexts += ctx
 
     final = llm_module.synthesize(question, sub_results)
     return {"answer": final["answer"], "citations": final["citations"],
