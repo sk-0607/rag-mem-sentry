@@ -3,7 +3,7 @@ from pydantic import BaseModel
 
 from app import orchestrator
 
-app = FastAPI(title="Agentic Research-RAG")
+app = FastAPI(title="Self-Correcting RAG")
 
 
 class Query(BaseModel):

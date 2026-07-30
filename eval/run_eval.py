@@ -5,7 +5,7 @@ import types
 
 # ragas 0.4.x hard-imports `langchain_community.chat_models.vertexai`, a submodule
 # removed in langchain-community 0.4.x (Vertex AI moved to langchain-google-vertexai).
-# Our judge is Groq (ChatOpenAI); we never touch Vertex, so register a stub for the
+# Our judge is Gemini (ChatOpenAI); we never touch Vertex, so register a stub for the
 # single name ragas references, before importing ragas.
 if "langchain_community.chat_models.vertexai" not in sys.modules:
     _vx = types.ModuleType("langchain_community.chat_models.vertexai")
@@ -49,7 +49,7 @@ def write_results(scores, path):
 def main():
     from app.orchestrator import run_agentic as run
     qa = json.load(open("eval/qa_set.json", encoding="utf-8"))
-    # Groq free-tier is TPM-limited; EVAL_N caps the run size for a first pass.
+    # Gemini free-tier is rate-limited; EVAL_N caps the run size for a first pass.
     n = int(os.getenv("EVAL_N", str(len(qa))))
     qa = qa[:n]
     records = build_records(qa, run)
@@ -59,9 +59,10 @@ def main():
                        api_key=os.environ[config.LLM_API_KEY_ENV], temperature=0)
     embeddings = HuggingFaceEmbeddings(model_name=config.EMBED_MODEL)
 
-    # Groq allows only n=1 per request, so drop answer_relevancy's multi-sample
-    # strictness; serialize jobs (max_workers=1) to respect TPM and avoid the
-    # heavy faithfulness metric timing out under parallel bursts.
+    # The endpoint allows only n=1 per request, so drop answer_relevancy's
+    # multi-sample strictness; serialize jobs (max_workers=1) to respect the
+    # per-minute limits and avoid the heavy faithfulness metric timing out
+    # under parallel bursts.
     answer_relevancy.strictness = 1
     run_config = RunConfig(timeout=900, max_workers=1)
 

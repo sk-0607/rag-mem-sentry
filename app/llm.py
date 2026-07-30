@@ -32,7 +32,7 @@ def chat(messages, client=None):
             wait = float(getattr(e, "response", None)
                          and e.response.headers.get("retry-after", 2) or 2)
             time.sleep(wait + 0.5)
-    raise RuntimeError("Groq rate limit: exhausted retries")
+    raise RuntimeError(f"{config.LLM_MODEL} rate limit: exhausted retries")
 
 
 def _is_refusal(text):
@@ -88,10 +88,12 @@ def answer(query, docs, client=None):
     msg = [
         {"role": "system", "content":
          "You are a research assistant. Answer the question using ONLY the "
-         "provided context passages, and cite sources inline with the "
-         "bracketed tags exactly as shown above each passage. If — and only "
-         "if — none of the passages are relevant to the question, reply with "
-         "exactly: Not grounded in the corpus."},
+         "provided context passages. Cite sources inline by copying the "
+         "bracketed tag shown above a passage verbatim, brackets included. "
+         "Give every source its own brackets — write [tag one] [tag two], "
+         "never [tag one, tag two]. If — and only if — none of the passages "
+         "are relevant to the question, reply with exactly: "
+         "Not grounded in the corpus."},
         {"role": "user", "content":
          f"Question: {query}\n\nContext:\n{_context_block(docs)}"},
     ]
