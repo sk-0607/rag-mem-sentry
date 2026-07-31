@@ -43,22 +43,32 @@ pytest                           # run the test suite
 
 ## Evaluation
 
-RAGAS metrics (Gemini as judge, local MiniLM embeddings) on the fixed
-20-question Q&A set in `eval/qa_set.json`. Committed scorecard
-(`eval/results.md`):
+RAGAS metrics (Gemini as judge, local MiniLM embeddings) over the Q&A set in
+`eval/qa_set.json`. Current scorecard (`eval/results-n10.md`), measured on the
+first 10 questions against the full decomposition + web-fallback pipeline:
 
 | Metric | Score |
 |---|---|
 | faithfulness | 0.97 |
-| answer_relevancy | 0.83 |
-| context_precision | 0.77 |
+| answer_relevancy | 0.76 |
+| context_precision | 0.75 |
 
-> **Note:** these scores were measured on the earlier single-loop CRAG pipeline,
-> before query decomposition and the web-search fallback were added. They have
-> not yet been re-run against the current orchestrator.
+For reference, the earlier single-loop CRAG pipeline scored 0.97 / 0.83 / 0.77
+over all 20 questions (`eval/results.md`). Faithfulness is unchanged; the dips
+in relevancy and precision are expected, since a synthesized multi-sub-answer
+and occasional web snippets give the judge more surface to mark down than a
+single-loop corpus answer did.
 
-Reproduce with `python -m eval.run_eval` (set `EVAL_N` to cap the run size for a
-quick pass on a tight free-tier budget).
+> **Note:** the two scorecards are not directly comparable — different pipelines
+> *and* different sample sizes (10 vs 20). The agentic run is capped at 10
+> because a full 20-question pass exceeds the Gemini free tier's daily request
+> quota: the pipeline issues ~10 generation calls per question (decompose + up
+> to 3 sub-queries × grade/rewrite/re-grade/generate + synthesize) on top of the
+> judge's own calls.
+
+Reproduce with `EVAL_N=10 python -m eval.run_eval` (`EVAL_N` caps the run size;
+omit it for the full set if you have quota headroom). Set `LLM_MIN_INTERVAL` to
+pace requests under the per-minute cap — eval defaults it to 4s.
 
 ## Limitations
 
