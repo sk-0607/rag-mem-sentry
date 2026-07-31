@@ -52,6 +52,10 @@ def main():
     # Gemini free-tier is rate-limited; EVAL_N caps the run size for a first pass.
     n = int(os.getenv("EVAL_N", str(len(qa))))
     qa = qa[:n]
+    # Generating the answers is the bursty phase (each question fans out into
+    # several sub-queries); pace it under the 15 req/min free-tier cap. The
+    # judge phase below is already throttled by RunConfig's tenacity backoff.
+    config.LLM_MIN_INTERVAL = float(os.getenv("LLM_MIN_INTERVAL", "4"))
     records = build_records(qa, run)
     ds = Dataset.from_list(records)
 

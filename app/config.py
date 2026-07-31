@@ -26,6 +26,10 @@ FUSE_M = 10       # kept after RRF, sent to reranker
 TOP_K = 5         # final docs after rerank
 MAX_RETRIES = 1   # CRAG rewrite+retry budget
 
+# Minimum seconds between LLM requests. 0 = no pacing (keeps the UI responsive);
+# eval runs raise it to stay under the free tier's per-minute request cap.
+LLM_MIN_INTERVAL = float(os.getenv("LLM_MIN_INTERVAL", "0"))
+
 # --- Phase 2A: decomposition + web fallback ---
 MAX_SUBQUERIES = 3
 WEB_K = 3

@@ -1,4 +1,69 @@
-from app import llm
+import httpx
+import pytest
+from openai import RateLimitError
+
+from app import config, llm
+
+
+class _OkClient:
+    """Minimal stand-in for the OpenAI client's success path."""
+    class chat:
+        class completions:
+            @staticmethod
+            def create(**kw):
+                msg = type("M", (), {"content": "ok"})
+                return type("R", (), {"choices": [type("C", (), {"message": msg})]})
+
+
+def _rate_limited(headers=None):
+    resp = httpx.Response(429, request=httpx.Request("POST", "http://x"),
+                          headers=headers or {})
+    class Boom:
+        class chat:
+            class completions:
+                @staticmethod
+                def create(**kw):
+                    raise RateLimitError("slow down", response=resp, body=None)
+    return Boom
+
+
+def test_chat_backoff_grows_exponentially(monkeypatch):
+    sleeps = []
+    monkeypatch.setattr(llm.time, "sleep", lambda s: sleeps.append(s))
+    monkeypatch.setattr(config, "LLM_MIN_INTERVAL", 0)
+    with pytest.raises(RuntimeError):
+        llm.chat([{"role": "user", "content": "x"}], client=_rate_limited())
+    assert sleeps == sorted(sleeps)
+    assert sleeps[-1] > sleeps[0]          # not a flat delay
+    assert sum(sleeps) > 60                # outlasts a per-minute window
+
+def test_chat_honours_retry_after_header(monkeypatch):
+    sleeps = []
+    monkeypatch.setattr(llm.time, "sleep", lambda s: sleeps.append(s))
+    monkeypatch.setattr(config, "LLM_MIN_INTERVAL", 0)
+    with pytest.raises(RuntimeError):
+        llm.chat([{"role": "user", "content": "x"}],
+                 client=_rate_limited({"retry-after": "7"}))
+    assert all(s == pytest.approx(7.5) for s in sleeps)
+
+def test_chat_paces_requests_when_interval_configured(monkeypatch):
+    clock, sleeps = {"t": 100.0}, []
+    monkeypatch.setattr(llm.time, "monotonic", lambda: clock["t"])
+    monkeypatch.setattr(llm.time, "sleep", lambda s: sleeps.append(s))
+    monkeypatch.setattr(config, "LLM_MIN_INTERVAL", 4.0)
+    monkeypatch.setattr(llm, "_last_call", 0.0)
+    llm.chat([{"role": "user", "content": "x"}], client=_OkClient)   # first: no wait
+    llm.chat([{"role": "user", "content": "x"}], client=_OkClient)   # immediate: waits
+    assert sleeps == [pytest.approx(4.0)]
+
+def test_chat_does_not_pace_by_default(monkeypatch):
+    sleeps = []
+    monkeypatch.setattr(llm.time, "sleep", lambda s: sleeps.append(s))
+    monkeypatch.setattr(config, "LLM_MIN_INTERVAL", 0)
+    monkeypatch.setattr(llm, "_last_call", 0.0)
+    llm.chat([{"role": "user", "content": "x"}], client=_OkClient)
+    llm.chat([{"role": "user", "content": "x"}], client=_OkClient)
+    assert sleeps == []
 
 def test_format_citations():
     docs = [{"title": "PoisonedRAG", "chunk_index": 3},

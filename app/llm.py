@@ -18,9 +18,35 @@ def get_client():
     )
 
 
+_last_call = 0.0
+
+
+def _pace():
+    """Space requests out by config.LLM_MIN_INTERVAL, so a long eval run stays
+    under the free tier's per-minute cap instead of bursting into a 429."""
+    global _last_call
+    interval = config.LLM_MIN_INTERVAL
+    if interval:
+        gap = time.monotonic() - _last_call
+        if gap < interval:
+            time.sleep(interval - gap)
+    _last_call = time.monotonic()
+
+
+def _backoff(exc, attempt):
+    """Honour a server-supplied retry-after, else back off exponentially.
+    A flat delay can exhaust every attempt inside one rate-limit window."""
+    resp = getattr(exc, "response", None)
+    retry_after = resp.headers.get("retry-after") if resp is not None else None
+    if retry_after:
+        return float(retry_after)
+    return min(2 * 2 ** attempt, 60)
+
+
 def chat(messages, client=None):
     client = client or get_client()
     for attempt in range(6):
+        _pace()
         try:
             resp = client.chat.completions.create(
                 model=config.LLM_MODEL,
@@ -29,9 +55,7 @@ def chat(messages, client=None):
             )
             return resp.choices[0].message.content.strip()
         except RateLimitError as e:
-            wait = float(getattr(e, "response", None)
-                         and e.response.headers.get("retry-after", 2) or 2)
-            time.sleep(wait + 0.5)
+            time.sleep(_backoff(e, attempt) + 0.5)
     raise RuntimeError(f"{config.LLM_MODEL} rate limit: exhausted retries")
 
 
