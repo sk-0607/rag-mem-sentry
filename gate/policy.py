@@ -17,13 +17,13 @@ class GatePolicy:
     hard_thresholds: dict[str, float]
 
     def decide(self, score: Score, store: str) -> Verdict:
-        if score.top is not None:
-            hard = self.hard_thresholds.get(score.top.signal)
-            if hard is not None and score.top.score >= hard:
+        for result in score.results:
+            hard = self.hard_thresholds.get(result.signal)
+            if hard is not None and result.score >= hard:
                 return Verdict(
                     action=Action.BLOCK,
                     score=score,
-                    reason=f"{score.top.signal} over hard threshold ({score.top.score:.2f} >= {hard:.2f})",
+                    reason=f"{result.signal} over hard threshold ({result.score:.2f} >= {hard:.2f})",
                 )
 
         limits = self.thresholds.get(store)

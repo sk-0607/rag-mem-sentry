@@ -36,6 +36,14 @@ def test_hard_threshold_blocks_regardless_of_aggregate():
     assert "hard threshold" in verdict.reason
 
 
+def test_hard_threshold_blocks_even_when_not_the_top_signal():
+    # s1 crosses its hard threshold, but s2 (no hard threshold registered)
+    # scores higher and would be score.top -- the override must still fire.
+    verdict = POLICY.decide(score_of(("s1", 0.96), ("s2", 0.99)), "corpus")
+    assert verdict.action is Action.BLOCK
+    assert "hard threshold" in verdict.reason
+
+
 def test_signal_without_a_hard_threshold_never_hard_blocks():
     # s2 has no entry in hard_thresholds; 0.99 suspicion alone lands in the band path
     verdict = POLICY.decide(score_of(("s2", 0.99)), "corpus")
