@@ -1,0 +1,53 @@
+import re
+
+from gate.types import GateContext, Item, SignalResult
+
+# (label, pattern). Labels appear in the reason string so a reviewer reading
+# the audit log knows which rule fired without re-running anything.
+INSTRUCTION_PATTERNS: list[tuple[str, str]] = [
+    ("ignore-previous", r"ignore\s+(?:all\s+)?(?:previous|prior|earlier|above)\s+instructions?"),
+    ("disregard-above", r"disregard\s+(?:all\s+)?(?:previous|prior|earlier|the\s+above)"),
+    ("role-reassignment", r"you\s+are\s+now\s+(?:an?\s+)?\w+"),
+    ("fake-system-message", r"system\s+(?:prompt|message)\s*:"),
+    ("new-instructions", r"new\s+instructions?\s*:"),
+]
+
+_COMPILED = [(label, re.compile(pattern, re.IGNORECASE)) for label, pattern in INSTRUCTION_PATTERNS]
+
+# Weight per distinct matched pattern, combined by noisy-OR within the signal.
+# 0.45 keeps a single match below the hard threshold on purpose: the corpus
+# quotes real attacks, and one quotation must quarantine rather than block.
+PATTERN_WEIGHT = 0.45
+
+
+class StructuralSignal:
+    """Rules-only detection over raw content. No LLM, no network."""
+
+    name = "structural"
+    # Derived from the weights below: above two instruction patterns (0.70),
+    # at or below two patterns plus an obfuscation hit (0.94). Recompute if
+    # either weight changes.
+    hard_threshold = 0.93
+
+    def score(self, item: Item, ctx: GateContext) -> SignalResult | None:
+        hits: list[tuple[str, str]] = []
+        for label, pattern in _COMPILED:
+            match = pattern.search(item.text)
+            if match:
+                hits.append((label, match.group(0)))
+
+        if not hits:
+            return None
+
+        clean = 1.0
+        for _ in hits:
+            clean *= 1.0 - PATTERN_WEIGHT
+        suspicion = min(1.0, 1.0 - clean)
+
+        labels = ", ".join(label for label, _ in hits)
+        return SignalResult(
+            signal=self.name,
+            score=suspicion,
+            reason=f"matched {len(hits)} instruction pattern(s): {labels}",
+            evidence_span=hits[0][1],
+        )
