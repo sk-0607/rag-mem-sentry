@@ -1,4 +1,10 @@
-# Self-Correcting RAG
+# Trust Gate
+
+Capstone fork of `self-correcting-rag`. Goal: screen RAG documents and agent
+memory records for poisoned content — write-time and read-time — before an
+LLM trusts and uses them. See `docs/specs/2026-08-16-poisoned-content-trust-gate-design.md`.
+
+## Host: Self-Correcting RAG
 
 Agentic RAG over a corpus of AI-security papers, with a Corrective-RAG (CRAG)
 self-correcting retrieval loop, hybrid retrieval + reranking, grounded
