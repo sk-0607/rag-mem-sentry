@@ -2,6 +2,7 @@ import io
 import json
 import logging
 import os
+from pathlib import Path
 
 import requests
 from pypdf import PdfReader
@@ -10,6 +11,8 @@ from sentence_transformers import SentenceTransformer
 
 from app import config
 from app.chunking import chunk_text
+from gate.screen import default_write_gate
+from gate.types import Action, Item
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("ingest")
@@ -47,15 +50,25 @@ def main():
     papers = json.load(open("ingest/papers.json", encoding="utf-8"))
     embedder = SentenceTransformer(config.EMBED_MODEL)
     client = chromadb.PersistentClient(path=config.CHROMA_DIR)
+    gate = default_write_gate(Path("data"))
 
     all_chunks = []
     for p in papers:
         try:
             text = download_pdf_text(p["arxiv_id"])
             chunks = chunk_text(text, p["arxiv_id"], p["title"])
-            index_chunks(chunks, embedder, client)
-            all_chunks.extend(chunks)
-            log.info("indexed %s (%d chunks)", p["arxiv_id"], len(chunks))
+
+            admitted_chunks = []
+            for chunk in chunks:
+                verdict = gate.screen(Item(id=chunk["id"], text=chunk["text"], kind="corpus"), "corpus")
+                if verdict.action is not Action.ADMIT:
+                    continue  # quarantined or blocked; recorded in the audit log
+                admitted_chunks.append(chunk)
+
+            if admitted_chunks:
+                index_chunks(admitted_chunks, embedder, client)
+            all_chunks.extend(admitted_chunks)
+            log.info("indexed %s (%d/%d chunks admitted)", p["arxiv_id"], len(admitted_chunks), len(chunks))
         except Exception as e:  # noqa: BLE001 - skip-and-continue is intentional
             log.warning("skipped %s: %s", p["arxiv_id"], e)
 
