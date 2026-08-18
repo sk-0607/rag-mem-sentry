@@ -104,7 +104,7 @@ ingest run:
   "admit": 2017,
   "quarantine": 8,
   "block": 0,
-  "fpr": 0.00395
+  "fpr": 0.003950617283950617
 }
 ```
 
