@@ -41,8 +41,17 @@ class GatePolicy:
         return Verdict(action=Action.ADMIT, score=score, reason=f"trust {score.trust:.2f} clears thresholds")
 
 
-# Placeholder values. Task 11 replaces these with figures calibrated against
-# the measured false-positive rate on the clean hard-negative set.
+# `corpus` thresholds are measured, not placeholder: Task 11 ran the write
+# gate over the real 22-paper AI-security corpus (2,025 chunks) and got
+# admit=2017, quarantine=8, block=0 -> FPR 0.395%, against a 2% budget. All 8
+# quarantined chunks were hand-read; every one is a genuine quoted attack/
+# red-team example (indirect-injection payload, GCG jailbreak illustration,
+# harmful-fine-tuning system prompt, or Anthropic sleeper-agents red-team
+# prompt) rather than a regex over-match on ordinary prose, so block_below and
+# quarantine_below are kept at their original values and treated as
+# calibrated for this corpus. See README.md "False-positive measurement" for
+# the full read-through. `experience` remains an unmeasured placeholder —
+# Phase 2 (Task 16) exercises the experience store for the first time.
 DEFAULT_POLICY = GatePolicy(
     thresholds={
         "corpus": StoreThresholds(block_below=0.10, quarantine_below=0.60),

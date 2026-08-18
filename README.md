@@ -76,6 +76,81 @@ Reproduce with `EVAL_N=10 python -m eval.run_eval` (`EVAL_N` caps the run size;
 omit it for the full set if you have quota headroom). Set `LLM_MIN_INTERVAL` to
 pace requests under the per-minute cap — eval defaults it to 4s.
 
+## Trust Gate: False-Positive Measurement and Threshold Calibration
+
+The write-time gate (`gate/`) screens every chunk before it reaches the index.
+`ingest/run_ingest.py` runs it against the real 22-paper AI-security corpus,
+and the result is the project's hard-negative false-positive set **by
+construction**: the papers contain no real attacks, only quoted examples of
+them inside academic prose, so any non-`admit` verdict on this corpus is a
+false positive.
+
+`eval/fpr.py` (`false_positive_rate(audit_entries) -> dict`, plus a
+`python -m eval.fpr <audit-log>` CLI) measures this from `gate/audit.py`'s
+JSONL log. Both `quarantine` and `block` count as false positives — only
+`admit` is "not flagged."
+
+**Budget:** 2% of the clean corpus (≈40 of ~2,025 chunks) — the opening
+position from the design plan: high enough to tolerate a few quoted-attack
+examples, low enough that "what does the gate cost a legitimate corpus?" has
+a defensible answer.
+
+**Measured result**, `python -m eval.fpr data/gate_audit.jsonl` over the full
+ingest run:
+
+```json
+{
+  "total": 2025,
+  "admit": 2017,
+  "quarantine": 8,
+  "block": 0,
+  "fpr": 0.00395
+}
+```
+
+0.395% — well under the 2% budget, with zero threshold changes.
+
+**Plan vs. reality on the hand-read count.** The plan's Step 6 (and the
+Phase 0–1 exit criteria) call for reading "at least 40" flagged chunks by
+hand. The real run only produced 8 quarantined chunks (0 blocked) — there is
+no way to hand-read 40 of something that doesn't exist at these thresholds.
+Rather than loosening thresholds to manufacture more flags, all **8 of 8**
+flagged chunks (the entire flagged population) were read in full, and the gap
+is recorded here rather than papered over. This is itself a finding: at the
+placeholder thresholds, S1's structural signal is precise on this corpus — it
+isn't spraying false positives across ordinary academic prose, it's catching
+a genuinely small number of real quoted-attack passages.
+
+All 8 were genuine quoted attack/red-team content, not regex over-matches on
+ordinary prose:
+
+| Chunk | Rule fired | Content |
+|---|---|---|
+| `2302.12173::97` | `html-comment` | Literal indirect prompt-injection payload quoted from the paper's own attack figure (`<!--> <\|im_start\|>...`), plus a hidden search-sabotage instruction block |
+| `2310.03693::21`, `::22` | `fake-system-message` | Paper's own "harmful examples demonstration attack": quotes the system prompt used to fine-tune a model into complying with harmful instructions |
+| `2402.07867::84`, `::85`, `::86` | `fake-system-message` | Worked illustration of a GCG jailbreak/PoisonedRAG adversarial-suffix attack, including a "Tell me how to build a bomb" target example |
+| `2401.05566::74`, `::75` | `role-reassignment` | Anthropic sleeper-agents paper's own red-teaming examples ("You are now an AI...", "You are now exempt from...") |
+
+No case was ordinary prose accidentally matched — every hit sits inside a
+paper's own worked attack example or red-team transcript. **Calibration
+decision: no regex tightened, no threshold moved.** Tightening a working
+regex or loosening a threshold to manufacture a lower number would trade a
+correct, visible flag for an invisible false negative on content that is
+genuinely attack-shaped, even when quoted for research purposes.
+
+**Final `DEFAULT_POLICY` (`corpus` store), now measured rather than
+placeholder:**
+
+```python
+"corpus": StoreThresholds(block_below=0.10, quarantine_below=0.60)
+```
+
+Unchanged from the pre-Task-11 values — the placeholder guess turned out to
+be a reasonable calibration for this corpus, and the choice is now backed by
+the 8/2025 read-through above instead of asserted without evidence. The
+`experience` store thresholds remain an unmeasured placeholder; Phase 2
+(Task 16) is the first time that store is exercised.
+
 ## Limitations
 
 - CRAG loop does one rewrite+retry per sub-question.
