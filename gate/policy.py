@@ -57,5 +57,10 @@ DEFAULT_POLICY = GatePolicy(
         "corpus": StoreThresholds(block_below=0.10, quarantine_below=0.60),
         "experience": StoreThresholds(block_below=0.20, quarantine_below=0.70),
     },
+    # structural's 0.93 is derived from StructuralSignal's pattern weights
+    # (gate/signals/structural.py): above two instruction patterns (0.70), at
+    # or below two patterns plus an obfuscation hit (0.94). Recompute if
+    # either weight changes. This dict, not any attribute on the Signal
+    # instance, is what GatePolicy.decide() actually reads.
     hard_thresholds={"structural": 0.93},
 )

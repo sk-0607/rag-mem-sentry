@@ -9,7 +9,6 @@ log = logging.getLogger(__name__)
 
 class Signal(Protocol):
     name: str
-    hard_threshold: float
 
     def score(self, item: Item, ctx: GateContext) -> SignalResult | None:
         """Return suspicion for this item, or None if this signal does not apply."""

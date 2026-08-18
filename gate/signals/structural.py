@@ -40,10 +40,10 @@ class StructuralSignal:
     """Rules-only detection over raw content. No LLM, no network."""
 
     name = "structural"
-    # Derived from the weights below: above two instruction patterns (0.70),
-    # at or below two patterns plus an obfuscation hit (0.94). Recompute if
-    # either weight changes.
-    hard_threshold = 0.93
+    # The hard-block threshold for this signal lives in gate/policy.py's
+    # DEFAULT_POLICY.hard_thresholds["structural"] (0.93) — that's the value
+    # GatePolicy.decide() actually reads. See the comment there for how it
+    # was derived from the weights above.
 
     def score(self, item: Item, ctx: GateContext) -> SignalResult | None:
         hits: list[tuple[str, str, float]] = []
