@@ -26,6 +26,10 @@ def test_zero_font_size_is_detected():
     assert score_text('<span style="font-size:0">hidden</span>') > 0.0
 
 
+def test_visible_font_size_with_decimal_is_not_flagged():
+    assert score_text('<p style="font-size:0.5em">footnote</p>') == 0.0
+
+
 def test_html_comment_is_detected():
     assert score_text("visible <!-- hidden instruction --> visible") > 0.0
 

@@ -22,7 +22,7 @@ PATTERN_WEIGHT = 0.45
 OBFUSCATION_CHECKS: list[tuple[str, str]] = [
     ("zero-width", r"[​‌‍⁠﻿]"),
     ("bidi-override", r"[‪-‮⁦-⁩]"),
-    ("hidden-css", r"(?:display\s*:\s*none|font-size\s*:\s*0|visibility\s*:\s*hidden)"),
+    ("hidden-css", r"(?:display\s*:\s*none|font-size\s*:\s*0(?!\.\d)(?!\d)(?:px|pt)?|visibility\s*:\s*hidden)"),
     ("html-comment", r"<!--.*?-->"),
 ]
 
