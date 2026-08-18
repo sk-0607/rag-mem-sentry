@@ -22,7 +22,12 @@ class WriteGate:
     quarantine: Quarantine
 
     def screen(self, item: Item, store: str) -> Verdict:
-        key = content_hash(item.text)
+        # Cache key includes store and the active signal set, not just text:
+        # the same text under a different store or signal set is a different
+        # question, and this keeps a future added signal (or a new store's
+        # rubric) from silently reusing a verdict computed without it.
+        signal_names = ",".join(sorted(s.name for s in self.signals))
+        key = content_hash(f"{store}|{signal_names}|{item.text}")
         results = self.cache.get(key)
         failed: list[str] = []
 
