@@ -147,9 +147,18 @@ graph.
 
 Deterministic rules over raw content. No LLM, no network. Runs at write-time and read-time.
 
-Detects: imperative constructions addressed to a model; invisible/zero-width unicode and
-homoglyph substitution; hidden HTML and markdown (white-on-white, `display:none`, comment
-blocks); tool-call and URL bait; base64 and other encoding used to smuggle instructions.
+Detects: instruction patterns (imperative constructions addressed to a model — "ignore previous
+instructions," role reassignment, fake system messages, "new instructions:"); invisible/zero-width
+unicode and bidi overrides; hidden CSS (`display:none`, zero font-size, `visibility:hidden`,
+transparent color, zero/clipped width or height) and HTML comment blocks; homoglyph substitution,
+caught by skeletonizing confusable codepoints (Cyrillic/Greek look-alikes, fullwidth Latin) to
+ASCII and re-running the instruction patterns against the result; and base64-encoded payloads,
+caught by decoding candidate runs and re-running the instruction patterns against the decoded
+text.
+
+Tool-call and URL bait were considered and dropped from S1's scope: telling bait apart from a
+legitimate tool call or citation needs surrounding context (the query, sibling candidates) that a
+content-only signal does not have — that need is what makes it S2-shaped, not S1-shaped.
 
 Cheapest signal, runs on everything, and is the entire write-time gate.
 

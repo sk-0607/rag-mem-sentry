@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Ship a working write-time content gate that screens documents and experience records before they enter a store, with a measured attack-success baseline and a measured false-positive rate on hard negatives.
+**Goal:** Ship a working write-time content gate that screens documents and experience records before they enter a store, with a measured false-positive rate on hard negatives. Attack-success rate is not a Phase 0–1 deliverable — it needs an attack corpus that does not exist until Phase 4; see the design spec's plan table (§10) for where ASR is scheduled (weeks 8–10).
 
 **Architecture:** Every candidate item is scored by pluggable signal modules implementing one interface. Scores aggregate into a trust score (pure math, no thresholds). A policy layer holds per-store thresholds and maps the score to an action: admit, quarantine, or block. Phase 0–1 delivers the interface, the aggregation, the policy, the persistence layers (cache/audit/quarantine), the first signal (S1, rules-only), and the write-time integration into ingestion.
 
