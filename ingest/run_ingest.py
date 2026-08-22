@@ -50,7 +50,10 @@ def main():
     papers = json.load(open("ingest/papers.json", encoding="utf-8"))
     embedder = SentenceTransformer(config.EMBED_MODEL)
     client = chromadb.PersistentClient(path=config.CHROMA_DIR)
-    gate = default_write_gate(Path("data"))
+    # Derived from config.CHUNKS_PATH at call time (not import time) so tests
+    # can monkeypatch config and redirect the gate's data files along with
+    # the chunks/chroma paths, rather than writing into the real data/ dir.
+    gate = default_write_gate(Path(config.CHUNKS_PATH).parent)
 
     all_chunks = []
     for p in papers:
