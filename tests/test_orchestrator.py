@@ -64,11 +64,6 @@ def test_llm_module_is_injected_into_graph():
     run_agentic("q", retriever=object(), llm_module=lm, graph_builder=builder)
     assert seen["llm_module"] is lm
 
-def test_single_subquery_passthrough():
-    fake_app = FakeApp()
-    llm = make_llm(["only"])
-    llm.synthesize = lambda q, sr, client=None: {"answer": sr[0]["answer"],
-                                                 "citations": sr[0]["citations"]}
-    out = run_agentic("atomic?", retriever=object(), llm_module=llm,
-                      graph_builder=lambda r, lm=None: fake_app)
-    assert out["answer"] == "ans-only"
+def test_single_subquery_passthrough(stub_llm, stub_retriever):
+    out = run_agentic("atomic?", retriever=stub_retriever, llm_module=stub_llm)
+    assert out["answer"] == "stub answer"
