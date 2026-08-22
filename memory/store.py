@@ -56,6 +56,21 @@ class ExperienceStore:
         with open(self.jsonl_path, "a", encoding="utf-8") as f:
             f.write(json.dumps(record.__dict__) + "\n")
 
+    def retrieve(self, task: str, k: int = config.EXPERIENCE_K) -> list[ExperienceRecord]:
+        # Guard the empty case ourselves: Chroma's behavior on an empty
+        # collection is version-dependent and not worth relying on.
+        if self.collection.count() == 0:
+            return []
+        embeddings = self.embedder.encode([task])
+        if hasattr(embeddings, "tolist"):
+            embeddings = embeddings.tolist()
+        result = self.collection.query(query_embeddings=embeddings, n_results=k)
+        ids = result["ids"][0]
+        # Chroma stores only `task`; rehydrate the full payload from the
+        # JSONL mirror, preserving Chroma's order (the similarity ranking).
+        by_id = {record.id: record for record in self.all_records()}
+        return [by_id[rid] for rid in ids]
+
     def all_records(self) -> list[ExperienceRecord]:
         if not self.jsonl_path.exists():
             return []
