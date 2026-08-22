@@ -10,6 +10,8 @@ import json
 import chromadb
 
 from app import config
+from gate.screen import WriteGate
+from gate.types import Action, Verdict
 from memory.types import ExperienceRecord
 
 
@@ -39,7 +41,17 @@ class ExperienceStore:
             self._collection = client.get_or_create_collection(self.collection_name)
         return self._collection
 
-    def write(self, record: ExperienceRecord) -> None:
+    def write(self, record: ExperienceRecord, gate: WriteGate | None = None) -> Verdict | None:
+        if gate is not None:
+            verdict = gate.screen(record.to_item(), "experience")
+            if verdict.action is not Action.ADMIT:
+                return verdict
+            self._persist(record)
+            return verdict
+        self._persist(record)
+        return None
+
+    def _persist(self, record: ExperienceRecord) -> None:
         self._append_jsonl(record)
         embeddings = self.embedder.encode([record.task])
         if hasattr(embeddings, "tolist"):
