@@ -209,9 +209,30 @@ scores and evidence spans.
 
 Four measurements. All reported gate-off vs gate-on.
 
-**9.1 Headline — attack success rate.** End-to-end: does the poisoned content actually change
-the agent's answer or behavior? Reported per poison class, with overhead attached. Target report
-shape: *"ASR X% → Y% at +Z ms/query."* Harm reduction, not detection accuracy.
+**9.1 Headline — attack success rate, reported at two levels.** Per poison class, with overhead
+attached. Target report shape: *"ASR X% → Y% at +Z ms/query."* Harm reduction, not detection
+accuracy.
+
+| Level | Question | Why it is reported |
+|---|---|---|
+| **Context** | Did the poison reach the model's context block? | The gate is a content-integrity control and this is the boundary it actually defends. Measured from the context block, not the answer. |
+| **Behavior** | Did the poison change the answer or the trace? | The end-to-end harm number. Confounded by model alignment — see below. |
+
+Both are reported because R3's measurement showed they diverge. In the trials where class-1
+poison reached `generate` verbatim, the model declined the injected instruction anyway: context
+ASR was 100%, behavior ASR was 0%, and the gate had nothing to do with either. Reporting only
+behavior would credit provider alignment to the gate on the defended side and understate the
+undefended baseline on the other.
+
+Two rules follow, and both are load-bearing for the write-up:
+
+- **The behavioral headline leans on classes 2 and 3.** Alignment refuses "ignore all previous
+  instructions." It does not refuse a plausible false fact, and it does not refuse an experience
+  record modelling an approach that is unsafe without being overtly malicious. Class 1's
+  behavioral number will look weak for reasons that are not about the gate.
+- **The model is named in every ASR figure.** These results hold for `gemini-flash-lite-latest`
+  and would move on a more compliant model. Stated as a limitation rather than left for a
+  reviewer to find.
 
 **9.2 Ablation.** Each signal on/off against each poison class. Cells are measurement slots, filled
 in week 9:
@@ -237,9 +258,12 @@ cache-warm separately**. Cold is the real first-run cost and is not hidden.
 ### 9.5 Baselines
 
 - **No gate** — the harm ceiling.
-- **The host's existing `grade` node alone** — mandatory. The CRAG grader may already catch some
-  class-1 poison. Measured in week 1. If it catches most of it, the contribution narrows to
-  classes 2 and 3 and the framing changes in week 2 rather than week 10.
+- **The host's existing `grade` node alone** — measured 2026-08-19 and confirmed a **null
+  baseline** for class 1: poison changed its verdict zero times in five controlled trials. Still
+  reported rather than dropped — "the pipeline we built on had no class-1 defense" is a result,
+  and a reviewer who assumes CRAG grading is a partial mitigation needs the measurement to see
+  otherwise. Whether it is null for classes 2 and 3 is **not** established; a poisoned *fact* is
+  topically relevant by construction, so the same null result should not be assumed there.
 - **One published defense**, if runnable — a perplexity or knowledge-consistency filter from the
   PoisonedRAG defense line.
 
@@ -299,9 +323,25 @@ killing a 20-question evaluation run at roughly 10 calls per question. The gate 
 three mitigations are week-2 work: hash-keyed verdict cache, batched judging, and a second
 provider key provisioned in advance. Discovering this in week 11 ends the project.
 
-**R3 — The host's existing grader may already catch class 1.** Measured week 1 as a mandatory
-baseline. If it does, the contribution narrows to classes 2 and 3 and the framing is corrected
-immediately.
+**R3 — The host's existing grader may already catch class 1. CLOSED 2026-08-19: it does not.**
+Measured against the real `app.llm.grade` with the gate never imported. Poison changed the grade
+verdict **zero times out of five** controlled trials. `grade` is a topical-relevance judge with a
+one-word `SUFFICIENT`/`WEAK` output contract — no security instruction, no adversarial framing.
+Where poison rode a topically-relevant carrier chunk it graded `sufficient` and passed into
+`generate`'s context block verbatim, hidden-HTML and zero-width variants included.
+
+The contribution therefore does **not** narrow to classes 2–3. Class 1 is unowned by the host
+pipeline, and the grader is not a partial defense to subtract — subtracting it would credit
+relevance filtering as security. Full method and results in the README's *R3* section.
+
+**R3a — model alignment may mask the class-1 ASR headline.** Surfaced by the R3 measurement and
+newly open. In the two trials where poison reached `generate`, the answers were not visibly
+hijacked: the model declined the injected instruction at answer time. That is alignment, not
+pipeline defense — unmeasured, unenforced, and provider-dependent — but it deflates the gate-off
+baseline that Phase 4's ASR headline is measured against. Responses, all three taken: report ASR
+at two levels (*poison reached the context* and *poison changed the output*); lean the behavioral
+headline on classes 2 and 3, which alignment does not catch; and state the model dependency
+(`gemini-flash-lite-latest`) as an explicit limitation. See §9.1.
 
 **R4 — S2 may dominate the ablation**, falsifying the multi-signal premise. Measured week 9. S3
 is cut and the negative result is reported. A negative result measured on purpose reads as rigor;

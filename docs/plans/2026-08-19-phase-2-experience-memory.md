@@ -1092,4 +1092,11 @@ Phase 3 (S2 policy judge and read-time gating, weeks 6–7) starts from:
 - `memory/gate.py` as the seam where the experience rubric attaches
 - The signal registry, built alongside S2 — carry-forward #4, deferred here on purpose
 - The poisoning demonstration from Task 20 step 7 as S2's target: those exact records must stop changing behavior once the read path is gated
-- R3 still unmeasured — whether the existing CRAG `grade` node already catches class-1 poison. It needs poison samples and LLM calls, and Task 20 step 7 produces the samples. **Measure it there or immediately after**; it is now the oldest open risk and it can still narrow the contribution.
+- **R3 is closed (2026-08-19): the existing `grade` node is a null baseline for class 1.** Poison changed its verdict zero times in five controlled trials; where poison rode a relevant carrier it graded `sufficient` and reached `generate` verbatim. The contribution does not narrow — class 1 stays in scope. See the README's *R3* section and spec §9.5.
+- **R3a is open and replaces it as the risk to watch.** Model alignment refused the injected instruction at answer time in both trials where poison reached `generate`. That deflates the gate-off ASR baseline the Phase 4 headline is measured against. Spec §9.1 now requires ASR at two levels — *poison reached the context* and *poison changed the output* — and Phase 3 should record the context-level number for every S2 trial as it goes, rather than reconstructing it in Phase 4.
+
+## One open item from the R3 measurement
+
+The R3 trials against a **poison-only chunk** (no topical carrier) graded weak, and were read as "rejected for having no content to answer with, not for containing poison." That reading is correct but **the control was asserted, not run** — no off-topic *clean* chunk was graded against the same questions.
+
+It does not change R3's conclusion, which rests on the five controlled carrier trials. Close it anyway when convenient: grade an off-topic clean chunk (any non-corpus prose) against the same five questions and confirm it also grades weak. Five LLM calls. Recorded here because an asserted control is a hypothesis, and this project has already been bitten once by treating one as an observation.
