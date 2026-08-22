@@ -28,10 +28,10 @@ OBFUSCATION_CHECKS: list[tuple[str, str]] = [
         r"|font-size\s*:\s*0(?!\.\d)(?!\d)(?:px|pt)?"
         r"|visibility\s*:\s*hidden"
         r"|opacity\s*:\s*0(?![\d.])"
-        r"|color\s*:\s*transparent"
+        r"|(?<![\w-])color\s*:\s*transparent"
         r"|clip-path\s*:\s*inset\(\s*100%\s*\)"
-        r"|height\s*:\s*0(?![\d.])(?:px|pt|%)?"
-        r"|width\s*:\s*0(?![\d.])(?:px|pt|%)?)",
+        r"|(?<![\w-])height\s*:\s*0(?![\d.])(?:px|pt|%)?"
+        r"|(?<![\w-])width\s*:\s*0(?![\d.])(?:px|pt|%)?)",
     ),
     ("html-comment", r"<!--.*?-->"),
 ]

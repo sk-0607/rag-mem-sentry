@@ -57,3 +57,35 @@ def test_visible_small_font_is_still_not_flagged():
 
 def test_visible_opacity_is_not_flagged():
     assert s('<span style="opacity:0.95">ordinary</span>') == 0.0
+
+
+# Regression guard for the unanchored color/height/width sub-patterns fixed
+# after task 17 (commit 2bc6ba6): each of these is mainstream CSS whose
+# property name merely *ends* with "color", "height", or "width", not the
+# hidden-content trick the signal is meant to catch.
+def test_background_color_transparent_is_not_flagged():
+    assert s('<div style="background-color: transparent;">hi</div>') == 0.0
+
+
+def test_border_color_transparent_is_not_flagged():
+    assert s('<div style="border-color: transparent;">hi</div>') == 0.0
+
+
+def test_min_height_zero_is_not_flagged():
+    assert s('<div style="min-height: 0;">hi</div>') == 0.0
+
+
+def test_line_height_zero_is_not_flagged():
+    assert s('<div style="line-height: 0;">hi</div>') == 0.0
+
+
+def test_border_width_zero_is_not_flagged():
+    assert s('<div style="border-width: 0;">hi</div>') == 0.0
+
+
+def test_min_width_zero_is_not_flagged():
+    assert s('<div style="min-width: 0;">flex fix</div>') == 0.0
+
+
+def test_outline_width_zero_is_not_flagged():
+    assert s('<div style="outline-width: 0;">hi</div>') == 0.0
