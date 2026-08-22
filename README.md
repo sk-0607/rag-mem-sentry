@@ -376,17 +376,22 @@ the corpus context every time. That is a property of this attack against `gemini
 with this system prompt, not a gate result — no gate component was on the read path — and would
 plausibly move with a weaker system prompt, thinner corpus coverage, or a more suggestible model.
 
-**Why this is not "stop and report nothing to defend."** The brief's exit condition is that a
-zero *behavior*-level result means Phase 3 has nothing to defend. Here, context-level ASR is
-100%: the poisoned content demonstrably reaches the trusted prompt, ungated, every time it's
-retrieved. That is the exact boundary S2 is specified to screen (design spec §9.1's "Context"
-row) — a gate that stopped this record from ever reaching `generate` would close a real,
-measured gap, independent of whether this particular model chose to act on it once it arrived.
-The behavior-level miss is reported in full rather than smoothed into a single number, per
-`docs/specs/2026-08-16-poisoned-content-trust-gate-design.md` §9.1's two-level requirement — and,
-consistent with R3a, **the behavioral headline for Phase 3 should lean on classes 2 and 3**
-(false-fact and unsafe-approach memory poisoning against a less resistant framing), not on
-class-1-shaped instruction overrides that this model already declines.
+**Per the phase's stated exit criterion, this is the stop condition.** The exit criterion was
+stated plainly going in: poisoned experience records must measurably change agent behavior with
+the gate off, or Phase 2 stops and reports it before Phase 3 begins. Behavior-level ASR is 0/3 —
+literally, that criterion is not met. The project owner has decided to hold to that reading:
+**Phase 3 (read-time gating / the S2 policy judge) is paused pending further evidence**, rather
+than proceeding on the strength of context-level ASR alone. Context-level ASR of 100% is still a
+real, separately-reported finding — the poisoned content demonstrably reaches the trusted prompt,
+ungated, every time it's retrieved, and design spec §9.1's "Context" row does name that as part
+of what S2 would screen — but it does not, by itself, satisfy an exit criterion written in terms
+of behavior. The likely cause is the same one R3a already named: `app/llm.answer`'s strong system
+prompt plus substantial, correctly-cited corpus context outcompeted the appended experience block
+every time, for this model. The natural next experiment, before either declaring "nothing to
+defend" for good or moving to Phase 3, is a follow-up using a poisoning strategy less
+instruction-override-shaped than these three records — R3a's own class 2/3 (false-fact and
+unsafe-approach poisoning against weaker competing context) — to see whether behavior-level ASR
+moves off zero under conditions closer to what Phase 3 would actually need to defend against.
 
 ## Limitations
 
