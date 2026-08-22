@@ -106,9 +106,16 @@ def rewrite(query, client=None):
     return chat(msg, client)
 
 
-def answer(query, docs, client=None):
+def answer(query, docs, experiences="", client=None):
     if not docs:
         return {"answer": REFUSAL, "citations": []}
+    content = f"Question: {query}\n\nContext:\n{_context_block(docs)}"
+    if experiences:
+        # Appended, not interpolated into Context: the experiences block is
+        # agent-authored memory, not retrieved corpus text, and keeping it a
+        # separate labeled block (format_experiences supplies the label)
+        # matches the _context_block convention instead of inventing a new one.
+        content += f"\n\n{experiences}"
     msg = [
         {"role": "system", "content":
          "You are a research assistant. Answer the question using ONLY the "
@@ -118,8 +125,7 @@ def answer(query, docs, client=None):
          "never [tag one, tag two]. If — and only if — none of the passages "
          "are relevant to the question, reply with exactly: "
          "Not grounded in the corpus."},
-        {"role": "user", "content":
-         f"Question: {query}\n\nContext:\n{_context_block(docs)}"},
+        {"role": "user", "content": content},
     ]
     text = chat(msg, client)
     if _is_refusal(text):

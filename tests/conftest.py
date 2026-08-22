@@ -23,7 +23,7 @@ def stub_llm():
     m.decompose = lambda q, client=None: [q]
     m.grade = lambda q, docs, client=None: "sufficient"
     m.rewrite = lambda q, client=None: q
-    m.answer = lambda q, docs, client=None: {"answer": "stub answer",
+    m.answer = lambda q, docs, experiences="", client=None: {"answer": "stub answer",
                                               "citations": ["[T, chunk#0]"]}
     m.synthesize = lambda q, sr, client=None: {"answer": sr[0]["answer"],
                                                 "citations": sr[0]["citations"]}

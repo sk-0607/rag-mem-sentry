@@ -13,7 +13,7 @@ def make_llm(grade_seq):
     mod = types.SimpleNamespace()
     mod.grade = lambda q, docs, client=None: seq.pop(0)
     mod.rewrite = lambda q, client=None: q + " rewritten"
-    mod.answer = lambda q, docs, client=None: {"answer": "A", "citations": ["[T, chunk#0]"]}
+    mod.answer = lambda q, docs, experiences="", client=None: {"answer": "A", "citations": ["[T, chunk#0]"]}
     return mod
 
 def test_sufficient_skips_retry():
@@ -25,6 +25,42 @@ def test_sufficient_skips_retry():
     assert r.calls == 1
     assert out["answer"] == "A"
     assert "rewrite" not in " ".join(out["path_trace"])
+
+def test_generate_forwards_experiences_to_answer():
+    r = FakeRetriever()
+    captured = {}
+    mod = types.SimpleNamespace()
+    mod.grade = lambda q, docs, client=None: "sufficient"
+    mod.rewrite = lambda q, client=None: q + " rewritten"
+    def fake_answer(q, docs, experiences="", client=None):
+        captured["experiences"] = experiences
+        return {"answer": "A", "citations": ["[T, chunk#0]"]}
+    mod.answer = fake_answer
+    app = build_graph(r, mod)
+    out = app.invoke({"query": "q", "original_query": "q", "docs": [],
+                      "grade": "", "retries": 0, "web_tried": False, "answer": "",
+                      "citations": [], "path_trace": [],
+                      "experiences": "Past experiences:\n- task: t\n  approach: a\n  outcome: o"})
+    assert captured["experiences"] == "Past experiences:\n- task: t\n  approach: a\n  outcome: o"
+    assert out["answer"] == "A"
+
+
+def test_generate_defaults_experiences_to_empty_when_absent_from_state():
+    r = FakeRetriever()
+    captured = {}
+    mod = types.SimpleNamespace()
+    mod.grade = lambda q, docs, client=None: "sufficient"
+    mod.rewrite = lambda q, client=None: q + " rewritten"
+    def fake_answer(q, docs, experiences="", client=None):
+        captured["experiences"] = experiences
+        return {"answer": "A", "citations": ["[T, chunk#0]"]}
+    mod.answer = fake_answer
+    app = build_graph(r, mod)
+    app.invoke({"query": "q", "original_query": "q", "docs": [],
+               "grade": "", "retries": 0, "web_tried": False, "answer": "",
+               "citations": [], "path_trace": []})   # no "experiences" key at all
+    assert captured["experiences"] == ""
+
 
 def test_weak_triggers_one_retry():
     r = FakeRetriever()
@@ -42,7 +78,7 @@ def make_llm_seq(grade_seq):
     m = types.SimpleNamespace()
     m.grade = lambda q, docs, client=None: seq.pop(0)
     m.rewrite = lambda q, client=None: q + " rewritten"
-    m.answer = lambda q, docs, client=None: {
+    m.answer = lambda q, docs, experiences="", client=None: {
         "answer": "A", "citations": [f"[web: {docs[0]['paper_id']}]"] if docs and docs[0].get("source") == "web" else ["[T, chunk#0]"]}
     return m
 
