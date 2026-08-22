@@ -1,3 +1,5 @@
+import base64
+import binascii
 import re
 
 from gate.types import GateContext, Item, SignalResult
@@ -73,6 +75,39 @@ def _skeleton(text: str) -> str:
     return text.translate(_SKELETON_TABLE)
 
 
+# 40 chars is the floor because shorter runs collide with identifiers,
+# hashes, and citation keys that legitimately appear in academic prose.
+_BASE64_RUN = re.compile(r"[A-Za-z0-9+/]{40,}={0,2}")
+
+# A decode that yields mostly control bytes is data (an image, a binary
+# blob), not smuggled text — only mostly-printable decodes are candidates
+# for the instruction-pattern re-check below.
+_PRINTABLE_RATIO_FLOOR = 0.9
+
+
+def _decoded_candidates(text: str) -> list[str]:
+    """Find base64-looking runs and decode the ones that are actually base64.
+
+    Must never raise: a run that merely looks like base64 (wrong padding,
+    non-UTF-8 payload, arbitrary binary) is common in a corpus that legitimately
+    contains encoded data, and is simply not a candidate — not an error.
+    """
+    candidates = []
+    for match in _BASE64_RUN.finditer(text):
+        run = match.group(0)
+        try:
+            decoded = base64.b64decode(run, validate=True).decode("utf-8")
+        except (binascii.Error, ValueError, UnicodeDecodeError):
+            continue
+        if not decoded:
+            continue
+        printable = sum(1 for c in decoded if c.isprintable() or c in "\n\r\t")
+        if printable / len(decoded) < _PRINTABLE_RATIO_FLOOR:
+            continue
+        candidates.append(decoded)
+    return candidates
+
+
 class StructuralSignal:
     """Rules-only detection over raw content. No LLM, no network."""
 
@@ -112,6 +147,17 @@ class StructuralSignal:
                 match = pattern.search(skeleton)
                 if match:
                     hits.append((f"homoglyph-{label}", match.group(0), OBFUSCATION_WEIGHT))
+
+        # Decode base64-looking runs and re-run the instruction patterns
+        # against what comes out. Detection is on the decoded content, never
+        # on "this text contains base64" — the corpus legitimately contains
+        # encoded data. evidence_span is the decoded match, not the base64,
+        # so an audit reader sees what it said.
+        for decoded in _decoded_candidates(item.text):
+            for label, pattern in _COMPILED:
+                match = pattern.search(decoded)
+                if match:
+                    hits.append((f"encoded-{label}", match.group(0), OBFUSCATION_WEIGHT))
 
         if not hits:
             return None

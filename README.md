@@ -180,6 +180,30 @@ Cyrillic/Greek in a couple of papers) never survives skeletonization into a
 matched instruction pattern. No newly-flagged chunks to read, so no threshold
 was touched.
 
+**Task 18 re-measurement (S1 encoded-payload detection).** Task 18 added
+base64 decoding to S1: any run of 40+ base64-alphabet characters is decoded
+and the instruction patterns are re-run against the *decoded* text, recording
+an `encoded-<label>` hit at `OBFUSCATION_WEIGHT` on a match. Presence of
+base64 alone is never flagged — the corpus legitimately contains encoded
+data. Re-running the full ingest (`python -m ingest.run_ingest && python -m
+eval.fpr data/gate_audit.jsonl`) gives:
+
+```json
+{
+  "total": 2027,
+  "admit": 2019,
+  "quarantine": 8,
+  "block": 0,
+  "fpr": 0.003946719289590528
+}
+```
+
+0.395% (8/2027) — identical to the Task 17 measurement, both in count and in
+which 8 chunks are flagged. Grepping the full audit log for `encoded-` turns
+up zero matches across all 2027 chunks: no base64 run in this corpus decodes
+to text that matches an instruction pattern, so the new detection axis found
+nothing to flag and nothing to hand-read. No threshold was touched.
+
 ## R3: Does the Existing CRAG Grader Already Catch Class-1 Poison?
 
 **No. Measured 2026-08-19, and the answer is a clean zero.**
