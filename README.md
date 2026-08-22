@@ -1,14 +1,11 @@
-# Trust Gate
-
-Capstone fork of `self-correcting-rag`. Goal: screen RAG documents and agent
-memory records for poisoned content — write-time and read-time — before an
-LLM trusts and uses them. See `docs/specs/2026-08-16-poisoned-content-trust-gate-design.md`.
-
-## Host: Self-Correcting RAG
+# RAG Mem Sentry
 
 Agentic RAG over a corpus of AI-security papers, with a Corrective-RAG (CRAG)
 self-correcting retrieval loop, hybrid retrieval + reranking, grounded
-citations, a refusal guardrail, and a RAGAS evaluation scorecard.
+citations, a refusal guardrail, and a RAGAS evaluation scorecard — plus a
+content trust gate that screens documents and agent memory records for
+poisoned content, write-time and read-time, before an LLM trusts and uses
+them. See `docs/specs/2026-08-16-poisoned-content-trust-gate-design.md`.
 
 ## Architecture
 
@@ -76,7 +73,7 @@ Reproduce with `EVAL_N=10 python -m eval.run_eval` (`EVAL_N` caps the run size;
 omit it for the full set if you have quota headroom). Set `LLM_MIN_INTERVAL` to
 pace requests under the per-minute cap — eval defaults it to 4s.
 
-## Trust Gate: False-Positive Measurement and Threshold Calibration
+## Content Gate: False-Positive Measurement and Threshold Calibration
 
 The write-time gate (`gate/`) screens every chunk before it reaches the index.
 `ingest/run_ingest.py` runs it against the real 22-paper AI-security corpus,
