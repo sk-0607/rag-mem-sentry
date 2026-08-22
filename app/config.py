@@ -20,6 +20,10 @@ CHROMA_DIR = os.getenv("CHROMA_DIR", "data/chroma")
 CHUNKS_PATH = os.getenv("CHUNKS_PATH", "data/chunks.jsonl")
 COLLECTION = "papers"
 
+EXPERIENCE_COLLECTION = "experiences"
+EXPERIENCES_PATH = os.getenv("EXPERIENCES_PATH", "data/experiences.jsonl")
+EXPERIENCE_K = 3      # past experiences injected per run
+
 DENSE_N = 20      # dense candidates pulled from Chroma
 SPARSE_N = 20     # BM25 candidates
 FUSE_M = 10       # kept after RRF, sent to reranker
