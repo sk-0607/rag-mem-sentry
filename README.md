@@ -149,6 +149,37 @@ the 8/2025 read-through above instead of asserted without evidence. The
 is the first time that store is exercised, and Task 20 is the first time those
 thresholds are measured.
 
+**Task 17 re-measurement (S1 homoglyph skeletonization + extended hidden-CSS
+checks).** Task 17 added Cyrillic/Greek/fullwidth homoglyph skeletonization
+and four more hidden-CSS variants (`opacity:0`, `color:transparent`,
+`clip-path:inset(100%)`, `height:0`/`width:0`) to S1. Re-running the full
+ingest (`python -m ingest.run_ingest && python -m eval.fpr
+data/gate_audit.jsonl`) gives:
+
+```json
+{
+  "total": 2027,
+  "admit": 2019,
+  "quarantine": 8,
+  "block": 0,
+  "fpr": 0.003946719289590528
+}
+```
+
+0.395% (8/2027) — statistically unchanged from the Task 11 baseline of
+0.395% (8/2025); the 2-chunk difference in `total` is pre-existing run-to-run
+chunking variance, not an effect of this task. The 8 flagged chunks are the
+same `2302.12173::97`, `2310.03693::21`/`::22`, `2402.07867::84`/`::85`/`::86`,
+and `2401.05566::74`/`::75` read through above — confirmed by re-reading every
+flagged entry's signal reason in `data/gate_audit.jsonl`, all still
+`html-comment`, `fake-system-message`, or `role-reassignment`. Neither the new
+`homoglyph-*` reason tag nor any of the four new hidden-CSS labels
+(`opacity`, `color:transparent`, `clip-path`, `height`/`width`) appears on any
+flagged chunk: the corpus's genuine non-ASCII text (accented Latin, quoted
+Cyrillic/Greek in a couple of papers) never survives skeletonization into a
+matched instruction pattern. No newly-flagged chunks to read, so no threshold
+was touched.
+
 ## R3: Does the Existing CRAG Grader Already Catch Class-1 Poison?
 
 **No. Measured 2026-08-19, and the answer is a clean zero.**
