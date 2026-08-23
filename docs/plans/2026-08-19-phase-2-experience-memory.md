@@ -1076,16 +1076,46 @@ git commit -m "docs: narrow S1's spec remit to what exists; drop the unmet ASR p
 
 ## Phase 2 exit criteria
 
-- [ ] `pytest -q` green
-- [ ] An agent run writes an experience record; a later similar run retrieves it
-- [ ] Poisoned experience records are quarantined at write time, and the clean ones are not
-- [ ] Experience flag rate measured, every flagged record hand-read and classified, thresholds recorded as measured
-- [ ] Corpus FPR re-measured after the S1 extensions and still under the 2% budget
-- [ ] **Memory poisoning demonstrated on the ungated read path**, with the observed behavior change written up
-- [ ] `WriteGate` refuses an empty signal list; ingest wiring covered by an integration test
-- [ ] Spec §7.2 and the Phase 0–1 Goal line match what exists
+*Settled 2026-08-23, after Task 20's measurement. Seven of eight met; the eighth is the one the
+phase was built to test, and it did not pass.*
 
-## Handoff to Phase 3
+- [x] `pytest -q` green
+- [x] An agent run writes an experience record; a later similar run retrieves it
+- [x] Poisoned experience records are quarantined at write time, and the clean ones are not
+      (`tests/memory/test_gated_write.py`)
+- [x] Experience flag rate measured, every flagged record hand-read and classified, thresholds
+      recorded as measured — 20 records, all `admit`, so zero to hand-read; thresholds recorded
+      unmoved-but-measured. Reproducible via `eval/experience_calibration.py`.
+- [x] Corpus FPR re-measured after the S1 extensions and still under the 2% budget — 8/2025 =
+      0.395%, unchanged across all three ingests
+- [ ] **Memory poisoning demonstrated on the ungated read path**, with the observed behavior
+      change written up — **NOT MET.** Context-level ASR 3/3: every poisoned record was
+      retrieved and reached the model's prompt verbatim. Behavior-level ASR 0/3: none of the
+      three answers changed. There was no observed behavior change to write up. See the stop
+      decision below.
+- [x] `WriteGate` refuses an empty signal list; ingest wiring covered by an integration test
+- [x] Spec §7.2 and the Phase 0–1 Goal line match what exists
+
+## Stop decision: Phase 3 is paused
+
+**Decided 2026-08-23 by the project owner. Phase 3 (S2 policy judge and read-time gating) does
+not start.** The week-5 gate check in `docs/plans/2026-08-16-trust-gate-phase-1.md` requires
+memory poisoning to demonstrably change agent behavior on the ungated path before a defense
+against it is built. Task 20 ran that check and it did not pass at the behavior level.
+
+The gate check did its job: it caught an attack that reaches the trusted prompt every time but
+does not, against this model with this system prompt, change what comes out. Building S2 now
+would be defending a demonstrated *exposure* while calling it a demonstrated *attack*.
+
+Full measurement, both ASR levels, the confounds, and the natural next experiment (a poisoning
+strategy less instruction-override-shaped, per R3a's class 2/3) are in the README's
+**"Phase 2 Results: Experience-Store Calibration and the Ungated Poisoning Demonstration"**
+section. Read that before reopening this.
+
+## Handoff to Phase 3, if it is unpaused
+
+**Superseded by the stop decision above** — kept because it is still the right starting point
+whenever a follow-up measurement moves behavior-level ASR off zero.
 
 Phase 3 (S2 policy judge and read-time gating, weeks 6–7) starts from:
 
@@ -1095,8 +1125,13 @@ Phase 3 (S2 policy judge and read-time gating, weeks 6–7) starts from:
 - **R3 is closed (2026-08-19): the existing `grade` node is a null baseline for class 1.** Poison changed its verdict zero times in five controlled trials; where poison rode a relevant carrier it graded `sufficient` and reached `generate` verbatim. The contribution does not narrow — class 1 stays in scope. See the README's *R3* section and spec §9.5.
 - **R3a is open and replaces it as the risk to watch.** Model alignment refused the injected instruction at answer time in both trials where poison reached `generate`. That deflates the gate-off ASR baseline the Phase 4 headline is measured against. Spec §9.1 now requires ASR at two levels — *poison reached the context* and *poison changed the output* — and Phase 3 should record the context-level number for every S2 trial as it goes, rather than reconstructing it in Phase 4.
 
-## One open item from the R3 measurement
+## One open item from the R3 measurement — relocated
 
-The R3 trials against a **poison-only chunk** (no topical carrier) graded weak, and were read as "rejected for having no content to answer with, not for containing poison." That reading is correct but **the control was asserted, not run** — no off-topic *clean* chunk was graded against the same questions.
+**Moved to the README's "Open measurements" section on 2026-08-23, and still open.** It lives
+there now rather than here: this plan is finished, and an open item parked in a finished plan is
+an item that gets lost. The README is the document that outlives the phase.
 
-It does not change R3's conclusion, which rests on the five controlled carrier trials. Close it anyway when convenient: grade an off-topic clean chunk (any non-corpus prose) against the same five questions and confirm it also grades weak. Five LLM calls. Recorded here because an asserted control is a hypothesis, and this project has already been bitten once by treating one as an observation.
+Summary, for anyone reading this plan on its own: the R3 poison-only trials graded weak, read as
+"rejected for having no content to answer with, not for containing poison" — a correct reading,
+but **the control was asserted, not run**. Five LLM calls would close it. It does not change R3's
+conclusion, which rests on the five controlled carrier trials.

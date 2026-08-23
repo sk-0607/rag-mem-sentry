@@ -1727,7 +1727,13 @@ Deliberately task-level, not step-level. Two measurements inside Phase 0–1 and
 
 **Gate check (week 5):** the teammate's poisoned experience records demonstrably change agent behavior on the **ungated** path. Do not proceed to Phase 3 until memory poisoning is shown to work — a defense against an undemonstrated attack is unfalsifiable.
 
-### Phase 3 — S2 policy judge and read-time gate (weeks 6–7)
+> **Run 2026-08-23. The check did not pass, and it held.** Task 20 wrote three poisoned experience records straight into the store with `gate=None` and ran three matching questions through the ungated read path. Context-level ASR was 3/3 — every poisoned record was retrieved and reached the model's prompt verbatim. Behavior-level ASR was 0/3 — no answer changed. Poisoning reaches the trusted surface but is not, against this model with this system prompt, shown to work in the sense this check requires.
+>
+> **Phase 3 is therefore paused**, per the rule above rather than in spite of it. This is the gate check working: it caught the difference between a demonstrated exposure and a demonstrated attack, before a defense was built on top of the weaker one. Full measurement and the stop decision: README's *"Phase 2 Results"* section and `docs/plans/2026-08-19-phase-2-experience-memory.md`'s *"Stop decision"*.
+
+### Phase 3 — S2 policy judge and read-time gate (weeks 6–7) — **PAUSED**
+
+Held at the week-5 gate check above. The task table stands unchanged as the starting point if a follow-up measurement moves behavior-level ASR off zero.
 
 | Task | Deliverable |
 |---|---|

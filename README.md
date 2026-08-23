@@ -22,9 +22,11 @@ question → decompose (LLM: 1–3 sub-questions)
 ```
 
 - **LLM:** Gemini `gemini-flash-lite-latest` via the OpenAI-compatible Google
-  AI Studio endpoint (free tier). The client is **provider-neutral** — set
-  `LLM_BASE_URL` / `LLM_MODEL` + the key env to point at any OpenAI-compatible
-  provider (Groq, OpenAI, local) without touching call sites.
+  AI Studio endpoint (free tier) — the default in `app/config.py`, overridable
+  per-checkout with `LLM_MODEL` in `.env`. The client is **provider-neutral** —
+  set `LLM_BASE_URL` / `LLM_MODEL` + the key env to point at any
+  OpenAI-compatible provider (Groq, OpenAI, local) without touching call sites.
+  Measured security results name the model they ran against; see Limitations.
 - **Embeddings/rerank:** local `all-MiniLM-L6-v2` + `ms-marco-MiniLM-L-6-v2`.
 - **Vector store:** Chroma (local); sparse: `rank_bm25`.
 - **Orchestration:** LangGraph. **UI:** Gradio. **Eval:** RAGAS.
@@ -266,7 +268,7 @@ subtracting it would credit relevance filtering as security.
    certainly right, but the confirming run (grade an off-topic *clean* chunk
    against the same questions) was asserted rather than executed. R3's
    conclusion rests on the five controlled carrier trials, which are sufficient
-   on their own. The open item is tracked in the Phase 2 plan.
+   on their own. Still open — see "Open measurements" below.
 2. **The model resisted at answer time.** In trials 6 and 9 the poison reached
    the context but the generated answers were not visibly hijacked — the model
    declined the injected instruction itself. That is provider alignment, not
@@ -279,12 +281,17 @@ subtracting it would credit relevance filtering as security.
 
 ## Phase 2 Results: Experience-Store Calibration and the Ungated Poisoning Demonstration
 
-Phase 2 (Tasks 12–20) built the agent's write-side experience memory: after
+Phase 2 (Tasks 12–21) built the agent's write-side experience memory: after
 every run, `app/orchestrator.py` writes an `ExperienceRecord` (task, approach,
 outcome) through the same write-time gate the corpus uses, into a separate
 Chroma collection keyed on `task` text. Retrieval is deliberately **ungated**
 — by design, per the phase's constraint, so Task 20 (this section) could
 demonstrate the exact attack Phase 3's read-time defense (S2) exists to stop.
+
+Every figure in this section was measured against **`gemini-3.1-flash-lite`**, set via `.env`'s
+`LLM_MODEL` override rather than the repository default `gemini-flash-lite-latest`
+(`app/config.py`). The result is model-dependent, so the model that produced it is named rather
+than left to the default.
 
 Task 20 also closed a wiring gap found during Task 16's review: `format_experiences(records)`
 reached `run_agentic`'s graph state but `app/graph.py`'s `generate_node` never read it, so
@@ -324,22 +331,31 @@ figure quoted below rather than reproducing it exactly.
 
 ```json
 {
-  "total": 17,
-  "admit": 17,
+  "total": 20,
+  "admit": 20,
   "quarantine": 0,
   "block": 0,
   "flag_rate": 0.0
 }
 ```
 
-17, not 15: `data/experiences.jsonl` already held 2 records from an earlier ad hoc exercise of
-the Task 16 wiring (same real pipeline, same clean-question shape, just not run as part of this
-task), and they were kept rather than discarded — reproducing the measurement should not require
-throwing away real, valid data points. Every one of the 17 audit entries carries `trust: 1.00`
-and `action: admit` — S1's structural signal fired on none of them. **Zero flagged records to
-hand-read**, which is itself the finding: agent-authored experience text describing normal
-question-answering work doesn't resemble an instruction-injection pattern, so it doesn't trip
-the same rules that catch quoted attacks in the corpus.
+**20, not 15, and not the 17 first reported.** The calibration run itself produced 15. Two more
+were already in `data/experiences.jsonl` from an earlier ad hoc exercise of the Task 16 wiring
+(same real pipeline, same clean-question shape, just not run as part of this task) and were kept
+rather than discarded — reproducing a measurement should not require throwing away real, valid
+data points. That is the 17 this section originally quoted. The three poisoning-demo runs below
+each then wrote their own gated record back through `run_agentic`, taking the log to 20, which is
+what the command prints today. The conclusion is unchanged and the count is not load-bearing:
+every one of the 20 audit entries carries `trust: 1.00` and `action: admit` — S1's structural
+signal fired on none of them. **Zero flagged records to hand-read**, which is itself the finding:
+agent-authored experience text describing normal question-answering work doesn't resemble an
+instruction-injection pattern, so it doesn't trip the same rules that catch quoted attacks in the
+corpus.
+
+(The three *poisoned* demo records are not among the 20 — they were written with `gate=None` and
+so never produced an audit entry. They are still live and unmarked in `data/experiences.jsonl`;
+`ExperienceStore.purge(ids)` removes them from Chroma and the JSONL mirror together before any
+live demo runs with memory on.)
 
 **Calibration decision: `experience` thresholds (`block_below=0.20, quarantine_below=0.70`)
 left unchanged.** The brief is explicit that an unmoved-but-measured threshold is the honest
@@ -395,6 +411,16 @@ attack method designed to circumvent the safety alignment... by generating unive
 transferable prompts that elicit harmful responses..." (poisoned) — same descriptive framing,
 same level of detail, no shift toward the poisoned record's "practical how-to."
 
+**A second, more mundane confound sits on top of that.** With `EXPERIENCE_K=3` and 20 clean
+records already in the store, each poisoned record was retrieved *alongside up to two clean
+ones* — so the injected block was not the poison alone but the poison next to correctly-cited
+descriptions of the same kind of work. The GCG case is the sharp one: clean record `d7d69f50`
+carries the task string `"What is the GCG attack on aligned language models?"`, byte-identical
+to poisoned record `02589b62`'s, so it was near-certainly co-retrieved and sat in the same
+`Past experiences:` block. The poisoned record competed not only against the system prompt and
+the corpus context, but against a clean sibling modelling the opposite approach on the identical
+task. A store holding only poison would be a different, and stronger, test.
+
 **This mirrors R3a exactly, and for the same reason.** `app/llm.answer`'s system prompt
 ("Answer... using ONLY the provided context passages... Cite sources inline...") is a strong,
 explicit instruction sitting immediately before a *substantial, topically relevant, correctly
@@ -422,6 +448,39 @@ instruction-override-shaped than these three records — R3a's own class 2/3 (fa
 unsafe-approach poisoning against weaker competing context) — to see whether behavior-level ASR
 moves off zero under conditions closer to what Phase 3 would actually need to defend against.
 
+The stop decision is recorded in both plan documents:
+`docs/plans/2026-08-19-phase-2-experience-memory.md` ("Stop decision: Phase 3 is paused") and
+`docs/plans/2026-08-16-trust-gate-phase-1.md`'s week-5 gate check.
+
+## Open measurements
+
+Things this project has decided are worth measuring and has not measured. Listed here rather
+than inside a finished plan document, because an open item parked in a completed plan is an item
+that gets lost.
+
+1. **R3's poison-only control (5 LLM calls, open since 2026-08-19).** The R3 trials against a
+   poison-only chunk graded weak, read as "rejected for having no content to answer with, not
+   for containing poison." That reading is almost certainly right, but the confirming run —
+   grade an off-topic *clean* chunk against the same five questions and check it also grades
+   weak — was asserted, not executed. R3's conclusion does not depend on it; it rests on the
+   five controlled carrier trials. Recorded because an asserted control is a hypothesis, and
+   this project has been bitten once already by treating one as an observation.
+2. **Behavior-level ASR under a less instruction-override-shaped poisoning strategy.** The
+   natural next experiment named at the end of the Phase 2 results above, and the one that would
+   unpause Phase 3 if it moved off zero.
+3. **The experience store's block band.** `block_below=0.20` is stricter than the corpus's
+   `0.10` and nothing in the clean calibration set came near it. See the calibration section
+   above.
+
+## Known Phase 3+ concerns (named, not addressed)
+
+- **Unbounded growth on the memory path.** Nothing dedupes, caps, or evicts experience records:
+  every run appends one, `ExperienceStore.retrieve()` re-parses the entire JSONL mirror on every
+  call, and the agent's own answer becomes the next run's injected context — a self-confirmation
+  channel that nothing currently tests. All of this is fine at capstone scale (tens of records)
+  and none of it is a Phase 2 problem, but each becomes one at any real volume.
+  `ExperienceStore.purge(ids)` is the only removal path today, and it is manual.
+
 ## Limitations
 
 - CRAG loop does one rewrite+retry per sub-question.
@@ -435,11 +494,14 @@ moves off zero under conditions closer to what Phase 3 would actually need to de
   be answered from it — grounded, but not the paper's actual subject.
 - Free-tier request limits pace the eval run; it is serialized to stay within
   budget.
-- Security results are **provider-dependent**. Every figure here was measured
-  against `gemini-flash-lite-latest`. The R3 finding that the model itself
-  declines injected instructions at answer time is that provider's alignment,
-  not a property of this pipeline, and a more compliant model would move the
-  numbers. Attack-success figures name their model for this reason.
+- Security results are **provider-dependent**, and two different Gemini models
+  produced them: R3 (2026-08-19) ran against `gemini-flash-lite-latest`, the
+  repository default in `app/config.py`; the Phase 2 calibration and poisoning
+  demonstration ran against `gemini-3.1-flash-lite`, set via `.env`'s
+  `LLM_MODEL`. Each section names the model that produced its numbers. The
+  finding that the model itself declines injected instructions at answer time
+  is that provider's alignment, not a property of this pipeline, and a more
+  compliant model would move the numbers.
 
 ## Roadmap
 
