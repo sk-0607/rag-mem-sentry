@@ -88,6 +88,27 @@ class ExperienceStore:
         by_id = {record.id: record for record in self.all_records()}
         return [by_id[rid] for rid in ids if rid in by_id]
 
+    def purge(self, record_ids) -> int:
+        """Delete records by id from both Chroma and the JSONL mirror.
+
+        Genuinely destructive, unlike gate/quarantine.py's reversible hold —
+        the use it exists for is removing deliberately poisoned demo records
+        before a live demo, where leaving them recoverable is the risk. Returns
+        how many were actually present, so a caller can tell a real purge from
+        a typo'd id.
+        """
+        targets = set(record_ids)
+        existing = self.all_records()
+        kept = [r for r in existing if r.id not in targets]
+        removed = len(existing) - len(kept)
+        if removed == 0:
+            return 0
+        self.collection.delete(ids=list(targets))
+        with open(self.jsonl_path, "w", encoding="utf-8") as f:
+            for record in kept:
+                f.write(json.dumps(record.__dict__) + "\n")
+        return removed
+
     def all_records(self) -> list[ExperienceRecord]:
         if not self.jsonl_path.exists():
             return []
