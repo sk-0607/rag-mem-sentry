@@ -85,7 +85,11 @@ false positive.
 `eval/fpr.py` (`false_positive_rate(audit_entries) -> dict`, plus a
 `python -m eval.fpr <audit-log>` CLI) measures this from `gate/audit.py`'s
 JSONL log. Both `quarantine` and `block` count as false positives — only
-`admit` is "not flagged."
+`admit` is "not flagged." It filters to `store == "corpus"`: from Phase 2 on,
+the experience store appends its verdicts to the same audit log, and an
+unfiltered count would report a mixed number as the corpus FPR. Deduped by
+`item_id` as well, because the log is append-only and a re-ingest re-screens
+every chunk under its same content-derived id.
 
 **Budget:** 2% of the clean corpus (≈40 of ~2,025 chunks) — the opening
 position from the design plan: high enough to tolerate a few quoted-attack
@@ -157,17 +161,24 @@ data/gate_audit.jsonl`) gives:
 
 ```json
 {
-  "total": 2027,
-  "admit": 2019,
+  "total": 2025,
+  "admit": 2017,
   "quarantine": 8,
   "block": 0,
-  "fpr": 0.003946719289590528
+  "fpr": 0.003950617283950617
 }
 ```
 
-0.395% (8/2027) — statistically unchanged from the Task 11 baseline of
-0.395% (8/2025); the 2-chunk difference in `total` is pre-existing run-to-run
-chunking variance, not an effect of this task. The 8 flagged chunks are the
+0.395% (8/2025) — identical to the Task 11 baseline, count for count.
+
+> **Correction.** This block and Task 18's below originally read `total: 2027,
+> admit: 2019`, explained as "run-to-run chunking variance." That explanation
+> was wrong, and so were the numbers: `eval/fpr.py` was store-blind at the
+> time, so it counted 2 experience records alongside the 2,025 corpus chunks.
+> The corpus-only count is invariant across all three ingests (Task 11, 17,
+> 18). Both blocks now show real output from the store-filtered `eval/fpr.py`.
+
+The 8 flagged chunks are the
 same `2302.12173::97`, `2310.03693::21`/`::22`, `2402.07867::84`/`::85`/`::86`,
 and `2401.05566::74`/`::75` read through above — confirmed by re-reading every
 flagged entry's signal reason in `data/gate_audit.jsonl`, all still
@@ -189,17 +200,17 @@ eval.fpr data/gate_audit.jsonl`) gives:
 
 ```json
 {
-  "total": 2027,
-  "admit": 2019,
+  "total": 2025,
+  "admit": 2017,
   "quarantine": 8,
   "block": 0,
-  "fpr": 0.003946719289590528
+  "fpr": 0.003950617283950617
 }
 ```
 
-0.395% (8/2027) — identical to the Task 17 measurement, both in count and in
+0.395% (8/2025) — identical to the Task 17 measurement, both in count and in
 which 8 chunks are flagged. Grepping the full audit log for `encoded-` turns
-up zero matches across all 2027 chunks: no base64 run in this corpus decodes
+up zero matches across all 2025 chunks: no base64 run in this corpus decodes
 to text that matches an instruction pattern, so the new detection axis found
 nothing to flag and nothing to hand-read. No threshold was touched.
 
