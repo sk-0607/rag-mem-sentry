@@ -6,6 +6,7 @@ exists for the same reason data/chunks.jsonl does: inspectability without
 opening Chroma, and it is the source of truth for enumeration.
 """
 import json
+from pathlib import Path
 
 import chromadb
 
@@ -88,3 +89,23 @@ class ExperienceStore:
             return []
         with open(self.jsonl_path, encoding="utf-8") as f:
             return [ExperienceRecord(**json.loads(line)) for line in f if line.strip()]
+
+
+def default_experience_store(data_dir) -> ExperienceStore:
+    """Assemble the standard experience store under `data_dir`.
+
+    The counterpart to memory.gate.default_experience_gate, and the one reader
+    of EXPERIENCE_COLLECTION / EXPERIENCES_PATH — before this, both constants
+    were declared and never read, so the store's real wiring lived only in
+    whatever ad hoc script last built one.
+
+    Paths are wrapped in Path() rather than passed through: _append_jsonl calls
+    .parent on jsonl_path, so a bare str from config would not fail until the
+    first write, far from the construction that caused it.
+    """
+    data_dir = Path(data_dir)
+    return ExperienceStore(
+        chroma_dir=data_dir / Path(config.CHROMA_DIR).name,
+        jsonl_path=data_dir / Path(config.EXPERIENCES_PATH).name,
+        collection=config.EXPERIENCE_COLLECTION,
+    )

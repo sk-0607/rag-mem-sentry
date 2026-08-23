@@ -308,6 +308,18 @@ embeddings, real gated `ExperienceStore`, over the first 15 questions of `eval/q
 (all in-corpus, all answerable), paced at `LLM_MIN_INTERVAL=4` to stay under the free-tier cap.
 All 15 completed — no rate-limit wall hit, no retry needed.
 
+That run is committed as `eval/experience_calibration.py` — the experience store's equivalent of
+`python -m ingest.run_ingest`, and the only way to regenerate the clean set this measurement is
+taken over:
+
+```bash
+CALIBRATION_N=15 python -m eval.experience_calibration   # spends real LLM budget
+python -m eval.experience_fpr data/gate_audit.jsonl
+```
+
+It appends to the live store rather than starting clean, so a re-run raises `total` above the
+figure quoted below rather than reproducing it exactly.
+
 `python -m eval.experience_fpr data/gate_audit.jsonl`:
 
 ```json
