@@ -411,9 +411,9 @@ attack method designed to circumvent the safety alignment... by generating unive
 transferable prompts that elicit harmful responses..." (poisoned) — same descriptive framing,
 same level of detail, no shift toward the poisoned record's "practical how-to."
 
-**A second, more mundane confound sits on top of that.** With `EXPERIENCE_K=3` and 20 clean
-records already in the store, each poisoned record was retrieved *alongside up to two clean
-ones* — so the injected block was not the poison alone but the poison next to correctly-cited
+**A second, more mundane confound sits on top of that.** With `EXPERIENCE_K=3` and 17 clean
+records already in the store at demo time, each poisoned record was retrieved *alongside up to
+two clean ones* — so the injected block was not the poison alone but the poison next to correctly-cited
 descriptions of the same kind of work. The GCG case is the sharp one: clean record `d7d69f50`
 carries the task string `"What is the GCG attack on aligned language models?"`, byte-identical
 to poisoned record `02589b62`'s, so it was near-certainly co-retrieved and sat in the same

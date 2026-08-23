@@ -55,10 +55,14 @@ class GatePolicy:
 # real embeddings) over 15 clean corpus questions, gated on write, got
 # admit=17, quarantine=0, block=0 -> flag rate 0.0%. Every record's trust was
 # 1.00 (no S1 signal fired), so there was nothing to hand-read and nothing to
-# recalibrate against. The placeholder block_below/quarantine_below survive
-# unchanged, not because they were proven right, but because clean generated
-# experiences never approached them. See README.md "Phase 2 Results" for the
-# full measurement and the ungated poisoning demonstration. Note that
+# recalibrate against. (`python -m eval.experience_fpr` against the live
+# store reports a higher total today — 3 write-backs from the poisoning demo
+# accumulated on top of the 17 calibration records — but flag rate is still
+# 0.0%; see README.md "Experience flag rate" for the current number.) The
+# placeholder block_below/quarantine_below survive unchanged, not because
+# they were proven right, but because clean generated experiences never
+# approached them. See README.md "Phase 2 Results" for the full measurement
+# and the ungated poisoning demonstration. Note that
 # `experience`'s block_below=0.20 is *stricter* than `corpus`'s 0.10: three
 # instruction patterns (trust 0.1664) block here but only quarantine on the
 # corpus. That band is unmeasured — the zero-flag calibration run never came
