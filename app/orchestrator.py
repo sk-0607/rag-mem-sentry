@@ -21,7 +21,7 @@ def format_experiences(records):
 
 
 def run_agentic(question, retriever=None, llm_module=_llm, graph_builder=_build_graph,
-                store=None):
+                store=None, gate=None):
     if retriever is None:
         from app.retrieval import Retriever
         retriever = Retriever()
@@ -56,7 +56,7 @@ def run_agentic(question, retriever=None, llm_module=_llm, graph_builder=_build_
 
     if store is not None:
         # Write-time gating only (Task 15's ExperienceStore.write(gate=...));
-        # the retrieve above is deliberately ungated — Task 21 needs that
+        # the retrieve above is deliberately ungated — Task 20 needs that
         # undefended read path to demonstrate the attack it defends against.
         record = record_from_run(
             task=question,
@@ -64,7 +64,13 @@ def run_agentic(question, retriever=None, llm_module=_llm, graph_builder=_build_
             outcome=final["answer"],
             success=final["answer"] != _llm.REFUSAL,
         )
-        store.write(record, gate=default_experience_gate(Path("data")))
+        if gate is None:
+            # Derived from config at call time, not a hardcoded Path("data"):
+            # a CWD-relative literal writes the gate's audit/cache/quarantine
+            # wherever the process was started. Same fix Task 19 applied to
+            # ingest/run_ingest.py via config.CHUNKS_PATH.
+            gate = default_experience_gate(Path(config.EXPERIENCES_PATH).parent)
+        store.write(record, gate=gate)
 
     return {"answer": final["answer"], "citations": final["citations"],
             "path_trace": trace, "contexts": contexts,
