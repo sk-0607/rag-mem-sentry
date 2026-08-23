@@ -350,6 +350,12 @@ nothing about whether the placeholder cut points would actually catch a genuinel
 record. That question is what Step 7 below tests, through the ungated path where these
 thresholds don't apply at all.
 
+One band in particular went unexercised. `experience`'s `block_below=0.20` is *stricter* than
+`corpus`'s `0.10`, so three instruction patterns (trust 0.1664) block on the experience store
+where the same text would only quarantine on the corpus — and blocking is the one irreversible
+action, with no release path. Nothing in the clean 17-record set came close, so the measurement
+says nothing about that band either way.
+
 ### Poisoning demonstration — the phase's exit criterion
 
 Three `ExperienceRecord`s were written **directly with `gate=None`**, bypassing the write-time
