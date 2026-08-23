@@ -55,6 +55,28 @@ def test_obfuscation_plus_instruction_reaches_hard_threshold():
     assert score_text(text) >= HARD_THRESHOLD
 
 
+def test_zero_opacity_is_detected():
+    assert score_text('<span style="opacity:0">hidden</span>') > 0.0
+
+
+def test_visibility_hidden_is_detected():
+    assert score_text('<span style="visibility:hidden">hidden</span>') > 0.0
+
+
+def test_fill_opacity_is_not_flagged():
+    # SVG figures in the corpus set fill-opacity/stroke-opacity to 0 routinely;
+    # it hides a shape, not text, and is not the `opacity` property.
+    assert score_text('<circle style="fill-opacity:0" r="4"/>') == 0.0
+
+
+def test_stroke_opacity_is_not_flagged():
+    assert score_text('<path style="stroke-opacity:0" d="M0 0"/>') == 0.0
+
+
+def test_backface_visibility_is_not_flagged():
+    assert score_text('<div style="backface-visibility:hidden">card</div>') == 0.0
+
+
 def test_obfuscation_label_appears_in_reason():
     result = SIGNAL.score(Item(id="a", text="text​more", kind="corpus"), CTX)
     assert "zero-width" in result.reason

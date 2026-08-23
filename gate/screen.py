@@ -21,6 +21,12 @@ class WriteGate:
     audit: AuditLog
     quarantine: Quarantine
 
+    def __post_init__(self):
+        # A gate with no signals aggregates to trust=1.0 and admits everything.
+        # Default-deny must not depend on a caller remembering to pass signals.
+        if not self.signals:
+            raise ValueError("WriteGate requires at least one signal; refusing to admit-all")
+
     def screen(self, item: Item, store: str) -> Verdict:
         # Cache key includes store and the active signal set, not just text:
         # the same text under a different store or signal set is a different

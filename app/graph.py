@@ -19,6 +19,7 @@ class RAGState(TypedDict):
     answer: str
     citations: list
     path_trace: list
+    experiences: str
 
 
 def build_graph(retriever, llm_module=_llm, web_module=_websearch):
@@ -45,7 +46,7 @@ def build_graph(retriever, llm_module=_llm, web_module=_websearch):
                 "path_trace": state["path_trace"] + ["web_fallback"]}
 
     def generate_node(state):
-        out = llm_module.answer(state["query"], state["docs"])
+        out = llm_module.answer(state["query"], state["docs"], state.get("experiences", ""))
         return {"answer": out["answer"], "citations": out["citations"],
                 "path_trace": state["path_trace"] + ["generate"]}
 

@@ -3,7 +3,7 @@ from eval.fpr import dedupe_by_item_id, false_positive_rate
 
 
 def entries(*actions):
-    return [{"action": a} for a in actions]
+    return [{"action": a, "store": "corpus"} for a in actions]
 
 
 def test_all_admitted_is_zero_fpr():
@@ -34,9 +34,9 @@ def test_dedupe_keeps_only_the_last_entry_per_item_id():
     # Simulates a re-ingest: chunk "a" was admitted on the first run, then
     # quarantined on a second run. Only the second (later) verdict counts.
     log = [
-        {"item_id": "a", "action": "admit"},
-        {"item_id": "b", "action": "admit"},
-        {"item_id": "a", "action": "quarantine"},
+        {"item_id": "a", "action": "admit", "store": "corpus"},
+        {"item_id": "b", "action": "admit", "store": "corpus"},
+        {"item_id": "a", "action": "quarantine", "store": "corpus"},
     ]
     deduped = dedupe_by_item_id(log)
     assert len(deduped) == 2
@@ -44,3 +44,19 @@ def test_dedupe_keeps_only_the_last_entry_per_item_id():
     assert stats["total"] == 2
     assert stats["quarantine"] == 1
     assert stats["admit"] == 1
+
+
+def test_experience_verdicts_are_excluded():
+    # Both stores share one audit log, so a corpus FPR that counts experience
+    # records measures something other than what it claims.
+    log = entries("admit", "quarantine") + [
+        {"action": "admit", "store": "experience"},
+        {"action": "admit", "store": "experience"},
+    ]
+    stats = false_positive_rate(log)
+    assert stats["total"] == 2
+    assert stats["admit"] == 1
+
+
+def test_entry_without_a_store_is_excluded():
+    assert false_positive_rate([{"action": "admit"}])["total"] == 0

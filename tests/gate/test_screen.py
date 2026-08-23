@@ -109,3 +109,22 @@ def test_partial_run_is_not_cached(tmp_path):
 
     gate.signals = [StructuralSignal()]
     assert gate.screen(Item(id="b", text=CLEAN, kind="corpus"), "corpus").action is Action.ADMIT
+
+
+def test_empty_signal_list_is_rejected(tmp_path):
+    import pytest
+    from gate.screen import WriteGate
+    from gate.policy import DEFAULT_POLICY
+    from gate.cache import VerdictCache
+    from gate.audit import AuditLog
+    from gate.quarantine import Quarantine
+    with pytest.raises(ValueError):
+        WriteGate(signals=[], policy=DEFAULT_POLICY,
+                  cache=VerdictCache(tmp_path / "c.jsonl"),
+                  audit=AuditLog(tmp_path / "a.jsonl"),
+                  quarantine=Quarantine(tmp_path / "q.jsonl"))
+
+
+def test_default_write_gate_registers_at_least_one_signal(tmp_path):
+    from gate.screen import default_write_gate
+    assert default_write_gate(tmp_path).signals

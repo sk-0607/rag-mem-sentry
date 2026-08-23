@@ -103,6 +103,37 @@ def test_answer_prompt_tags_web_docs_by_domain(monkeypatch):
     assert "[web: owasp.org]" in seen["ctx"]
     assert "[PI 101, chunk#0]" not in seen["ctx"]
 
+def test_answer_prompt_unchanged_when_experiences_empty(monkeypatch):
+    captured = {}
+    def fake_chat(messages, client=None):
+        captured["content"] = messages[1]["content"]
+        return "grounded answer"
+    monkeypatch.setattr(llm, "chat", fake_chat)
+    docs = [{"title": "T", "chunk_index": 0, "text": "ctx"}]
+    llm.answer("q", docs)
+    assert captured["content"] == f"Question: q\n\nContext:\n{llm._context_block(docs)}"
+
+def test_answer_prompt_unchanged_when_experiences_explicitly_empty_string(monkeypatch):
+    captured = {}
+    def fake_chat(messages, client=None):
+        captured["content"] = messages[1]["content"]
+        return "grounded answer"
+    monkeypatch.setattr(llm, "chat", fake_chat)
+    docs = [{"title": "T", "chunk_index": 0, "text": "ctx"}]
+    llm.answer("q", docs, experiences="")
+    assert captured["content"] == f"Question: q\n\nContext:\n{llm._context_block(docs)}"
+
+def test_answer_includes_experiences_block_when_present(monkeypatch):
+    captured = {}
+    def fake_chat(messages, client=None):
+        captured["content"] = messages[1]["content"]
+        return "grounded answer"
+    monkeypatch.setattr(llm, "chat", fake_chat)
+    docs = [{"title": "T", "chunk_index": 0, "text": "ctx"}]
+    llm.answer("q", docs, experiences="Past experiences:\n- task: t\n  approach: a\n  outcome: o")
+    assert "Past experiences:" in captured["content"]
+    assert "approach: a" in captured["content"]
+
 def test_answer_refusal_carries_no_citations(monkeypatch):
     monkeypatch.setattr(llm, "chat", lambda m, client=None: llm.REFUSAL)
     docs = [{"title": "T", "chunk_index": 0, "text": "x", "source": "corpus"}]
