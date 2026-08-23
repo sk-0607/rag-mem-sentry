@@ -1717,13 +1717,24 @@ Deliberately task-level, not step-level. Two measurements inside Phase 0–1 and
 
 ### Phase 2 — Experience memory (weeks 4–5)
 
+Rewritten after the fact to match what shipped. The five-task table originally here was written
+before Phase 2 was planned; the phase ran to ten tasks, the store landed as `memory/store.py`
+rather than `memory/experience.py`, and gate wiring came before agent integration rather than
+after. Step-level detail for each of these lives in
+`docs/plans/2026-08-19-phase-2-experience-memory.md`.
+
 | Task | Deliverable |
 |---|---|
-| 12 | `memory/types.py` — `ExperienceRecord(id, task, approach, outcome, success, ts)` |
-| 13 | `memory/experience.py` — write path, embedded into a separate Chroma collection |
-| 14 | `memory/experience.py` — retrieve path, top-k similar past records by task text |
-| 15 | Agent integration — records written after a run, retrieved and injected before one |
-| 16 | Write-time gate applied to the experience store (reuses `WriteGate`, `store="experience"`) |
+| 12 | `memory/types.py` — `ExperienceRecord(id, task, approach, outcome, success, ts)` and its gate projection |
+| 13 | `memory/store.py` — write path, embedded into a separate Chroma collection with a JSONL mirror |
+| 14 | `memory/store.py` — retrieve path, top-k similar past records by task text |
+| 15 | `memory/gate.py` — write-time gate on the experience store (reuses `WriteGate`, `store="experience"`), plus the empty-signal hole in `gate/screen.py` |
+| 16 | Agent integration — `app/orchestrator.py` writes records after a run, retrieves them before one |
+| 17 | S1 — homoglyph skeletonization and the remaining hidden-CSS variants |
+| 18 | S1 — encoded (base64) payload detection |
+| 19 | Ingest integration test — the gate wiring in `ingest/run_ingest.py`, end to end |
+| 20 | `eval/experience_fpr.py` calibration, experiences wired into the generate prompt, and the ungated poisoning demonstration |
+| 21 | Spec and this plan reconciled with what actually exists |
 
 **Gate check (week 5):** the teammate's poisoned experience records demonstrably change agent behavior on the **ungated** path. Do not proceed to Phase 3 until memory poisoning is shown to work — a defense against an undemonstrated attack is unfalsifiable.
 
@@ -1733,7 +1744,7 @@ Deliberately task-level, not step-level. Two measurements inside Phase 0–1 and
 
 ### Phase 3 — S2 policy judge and read-time gate (weeks 6–7) — **PAUSED**
 
-Held at the week-5 gate check above. The task table stands unchanged as the starting point if a follow-up measurement moves behavior-level ASR off zero.
+Held at the week-5 gate check above. The task table stands unchanged as the starting point if a follow-up measurement moves behavior-level ASR off zero. Its numbers are the original roadmap's and now collide with Phase 2's shipped Tasks 17–21; renumber from 22 if this phase is ever resumed.
 
 | Task | Deliverable |
 |---|---|
