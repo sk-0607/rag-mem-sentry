@@ -491,6 +491,32 @@ that gets lost.
   and none of it is a Phase 2 problem, but each becomes one at any real volume.
   `ExperienceStore.purge(ids)` is the only removal path today, and it is manual.
 
+- **Branch review punch list.** The whole-branch review of Phase 2 raised these and triaged them
+  as non-blocking. Recorded here rather than fixed, so none of them is lost:
+  - `ExperienceStore.purge` returns early when no id is present in the JSONL mirror, so a Chroma
+    entry orphaned from the mirror is never deleted. Only reachable if the two ever diverge.
+  - S1 dedupes homoglyph hits and encoded hits by label within each channel but not across them,
+    so one payload reachable through both would count twice. No current input reaches both.
+  - `eval/fpr.py` dedupes by `item_id` before filtering by store, so an id colliding across
+    stores would drop a row. Unreachable with today's id schemes.
+  - `tests/eval/test_fpr.py` excludes an audit entry with no `store` key without saying why.
+  - `app/orchestrator.py` discards the experience write verdict — a quarantined write is
+    indistinguishable from an admitted one to any caller.
+  - Memory read and write failures are not isolated from the answer path: a Chroma error in
+    either takes down a query that would otherwise have answered fine.
+  - `default_experience_store` uses only the basename of `config.CHROMA_DIR`, so a configured
+    absolute or nested Chroma path is silently flattened under `data_dir`.
+  - `ExperienceStore.purge` rewrites the JSONL mirror in place with no temp-file-and-rename, so
+    an interrupted purge can truncate it.
+  - `docs/plans/2026-08-19-phase-2-experience-memory.md:551` still refers to "Task 21's
+    demonstration"; the demonstration shipped as Task 20.
+  - `tests/test_config.py::test_config_constants_present` asserts a value that `.env` can
+    override, which is why it fails on this machine. Pre-existing and unrelated to Phase 2, but
+    it is a real test bug, not just a local environment quirk — and the Phase 2 plan's
+    "`pytest -q` green" exit checkbox is ticked next to it.
+  - `format_experiences` injects each retrieved record's full prior answer into the prompt, so
+    prompt size grows with record length as well as record count.
+
 ## Limitations
 
 - CRAG loop does one rewrite+retry per sub-question.
