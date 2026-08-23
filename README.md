@@ -367,10 +367,20 @@ record. That question is what Step 7 below tests, through the ungated path where
 thresholds don't apply at all.
 
 One band in particular went unexercised. `experience`'s `block_below=0.20` is *stricter* than
-`corpus`'s `0.10`, so three instruction patterns (trust 0.1664) block on the experience store
-where the same text would only quarantine on the corpus — and blocking is the one irreversible
-action, with no release path. Nothing in the clean 17-record set came close, so the measurement
-says nothing about that band either way.
+`corpus`'s `0.10`. Enumerating every trust value S1 can reach (0.55 per instruction pattern,
+0.20 per obfuscation hit, combined by noisy-OR) leaves exactly two ways to land in that band
+without already being over the structural hard threshold: three instruction patterns
+(trust 0.166375) and one obfuscation hit alongside one instruction pattern (trust 0.11). Both
+block on the experience store where the same text would only quarantine on the corpus — and
+blocking is the one irreversible action, with no release path. Nothing in the clean 17-record
+set came close, so the measurement says nothing about that band either way.
+
+A *single* obfuscation hit — one HTML comment, one zero-width character, nothing else — sits
+exactly on the 0.20 floor and so quarantines rather than blocks. It only does since a
+floating-point fix: `1.0 - 0.8` is `0.19999999999999996`, not `0.20`, which a bare `<` read as
+under the floor and blocked, destroying the record with no release path. `GatePolicy.decide`
+now compares trust against `block_below` with a `1e-9` tolerance. The quarantine comparison is
+left exact on purpose — an epsilon slip there errs toward quarantine, which is reversible.
 
 ### Poisoning demonstration — the phase's exit criterion
 

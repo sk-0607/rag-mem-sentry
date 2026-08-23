@@ -2,6 +2,10 @@ from dataclasses import dataclass
 
 from gate.types import Action, Score, Verdict
 
+# Wider than any rounding error a handful of noisy-OR multiplications can
+# accumulate, far narrower than the gap between any two reachable trust values.
+_FLOAT_TOLERANCE = 1e-9
+
 
 @dataclass(frozen=True)
 class StoreThresholds:
@@ -34,7 +38,13 @@ class GatePolicy:
                 reason=f"unknown store {store!r}; quarantining rather than admitting",
             )
 
-        if score.trust < limits.block_below:
+        # Tolerance, because trust is a product of float weights and lands just
+        # shy of the round numbers the thresholds are written in: one
+        # OBFUSCATION_WEIGHT=0.8 hit gives 0.19999999999999996, not 0.20, which
+        # a bare `<` reads as under the 0.20 floor and blocks irreversibly.
+        # Only this comparison gets it — an epsilon slip at the quarantine
+        # floor errs toward quarantine, which is releasable.
+        if score.trust < limits.block_below - _FLOAT_TOLERANCE:
             return Verdict(action=Action.BLOCK, score=score, reason=f"trust {score.trust:.2f} below block floor")
         if score.trust < limits.quarantine_below:
             return Verdict(action=Action.QUARANTINE, score=score, reason=f"trust {score.trust:.2f} below quarantine floor")
@@ -63,11 +73,18 @@ class GatePolicy:
 # they were proven right, but because clean generated experiences never
 # approached them. See README.md "Phase 2 Results" for the full measurement
 # and the ungated poisoning demonstration. Note that
-# `experience`'s block_below=0.20 is *stricter* than `corpus`'s 0.10: three
-# instruction patterns (trust 0.1664) block here but only quarantine on the
-# corpus. That band is unmeasured — the zero-flag calibration run never came
-# near it — and blocking is the one irreversible action, so it is the first
-# thing to revisit if a real experience record ever lands in it.
+# `experience`'s block_below=0.20 is *stricter* than `corpus`'s 0.10, and what
+# actually lands in that band is narrower than it looks. Enumerating every
+# trust value S1 can reach (0.55 per instruction pattern, 0.20 per obfuscation
+# hit, noisy-OR) leaves exactly two soft blocks here that only quarantine on
+# the corpus: three instruction patterns at trust 0.166375, and one obfuscation
+# hit alongside one instruction pattern at 0.11. Everything else under 0.20 is
+# already over structural's hard threshold. A *single* obfuscation hit sits
+# exactly on the 0.20 floor and quarantines — but only because decide()
+# compares with a tolerance; 1.0 - 0.8 is 0.19999999999999996 in IEEE 754, so a
+# bare `<` blocked one HTML comment or zero-width character irreversibly. The
+# band is still unmeasured — the zero-flag calibration run never came near it —
+# so it stays the first thing to revisit if a real record ever lands in it.
 DEFAULT_POLICY = GatePolicy(
     thresholds={
         "corpus": StoreThresholds(block_below=0.10, quarantine_below=0.60),
