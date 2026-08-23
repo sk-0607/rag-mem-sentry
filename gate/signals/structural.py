@@ -28,8 +28,8 @@ OBFUSCATION_CHECKS: list[tuple[str, str]] = [
         "hidden-css",
         r"(?:display\s*:\s*none"
         r"|font-size\s*:\s*0(?!\.\d)(?!\d)(?:px|pt)?"
-        r"|visibility\s*:\s*hidden"
-        r"|opacity\s*:\s*0(?![\d.])"
+        r"|(?<![\w-])visibility\s*:\s*hidden"
+        r"|(?<![\w-])opacity\s*:\s*0(?![\d.])"
         r"|(?<![\w-])color\s*:\s*transparent"
         r"|clip-path\s*:\s*inset\(\s*100%\s*\)"
         r"|(?<![\w-])height\s*:\s*0(?![\d.])(?:px|pt|%)?"
@@ -153,10 +153,19 @@ class StructuralSignal:
         # on "this text contains base64" — the corpus legitimately contains
         # encoded data. evidence_span is the decoded match, not the base64,
         # so an audit reader sees what it said.
+        # Deduped by label across candidates, like the homoglyph loop above: a
+        # paper that quotes the same payload in a figure and again in an
+        # appendix has one distinct trait, and letting it count twice pushes
+        # 0.80 to 0.96 — past the hard threshold, into an irreversible BLOCK
+        # that gate/screen.py keeps no release path for.
+        encoded_labels: set[str] = set()
         for decoded in _decoded_candidates(item.text):
             for label, pattern in _COMPILED:
+                if label in encoded_labels:
+                    continue
                 match = pattern.search(decoded)
                 if match:
+                    encoded_labels.add(label)
                     hits.append((f"encoded-{label}", match.group(0), OBFUSCATION_WEIGHT))
 
         if not hits:
