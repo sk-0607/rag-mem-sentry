@@ -52,6 +52,24 @@ def test_k_larger_than_store_returns_all(tmp_path):
     assert len(s.retrieve("abc", k=10)) == 1
 
 
+def test_id_missing_from_the_jsonl_mirror_is_skipped(tmp_path):
+    # Chroma and the JSONL mirror can drift (a trimmed mirror, a repointed
+    # EXPERIENCES_PATH). Read-time posture is degrade, not refuse.
+    s = store_at(tmp_path)
+    s.write(rec("kept", "abc"))
+    s.write(rec("orphan", "abcd"))
+    s.jsonl_path.write_text(s.jsonl_path.read_text(encoding="utf-8").splitlines()[0] + "\n",
+                            encoding="utf-8")
+    assert [r.id for r in s.retrieve("abcd", k=2)] == ["kept"]
+
+
+def test_all_ids_missing_returns_empty_rather_than_raising(tmp_path):
+    s = store_at(tmp_path)
+    s.write(rec("r1", "abc"))
+    s.jsonl_path.write_text("", encoding="utf-8")
+    assert s.retrieve("abc", k=1) == []
+
+
 def test_retrieved_records_carry_full_payload(tmp_path):
     s = store_at(tmp_path)
     s.write(ExperienceRecord(id="r1", task="t", approach="APPROACHY",

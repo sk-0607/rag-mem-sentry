@@ -81,8 +81,12 @@ class ExperienceStore:
         ids = result["ids"][0]
         # Chroma stores only `task`; rehydrate the full payload from the
         # JSONL mirror, preserving Chroma's order (the similarity ranking).
+        # Skip, don't raise, on an id Chroma knows and the mirror doesn't: the
+        # two can drift (a trimmed mirror, a repointed EXPERIENCES_PATH), and
+        # read-time posture is degrade rather than refuse — losing one memory
+        # must not take the whole answer down with it.
         by_id = {record.id: record for record in self.all_records()}
-        return [by_id[rid] for rid in ids]
+        return [by_id[rid] for rid in ids if rid in by_id]
 
     def all_records(self) -> list[ExperienceRecord]:
         if not self.jsonl_path.exists():
