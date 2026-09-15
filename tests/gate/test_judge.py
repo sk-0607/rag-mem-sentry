@@ -5,8 +5,10 @@ import pytest
 import app.llm
 from gate.types import GateContext, Item
 from gate.signals.judge import JudgeSignal, JudgeResponseError
+from memory.types import ExperienceRecord
 
 CTX = GateContext(store="corpus")
+EXPERIENCE_CTX = GateContext(store="experience")
 
 
 class FakeChat:
@@ -194,3 +196,65 @@ def test_score_delegates_to_score_batch():
     result = JudgeSignal(chat=fake).score(it, CTX)
     assert result.score == 0.3
     assert result.reason == "quotes"
+
+
+def experience_entry(idx, suspicion=0.1, label="neutral", evidence_span=None):
+    return {"id": f"i{idx}", "suspicion": suspicion, "label": label, "evidence_span": evidence_span}
+
+
+def test_experience_store_uses_experience_rubric():
+    its = [Item(id="e0", text="task: t\napproach: a\noutcome: o", kind="experience")]
+    fake = FakeChat(response(experience_entry(0)))
+    JudgeSignal(chat=fake).score_batch(its, EXPERIENCE_CTX)
+    exp_system_msg = fake.calls[0][0][0]["content"]
+
+    fake2 = FakeChat(response(entry(0)))
+    JudgeSignal(chat=fake2).score_batch(items(1), CTX)
+    corpus_system_msg = fake2.calls[0][0][0]["content"]
+
+    assert "endorses, normalises, or models unsafe behavior" in exp_system_msg
+    assert "AI-security research papers" not in exp_system_msg
+    assert "AI-security research papers" in corpus_system_msg
+    assert "endorses, normalises, or models unsafe behavior" not in corpus_system_msg
+
+
+def test_experience_label_set():
+    its = [Item(id="e0", text="task: t\napproach: a\noutcome: o", kind="experience")]
+
+    fake = FakeChat(response(experience_entry(0, label="endorses_unsafe")))
+    results = JudgeSignal(chat=fake).score_batch(its, EXPERIENCE_CTX)
+    assert results[0].reason == "endorses_unsafe"
+
+    fake2 = FakeChat(response(experience_entry(0, label="neutral")))
+    results2 = JudgeSignal(chat=fake2).score_batch(its, EXPERIENCE_CTX)
+    assert results2[0].reason == "neutral"
+
+    fake3 = FakeChat(response(experience_entry(0, label="quotes")))
+    with pytest.raises(JudgeResponseError):
+        JudgeSignal(chat=fake3).score_batch(its, EXPERIENCE_CTX)
+
+
+def test_experience_item_from_record_is_scored():
+    record = ExperienceRecord(
+        id="rec-1",
+        task="find a CVE for the target service",
+        approach="disabled TLS certificate verification to speed up scanning",
+        outcome="succeeded",
+        success=True,
+        ts="2026-01-01T00:00:00+00:00",
+    )
+    fake = FakeChat(response(experience_entry(0, label="endorses_unsafe")))
+    results = JudgeSignal(chat=fake).score_batch([record.to_item()], EXPERIENCE_CTX)
+    user_msg = fake.calls[0][0][1]["content"]
+    assert "disabled TLS certificate verification" in user_msg
+    assert results[0].reason == "endorses_unsafe"
+
+
+def test_experience_rubric_names_the_screened_fields():
+    its = [Item(id="e0", text="task: t\napproach: a\noutcome: o", kind="experience")]
+    fake = FakeChat(response(experience_entry(0)))
+    JudgeSignal(chat=fake).score_batch(its, EXPERIENCE_CTX)
+    system_msg = fake.calls[0][0][0]["content"]
+    assert "task" in system_msg
+    assert "approach" in system_msg
+    assert "outcome" in system_msg

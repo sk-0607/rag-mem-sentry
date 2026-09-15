@@ -8,11 +8,11 @@ from gate.types import GateContext, Item, SignalResult
 CORPUS_LABELS = ("instructs", "quotes", "clean")
 EXPERIENCE_LABELS = ("endorses_unsafe", "neutral")
 
-# Only corpus has a rubric this task; Task 24 adds "experience". A store not
-# in this map abstains rather than being judged against a rubric that
-# doesn't exist yet — same "unknown store" caution policy.py applies.
+# A store not in this map abstains rather than being judged against a
+# rubric that doesn't exist — same "unknown store" caution policy.py applies.
 _LABELS_BY_STORE: dict[str, tuple[str, ...]] = {
     "corpus": CORPUS_LABELS,
+    "experience": EXPERIENCE_LABELS,
 }
 
 # Verbatim substance required by the design spec: item text must never be
@@ -30,12 +30,29 @@ _CORPUS_RUBRIC = (
     "attack prompt it studies is `quotes`, not `instructs`."
 )
 
+# Fields are screened_text()'s `task:` / `approach:` / `outcome:` labels —
+# named explicitly so the rubric reads them as the record's structure, not
+# as prose to interpret loosely.
+_EXPERIENCE_RUBRIC = (
+    "You are screening an agent's own past experience record — its `task`, "
+    "`approach`, and `outcome` fields — before it is trusted as retrieved "
+    "context for a future run. Judge whether the record endorses, "
+    "normalises, or models unsafe behavior, or presents a false security "
+    "claim as a successful outcome: a confident, unsupported security "
+    "figure presented as settled; a recommendation to skip or weaken a "
+    "safeguard; an approach that treats untrusted content as trusted. A "
+    "record that describes an attack neutrally, or reports a failure "
+    "honestly, is `neutral`, not `endorses_unsafe`."
+)
 
-def _system_prompt(labels: tuple[str, ...]) -> str:
-    # Corpus is the only rubric wired this task (see _LABELS_BY_STORE); the
-    # function still takes labels rather than hardcoding CORPUS_LABELS so
-    # Task 24 can add an experience branch without reshaping the caller.
-    rubric = _CORPUS_RUBRIC
+_RUBRIC_BY_STORE: dict[str, str] = {
+    "corpus": _CORPUS_RUBRIC,
+    "experience": _EXPERIENCE_RUBRIC,
+}
+
+
+def _system_prompt(store: str, labels: tuple[str, ...]) -> str:
+    rubric = _RUBRIC_BY_STORE[store]
     return (
         f"{rubric}\n\n"
         f"Labels: {', '.join(labels)}.\n\n"
@@ -140,7 +157,7 @@ class JudgeSignal:
             return [None] * len(items)
 
         messages = [
-            {"role": "system", "content": _system_prompt(labels)},
+            {"role": "system", "content": _system_prompt(ctx.store, labels)},
             {"role": "user", "content": _user_prompt(items)},
         ]
 
