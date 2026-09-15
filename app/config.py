@@ -35,3 +35,9 @@ LLM_MIN_INTERVAL = float(os.getenv("LLM_MIN_INTERVAL", "0"))
 
 # --- Phase 2A: decomposition ---
 MAX_SUBQUERIES = 3
+
+# --- Phase 3: S2 policy judge ---
+# Defaults to LLM_MODEL so the judge needs no extra config out of the box;
+# override separately if the judge should run a different (e.g. cheaper) model.
+JUDGE_MODEL = os.getenv("JUDGE_MODEL", LLM_MODEL)
+JUDGE_BATCH_MAX = 5   # chunking into batches of this size is ReadGate's job, not the signal's

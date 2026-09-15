@@ -11,3 +11,15 @@ def test_config_constants_present():
 
 def test_phase2a_constants():
     assert config.MAX_SUBQUERIES == 3
+
+def test_judge_model_defaults_to_llm_model(monkeypatch):
+    monkeypatch.delenv("JUDGE_MODEL", raising=False)
+    import importlib
+    importlib.reload(config)
+    try:
+        assert config.JUDGE_MODEL == config.LLM_MODEL
+    finally:
+        importlib.reload(config)
+
+def test_judge_batch_max_is_five():
+    assert config.JUDGE_BATCH_MAX == 5

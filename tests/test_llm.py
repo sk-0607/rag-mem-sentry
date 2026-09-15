@@ -65,6 +65,32 @@ def test_chat_does_not_pace_by_default(monkeypatch):
     llm.chat([{"role": "user", "content": "x"}], client=_OkClient)
     assert sleeps == []
 
+def test_chat_uses_llm_model_by_default(monkeypatch):
+    recorded = {}
+    class RecordingClient:
+        class chat:
+            class completions:
+                @staticmethod
+                def create(**kw):
+                    recorded["model"] = kw["model"]
+                    msg = type("M", (), {"content": "ok"})
+                    return type("R", (), {"choices": [type("C", (), {"message": msg})]})
+    llm.chat([{"role": "user", "content": "x"}], client=RecordingClient)
+    assert recorded["model"] == config.LLM_MODEL
+
+def test_chat_model_override_reaches_client(monkeypatch):
+    recorded = {}
+    class RecordingClient:
+        class chat:
+            class completions:
+                @staticmethod
+                def create(**kw):
+                    recorded["model"] = kw["model"]
+                    msg = type("M", (), {"content": "ok"})
+                    return type("R", (), {"choices": [type("C", (), {"message": msg})]})
+    llm.chat([{"role": "user", "content": "x"}], client=RecordingClient, model="m-x")
+    assert recorded["model"] == "m-x"
+
 def test_format_citations():
     docs = [{"title": "PoisonedRAG", "chunk_index": 3},
             {"title": "GCG", "chunk_index": 0}]
