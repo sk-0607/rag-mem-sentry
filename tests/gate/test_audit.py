@@ -35,3 +35,15 @@ def test_entries_survive_reopen(tmp_path):
     path = tmp_path / "a.jsonl"
     AuditLog(path).record(Item(id="a", text="x", kind="corpus"), verdict_of(Action.ADMIT), "corpus")
     assert len(AuditLog(path).entries()) == 1
+
+
+def test_record_defaults_stage_to_write(tmp_path):
+    log = AuditLog(tmp_path / "a.jsonl")
+    log.record(Item(id="a", text="x", kind="corpus"), verdict_of(Action.ADMIT), "corpus")
+    assert log.entries()[0]["stage"] == "write"
+
+
+def test_record_stores_read_stage(tmp_path):
+    log = AuditLog(tmp_path / "a.jsonl")
+    log.record(Item(id="a", text="x", kind="corpus"), verdict_of(Action.ADMIT), "corpus", stage="read")
+    assert log.entries()[0]["stage"] == "read"

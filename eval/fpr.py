@@ -12,11 +12,17 @@ from pathlib import Path
 from gate.audit import AuditLog
 
 
-def false_positive_rate(audit_entries: list[dict]) -> dict:
+def false_positive_rate(audit_entries: list[dict], stage: str = "write") -> dict:
     # Both stores append to one audit log, so this has to filter: an unfiltered
     # count silently folds experience verdicts into a number reported as the
     # corpus FPR. Symmetric with eval/experience_fpr.py's `experience` filter.
-    entries = [e for e in audit_entries if e.get("store") == "corpus"]
+    # Stage defaults to "write" so this keeps measuring the write-time gate;
+    # entries logged before the stage field existed have no "stage" key and
+    # read as "write" too, so old audit logs are unaffected.
+    entries = [
+        e for e in audit_entries
+        if e.get("store") == "corpus" and e.get("stage", "write") == stage
+    ]
     total = len(entries)
     counts = {a: sum(1 for e in entries if e["action"] == a) for a in ("admit", "quarantine", "block")}
     flagged = counts["quarantine"] + counts["block"]
