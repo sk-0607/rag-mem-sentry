@@ -7,10 +7,7 @@ def test_config_constants_present():
     assert config.EMBED_MODEL == "sentence-transformers/all-MiniLM-L6-v2"
     assert config.RERANK_MODEL == "cross-encoder/ms-marco-MiniLM-L-6-v2"
     assert config.TOP_K == 5
-    assert config.MAX_RETRIES == 1
     assert config.DENSE_N >= config.FUSE_M >= config.TOP_K
 
 def test_phase2a_constants():
     assert config.MAX_SUBQUERIES == 3
-    assert config.WEB_K == 3
-    assert config.WEB_ENABLED is True

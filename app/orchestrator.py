@@ -34,8 +34,7 @@ def run_agentic(question, retriever=None, llm_module=_llm, graph_builder=_build_
     sub_results, trace, contexts = [], [], []
     for i, sq in enumerate(subqs):
         state = app.invoke({
-            "query": sq, "original_query": sq, "docs": [], "grade": "",
-            "retries": 0, "web_tried": False, "answer": "", "citations": [],
+            "query": sq, "docs": [], "answer": "", "citations": [],
             "path_trace": [], "experiences": experiences,
         })
         ctx = [d["text"] for d in state["docs"]]
@@ -45,12 +44,7 @@ def run_agentic(question, retriever=None, llm_module=_llm, graph_builder=_build_
             "path_trace": state["path_trace"],
         })
         trace += [f"sq{i}:{s}" for s in state["path_trace"]]
-        # A refused sub-query answered from none of its docs, so they must not
-        # reach the eval's `contexts` — RAGAS would score faithfulness and
-        # context_precision against passages the answer never used. The
-        # sub_result above keeps them for tracing.
-        if state["answer"] != _llm.REFUSAL:
-            contexts += ctx
+        contexts += ctx
 
     final = llm_module.synthesize(question, sub_results)
 
@@ -62,7 +56,9 @@ def run_agentic(question, retriever=None, llm_module=_llm, graph_builder=_build_
             task=question,
             approach=", ".join(trace),
             outcome=final["answer"],
-            success=final["answer"] != _llm.REFUSAL,
+            # No refusal path any more, so every run produces an answer; there is
+            # no failure signal left to derive success from.
+            success=True,
         )
         if gate is None:
             # Derived from config at call time, not a hardcoded Path("data"):

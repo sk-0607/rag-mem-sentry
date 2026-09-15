@@ -11,7 +11,6 @@ gradio>=4.44
 pypdf>=4.2
 requests>=2.31
 python-dotenv>=1.0
-ddgs>=6.0
 fastapi>=0.111
 uvicorn>=0.30
 pytest>=8.0

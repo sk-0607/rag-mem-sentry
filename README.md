@@ -1,8 +1,7 @@
 # RAG Mem Sentry
 
-Agentic RAG over a corpus of AI-security papers, with a Corrective-RAG (CRAG)
-self-correcting retrieval loop, hybrid retrieval + reranking, grounded
-citations, a refusal guardrail, and a RAGAS evaluation scorecard — plus a
+Agentic RAG over a corpus of AI-security papers, with hybrid retrieval +
+reranking, cited answers, and a RAGAS evaluation scorecard — plus a
 content trust gate that screens documents and agent memory records for
 poisoned content, write-time and read-time, before an LLM trusts and uses
 them. See `docs/specs/2026-08-16-poisoned-content-trust-gate-design.md`.
@@ -11,12 +10,9 @@ them. See `docs/specs/2026-08-16-poisoned-content-trust-gate-design.md`.
 
 ```
 question → decompose (LLM: 1–3 sub-questions)
-  → per sub-question, CRAG graph:
+  → per sub-question, graph:
       retrieve (dense + BM25 → RRF → cross-encoder rerank)
-      → grade (LLM: sufficient / weak)
-      → [weak, retries<1] rewrite → retrieve (once)
-      → [still weak] web_fallback (DuckDuckGo) → re-grade
-      → generate (cited answer) | refuse ("Not grounded in the corpus.")
+      → generate (cited answer)
   → synthesize (LLM: merge sub-answers + citations)
 → answer + citations + path-trace
 ```
@@ -31,9 +27,15 @@ question → decompose (LLM: 1–3 sub-questions)
 - **Vector store:** Chroma (local); sparse: `rank_bm25`.
 - **Orchestration:** LangGraph. **UI:** Gradio. **Eval:** RAGAS.
 
-The CRAG loop is built as discrete LangGraph nodes over an explicit `RAGState`,
-so new nodes (web-search fallback, refusal) are drop-in additions rather than
-rewrites; decomposition and synthesis wrap the graph in `app/orchestrator.py`.
+The graph is discrete LangGraph nodes over an explicit `RAGState`; decomposition
+and synthesis wrap it in `app/orchestrator.py`.
+
+> **Pipeline change (2026-09-15):** the inherited CRAG corrective loop (grade →
+> rewrite → web fallback) and the refusal guardrail ("Not grounded in the
+> corpus.") were removed; every sub-question now goes straight from retrieve to
+> generate. The RAGAS scorecards, R3, and the Phase 2 / poison-trial results below
+> were all measured **with** the loop and refusal in place, and describe that
+> pipeline, not the current one.
 
 ## Quickstart
 
@@ -519,12 +521,11 @@ that gets lost.
 
 ## Limitations
 
-- CRAG loop does one rewrite+retry per sub-question.
 - Sub-queries run sequentially (parallel fan-out is future work).
 - Decomposition capped at 3 sub-questions.
-- Web fallback uses keyless DuckDuckGo (occasional rate-limit/HTML drift); results are re-graded and refused if weak.
-- Web answers are labeled `[web: domain]` and are not peer-reviewed sources.
-- Corpus is ~22 papers; out-of-scope questions are refused, not answered.
+- No retrieval-quality check or refusal: out-of-scope questions are answered from
+  whatever the top-5 chunks are, so answers can be ungrounded.
+- Corpus is ~22 papers.
   Questions whose keywords collide with *example* text inside a paper (e.g. a
   benign recipe used as a jailbreak demo) can retrieve a real matching chunk and
   be answered from it — grounded, but not the paper's actual subject.

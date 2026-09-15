@@ -8,8 +8,6 @@ from app import config
 
 load_dotenv()
 
-REFUSAL = "Not grounded in the corpus."
-
 
 def get_client():
     return OpenAI(
@@ -59,14 +57,7 @@ def chat(messages, client=None):
     raise RuntimeError(f"{config.LLM_MODEL} rate limit: exhausted retries")
 
 
-def _is_refusal(text):
-    # the model occasionally trails a stray citation tag after the refusal
-    return text.strip().startswith(REFUSAL)
-
-
 def _cite_tag(d):
-    if d.get("source") == "web":
-        return f"[web: {d['paper_id']}]"
     return f"[{d['title']}, chunk#{d['chunk_index']}]"
 
 
@@ -84,31 +75,7 @@ def _context_block(docs):
     return "\n\n".join(f"{_cite_tag(d)}\n{d['text']}" for d in docs)
 
 
-def grade(query, docs, client=None):
-    msg = [
-        {"role": "system", "content":
-         "You grade whether retrieved context is sufficient to answer a "
-         "question. Reply with exactly one word: SUFFICIENT or WEAK."},
-        {"role": "user", "content":
-         f"Question: {query}\n\nContext:\n{_context_block(docs)}"},
-    ]
-    out = chat(msg, client).upper()
-    return "weak" if "WEAK" in out else "sufficient"
-
-
-def rewrite(query, client=None):
-    msg = [
-        {"role": "system", "content":
-         "Rewrite the user's question into a more effective search query for "
-         "a research-paper retrieval system. Return only the rewritten query."},
-        {"role": "user", "content": query},
-    ]
-    return chat(msg, client)
-
-
 def answer(query, docs, experiences="", client=None):
-    if not docs:
-        return {"answer": REFUSAL, "citations": []}
     content = f"Question: {query}\n\nContext:\n{_context_block(docs)}"
     if experiences:
         # Appended, not interpolated into Context: the experiences block is
@@ -122,15 +89,10 @@ def answer(query, docs, experiences="", client=None):
          "provided context passages. Cite sources inline by copying the "
          "bracketed tag shown above a passage verbatim, brackets included. "
          "Give every source its own brackets — write [tag one] [tag two], "
-         "never [tag one, tag two]. If — and only if — none of the passages "
-         "are relevant to the question, reply with exactly: "
-         "Not grounded in the corpus."},
+         "never [tag one, tag two]."},
         {"role": "user", "content": content},
     ]
-    text = chat(msg, client)
-    if _is_refusal(text):
-        return {"answer": REFUSAL, "citations": []}
-    return {"answer": text, "citations": format_citations(docs)}
+    return {"answer": chat(msg, client), "citations": format_citations(docs)}
 
 
 def decompose(question, client=None):
@@ -153,8 +115,6 @@ def synthesize(question, sub_results, client=None):
     if len(sub_results) == 1:
         r = sub_results[0]
         return {"answer": r["answer"], "citations": r["citations"]}
-    if all(r["answer"] == REFUSAL for r in sub_results):
-        return {"answer": REFUSAL, "citations": []}
 
     seen, cites = set(), []
     for r in sub_results:

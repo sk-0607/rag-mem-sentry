@@ -4,24 +4,15 @@ from app import orchestrator
 
 
 def format_response(result):
-    # trace entries are sub-query-prefixed (`sq0:rewrite`), so match the node name
-    nodes = {step.split(":")[-1] for step in result["path_trace"]}
-    if "web_fallback" in nodes:
-        badge = "🌐 web fallback"
-    elif "rewrite" in nodes:
-        badge = "🔁 retrieval retried"
-    else:
-        badge = "✅ direct"
     cites = "\n".join(f"- {c}" for c in result["citations"]) or "_none_"
-    side = f"**Path:** {badge}\n\n**Citations:**\n{cites}"
+    side = f"**Citations:**\n{cites}"
     return result["answer"], side
 
 
 def build_demo(runner=orchestrator.run_agentic):
-    with gr.Blocks(title="Self-Correcting RAG") as demo:
-        gr.Markdown("# Self-Correcting RAG\nAsk about AI-security papers. "
-                    "Answers are grounded in a retrieved corpus with a "
-                    "self-correcting (CRAG) retrieval loop.")
+    with gr.Blocks(title="Agentic RAG") as demo:
+        gr.Markdown("# Agentic RAG\nAsk about AI-security papers. "
+                    "Answers are generated from a retrieved corpus.")
         with gr.Row():
             with gr.Column(scale=3):
                 chatbot = gr.Chatbot(height=460)
