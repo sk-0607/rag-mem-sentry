@@ -1,9 +1,22 @@
+import importlib
+
 from app import config
 
-def test_config_constants_present():
-    assert config.LLM_BASE_URL == "https://generativelanguage.googleapis.com/v1beta/openai/"
-    assert config.LLM_MODEL == "gemini-flash-lite-latest"
-    assert config.LLM_API_KEY_ENV == "GEMINI_API_KEY"
+def test_config_constants_present(monkeypatch):
+    # These are the defaults, so the machine's .env must not answer for them:
+    # a .env naming another model made this fail on every developer machine.
+    with monkeypatch.context() as m:
+        m.setattr("dotenv.load_dotenv", lambda *a, **k: None)
+        for var in ("LLM_BASE_URL", "LLM_MODEL", "LLM_API_KEY_ENV"):
+            m.delenv(var, raising=False)
+        importlib.reload(config)
+        try:
+            assert config.LLM_BASE_URL == "https://generativelanguage.googleapis.com/v1beta/openai/"
+            assert config.LLM_MODEL == "gemini-flash-lite-latest"
+            assert config.LLM_API_KEY_ENV == "GEMINI_API_KEY"
+        finally:
+            m.undo()
+            importlib.reload(config)
     assert config.EMBED_MODEL == "sentence-transformers/all-MiniLM-L6-v2"
     assert config.RERANK_MODEL == "cross-encoder/ms-marco-MiniLM-L-6-v2"
     assert config.TOP_K == 5
