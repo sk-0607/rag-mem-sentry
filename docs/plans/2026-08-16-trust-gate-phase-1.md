@@ -1742,20 +1742,26 @@ after. Step-level detail for each of these lives in
 >
 > **Phase 3 is therefore paused**, per the rule above rather than in spite of it. This is the gate check working: it caught the difference between a demonstrated exposure and a demonstrated attack, before a defense was built on top of the weaker one. Full measurement and the stop decision: README's *"Phase 2 Results"* section and `docs/plans/2026-08-19-phase-2-experience-memory.md`'s *"Stop decision"*.
 
-### Phase 3 — S2 policy judge and read-time gate (weeks 6–7) — **PAUSED**
+### Phase 3 — S2 policy judge and read-time gate (weeks 6–7) — **built; gate-off vs gate-on measurements not run**
 
-Held at the week-5 gate check above. The task table stands unchanged as the starting point if a follow-up measurement moves behavior-level ASR off zero. Its numbers are the original roadmap's and now collide with Phase 2's shipped Tasks 17–21; renumber from 22 if this phase is ever resumed.
+The week-5 gate check above held Phase 3 on 2026-08-23. **Overridden by the project owner on 2026-09-15**; the reasoning and what the override does not change are in `docs/specs/2026-09-15-phase-3-read-time-gate-design.md` §0. The plan is `docs/plans/2026-09-15-phase-3-read-time-gate.md`; this table replaces the original Task 17–22 roadmap, which collided with Phase 2's Tasks 17–21 and is superseded.
 
-| Task | Deliverable |
-|---|---|
-| 17 | `gate/signals/judge.py` — batched LLM judge, corpus rubric (instruct vs quote) |
-| 18 | `gate/signals/judge.py` — experience rubric (endorses unsafe behavior) |
-| 19 | `gate/read.py` — `ReadGate.screen_batch(items, ctx)`, cache-first, S1 + S2 |
-| 20 | `app/graph.py` — insert `gate` node between `retrieve` and `grade` |
-| 21 | Degraded-mode path — expensive signals unavailable → S1 only + `reduced_assurance` in `path_trace` |
-| 22 | Clean-task RAGAS regression, gate off vs on |
+| Task | Deliverable | Status |
+|---|---|---|
+| 22 | `eval/experience_poison_trial.py` committed; gate-off baseline re-measured on the simplified host | measured |
+| 23 | `gate/signals/judge.py` — S2 policy judge, corpus rubric, batch contract | built, offline tests |
+| 24 | `gate/signals/judge.py` — experience rubric | built, offline tests |
+| 25 | Batch signal runner, audit `stage`, placeholder `judge` hard threshold | built, offline tests |
+| 26 | `gate/read.py` — cache-first `ReadGate.screen_batch`, S1 degradation | built, offline tests |
+| 27 | `app/graph.py` gate node and `app/orchestrator.py` experience filtering behind `read_gate=None` | built, offline tests |
+| 28 | R5 — S2 false-positive rate on quoted-attack hard negatives (`eval/judge_fpr.py`) | measured |
+| 29 | `eval/class1_trial.py` and `--arm off` and `--arm on` on the class-3 trial | built, not measured |
+| 30 | `EVAL_READ_GATE=1` RAGAS arm and `eval/overhead.py` | built, not measured |
+| 31 | Docs reconciled with what was built | docs |
 
-**Gate check (week 7):** classes 1 and 3 detected; RAGAS faithfulness delta measured and recorded. **Watch R5 here** — if the judge cannot separate quoting from instructing, S1's obfuscation weighting (Task 9) is the fallback and the rubric gets narrowed to obfuscation-corroborated cases.
+Tasks 29 and 30 are harness only. **Decided 2026-10-13 by the project owner: no gate-off vs gate-on measurement is run for now.** The attack-success, RAGAS and overhead numbers do not exist; they are recorded as open in the README's "Open measurements", not here.
+
+**Gate check (week 7), as it stands:** R5 was measured (README, "Phase 3: R5") and the S2 fallback was not triggered. Class 1 and 3 detection by the read gate and the RAGAS faithfulness delta are not measured.
 
 ### Phase 4 — S3 corroboration and ablation (weeks 8–9)
 

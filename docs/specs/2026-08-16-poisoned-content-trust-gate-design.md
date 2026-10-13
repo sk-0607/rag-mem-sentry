@@ -90,9 +90,11 @@ READ-TIME  (expensive signals, cache-first)
   query ─► hybrid retrieve top-N ─► per candidate:
               cache[content_hash]? ──hit──► reuse verdict
                                    └─miss─► S2 judge + S3 corroborate ─► write cache
-           ─► aggregate ─► verdict ─► admit set ─► [existing grade node] ─► generate / rewrite
-                                                                            / web_fallback / refuse
+           ─► aggregate ─► verdict ─► admit set ─► generate
 ```
+
+*Note, 2026-10-13:* the diagram above is the design as written. The host no longer has a `grade`
+node, so as built the read-time path is `retrieve → gate → generate` (Phase 3 spec §1 and §5).
 
 ### 6.1 Two properties this architecture buys
 
@@ -100,6 +102,12 @@ READ-TIME  (expensive signals, cache-first)
 chunks shrinks the retrieved context. The existing `grade` node then legitimately rewrites the
 query, falls back to web search, or refuses. The degraded path is already built and tested —
 the gate does not need its own failure UX.
+
+*Note, 2026-10-13 — this property no longer holds.* The host dropped the CRAG `grade` / `rewrite`
+loop, the refusal path and web fallback before Phase 3 (Phase 3 spec §1). A sub-query whose every
+chunk the gate excludes now reaches `generate` with an empty context (risk R7 in the Phase 3
+spec); there is no rewrite, fallback or refusal to absorb it. The paragraph above is kept as the
+original design.
 
 **A content-hash verdict cache is what makes read-time judging affordable.** Naive per-candidate
 judging costs roughly 15 extra LLM calls per question on top of the host's existing ~10. The
@@ -273,6 +281,8 @@ cache-warm separately**. Cold is the real first-run cost and is not hidden.
   and a reviewer who assumes CRAG grading is a partial mitigation needs the measurement to see
   otherwise. Whether it is null for classes 2 and 3 is **not** established; a poisoned *fact* is
   topically relevant by construction, so the same null result should not be assumed there.
+  *Note, 2026-10-13:* the `grade` node no longer exists in the host, so this baseline cannot be
+  re-run. R3's result stays as history; the baselines Phase 3 reports are *no gate* and *gate on*.
 - **One published defense**, if runnable — a perplexity or knowledge-consistency filter from the
   PoisonedRAG defense line.
 

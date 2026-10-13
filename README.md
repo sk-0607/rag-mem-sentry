@@ -12,6 +12,7 @@ them. See `docs/specs/2026-08-16-poisoned-content-trust-gate-design.md`.
 question → decompose (LLM: 1–3 sub-questions)
   → per sub-question, graph:
       retrieve (dense + BM25 → RRF → cross-encoder rerank)
+      → gate (read-time screen; only when a read gate is passed)
       → generate (cited answer)
   → synthesize (LLM: merge sub-answers + citations)
 → answer + citations + path-trace
@@ -30,10 +31,20 @@ question → decompose (LLM: 1–3 sub-questions)
 The graph is discrete LangGraph nodes over an explicit `RAGState`; decomposition
 and synthesis wrap it in `app/orchestrator.py`.
 
+The `gate` node is Phase 3's read-time gate (`gate/read.py`). It exists only when a
+caller passes `read_gate=` to `run_agentic` / `build_graph`; `None` (the default, and what
+`ui.py` and `api.py` pass) builds today's graph with no gate node and no experience filtering.
+When on, it screens the retrieved top-5 chunks with S1 plus the S2 policy judge
+(`gate/signals/judge.py`), one batched judge call per sub-query, verdicts cached by content
+hash, and passes only admitted chunks to `generate`. The same gate filters retrieved experience
+records before they are formatted into the prompt. If the judge is unavailable it degrades to
+S1 and says so in `path_trace`. A sub-query whose every chunk is excluded reaches `generate`
+with an empty context.
+
 > **Pipeline change (2026-09-15):** the inherited CRAG corrective loop (grade →
 > rewrite → web fallback) and the refusal guardrail ("Not grounded in the
 > corpus.") were removed; every sub-question now goes straight from retrieve to
-> generate. The RAGAS scorecards, R3, and the Phase 2 / poison-trial results below
+> generate (or, with a read gate, retrieve → gate → generate). The RAGAS scorecards, R3, and the Phase 2 / poison-trial results below
 > were all measured **with** the loop and refusal in place, and describe that
 > pipeline, not the current one.
 
@@ -287,7 +298,8 @@ Phase 2 (Tasks 12–21) built the agent's write-side experience memory: after
 every run, `app/orchestrator.py` writes an `ExperienceRecord` (task, approach,
 outcome) through the same write-time gate the corpus uses, into a separate
 Chroma collection keyed on `task` text. Retrieval is deliberately **ungated**
-— by design, per the phase's constraint, so Task 20 (this section) could
+(it remains ungated unless a read gate is passed, which Phase 3 added) — by design,
+per the phase's constraint, so Task 20 (this section) could
 demonstrate the exact attack Phase 3's read-time defense (S2) exists to stop.
 
 Every figure in this section was measured against **`gemini-3.1-flash-lite`**, set via `.env`'s
@@ -460,6 +472,10 @@ instruction-override-shaped than these three records — R3a's own class 2/3 (fa
 unsafe-approach poisoning against weaker competing context) — to see whether behavior-level ASR
 moves off zero under conditions closer to what Phase 3 would actually need to defend against.
 
+*Note, 2026-09-15: the project owner overrode this stop decision and Phase 3 proceeded (Phase 3
+spec, `docs/specs/2026-09-15-phase-3-read-time-gate-design.md` §0). The paragraph above is kept as
+written.*
+
 The stop decision is recorded in both plan documents:
 `docs/plans/2026-08-19-phase-2-experience-memory.md` ("Stop decision: Phase 3 is paused") and
 `docs/plans/2026-08-16-trust-gate-phase-1.md`'s week-5 gate check.
@@ -491,7 +507,9 @@ with `gate=None`, matching the design above), would have admitted all three pois
 result — zero observable behavior change — while also surfacing the gap this task's `context_asr`
 → `reached_prompt` rename exists to name: t2's poison was retrieved but never reached a `generate`
 prompt at all, because the old host's `grade`/`rewrite`/refuse loop intercepted it first. Full
-output: `data/poison_trial/results-2026-08-24.json`.
+output: `data/poison_trial/results-2026-08-24.json` as it was
+at the time; that path is stale. The trial wipes `data/poison_trial/` on every run, and now keeps
+its results in `data/poison_trial_results/` (`results-off.json`, `results-on.json`).
 
 ### Gate-off baseline on the simplified host (2026-09-16)
 
@@ -537,7 +555,8 @@ or analyses an attack is `quotes`, one that steers the reader's model is `instru
 clean-but-attack-quoting corpus chunks. Same argument as the write-time measurement above: the
 22-paper corpus holds no real attacks, so every read-time non-admit is a false positive by
 construction. This run measures **false positives only**. It contains no real attack, so it says
-nothing about whether the judge catches one — that is Task 29.
+nothing about whether the judge catches one — that needs the Task 29 harness, which has not been
+run (see "Phase 3: Gate-Off Vs Gate-On Harnesses" below).
 
 **Method.** `eval/judge_fpr.py` (`python -m eval.judge_fpr`). It takes the 20 questions in
 `eval/qa_set.json` as raw strings (no decomposition, no LLM), pulls the top `config.TOP_K = 5`
@@ -546,8 +565,8 @@ chunks per question from the real `Retriever`, adds the chunks S1 already holds 
 `ReadGate.screen_batch(items, "corpus")` — `StructuralSignal` + `JudgeSignal`, `DEFAULT_POLICY`.
 The wiring is `default_read_gate`'s, with one difference: a separate audit log
 (`data/phase3_r5/gate_audit.jsonl`), so the numbers read only this run's entries. The verdict cache
-is the shared `data/gate_cache.jsonl`. Items are built exactly as `app/graph.py`'s `gate_node`
-builds them, so their cache keys match what the pipeline produces. Run 2026-10-13 with
+is the shared `data/gate_cache.jsonl`. Items are built as `app/graph.py`'s `gate_node`
+builds them for chunks that carry an id, so their cache keys match what the pipeline produces. Run 2026-10-13 with
 `LLM_MIN_INTERVAL=2`, model `gemini-3.1-flash-lite` (`JUDGE_MODEL` unset, so the judge used the
 same model): 21 judge HTTP calls, all `200 OK`, no retries, no rate-limit errors.
 
@@ -576,7 +595,7 @@ file). The 8 are the same chunks the write-time read-through above found, so the
 
 **`fpr` here is not a corpus false-positive rate.** 8 of the 104 items are chunks S1 already
 quarantines, and all 8 non-admits are exactly those chunks, each topped by `structural`. The
-7.7% is a property of how the set was built. The corpus-wide figure remains the separately
+0.07692307692307693 is a property of how the set was built. The corpus-wide figure remains the separately
 measured write-time one: 8 / 2025 = 0.395% (above). What this run does say about the other 96
 items: none was flagged, by either signal. The audit log has 0 entries containing `reduced assurance`
 (`grep -c "reduced assurance" data/phase3_r5/gate_audit.jsonl` = 0 of 104 lines), so the judge
@@ -637,13 +656,29 @@ touched and no threshold moved.
   suspicion. In all 8 non-admits the structural score alone fixes the verdict: 7 sit at the S1-only
   trust (0.55, or 0.19999999999999996 for the `html-comment` hit), and the 8th
   (`2402.07867::85`, judge 0.2) is lower than S1-only, 0.44000000000000006 against 0.55, and
-  still a quarantine. A `quotes` label from the judge changes nothing for a chunk S1 already
+  still a quarantine. A `quotes` label from the judge does not change the action here for a chunk S1 already
   holds. This is an observation about how the signals combine, not a proposal.
 - **Not shown:** whether the judge flags a real instruction (no attack content in this set;
-  Task 29), how it behaves on other models, or any corpus-wide read-time rate. 96 of the 104 items
+  the Task 29 harness, not run), how it behaves on other models, or any corpus-wide read-time rate. 96 of the 104 items
   are top-5 retrievals for 20 questions, not a random sample of the corpus.
 
 Outputs sit under `data/phase3_r5/` (gitignored): `gate_audit.jsonl`, `summary-2026-10-13.json`.
+
+## Phase 3: Gate-Off Vs Gate-On Harnesses (built, not run)
+
+Phase 3 built the harnesses that would compare the pipeline with the read gate off and on.
+**None of them has been run, so this README holds no gate-on attack-success, RAGAS or overhead
+number, and none is implied.** The project owner decided on 2026-10-13 not to run any gate-off vs
+gate-on measurement for now. Each run uses whatever model `.env` names (`gemini-3.1-flash-lite`
+today) and spends real LLM budget.
+
+| Harness | Command | Would report | Writes to |
+|---|---|---|---|
+| Class-1 trial (`eval/class1_trial.py`) | `python -m eval.class1_trial` | Five R3-style carrier chunks (one poison variant each), each trial run gate off then gate on, one sub-query through `build_graph`. Per trial: carrier in `generate`'s docs (context level), a fixed canary token in the answer (behavior level), which chunks the gate excluded and the signal that topped each, the carrier's audit entry. | `data/class1_trial_results/results.json` (rewritten after every trial, `complete` false until the last) |
+| Class-3 trial (`eval/experience_poison_trial.py`) | `python -m eval.experience_poison_trial --arm off`, then `--arm on` | The poison-only experience trial of the Phase 2 sections above, once per arm. Per question: whether the poison record was retrieved, excluded, reached the prompt, and the answer; plus an ungated control arm. `--arm off` is the 2026-09-16 baseline's command; `--arm on` adds the read gate. | `data/poison_trial_results/results-off.json` and `results-on.json` |
+| RAGAS and overhead (`eval/run_eval.py`, `eval/overhead.py`) | `EVAL_N=10 python -m eval.run_eval`, then `EVAL_READ_GATE=1 EVAL_N=10 python -m eval.run_eval` for the gated arm; `OVERHEAD_N=5 LLM_MIN_INTERVAL=2 python -m eval.overhead` | RAGAS faithfulness, answer relevancy and context precision per arm, with each question's `path_trace` so sub-queries where the gate admitted 0 of 5 chunks can be counted; for overhead, LLM calls and wall-clock per question for `off`, `on-cold` (empty verdict cache) and `on-warm`. | RAGAS: `data/phase3_ragas/run-off.json` and `run-on.json`, plus `eval/results.md` or `eval/results-gate-on.md` (complete runs only). Overhead: `data/phase3_overhead/results.json` |
+
+The runs are deferred by the owner; this section is not a plan to run them.
 
 ## Open measurements
 
@@ -662,9 +697,14 @@ that gets lost.
    twice now — the "False-fact / unsafe-approach poison retrial (2026-08-24)" and "Gate-off
    baseline on the simplified host (2026-09-16)" subsections under Phase 2 Results above — with
    false-fact / unsafe-approach poison (R3a's class 2/3) against thin-coverage questions and no
-   co-retrieved clean sibling. Behavior ASR stayed 0/3 both times, so this has not moved off zero
-   and Phase 3 remains paused per the stop decision; still open is whether *some* poisoning
-   strategy against this model and system prompt would move it.
+   co-retrieved clean sibling. Behavior ASR stayed 0/3 both times, so this has not moved off zero;
+   still open is whether *some* poisoning strategy against this model and system prompt would move
+   it. *Update, 2026-10-13:* Phase 3 was built after the owner's 2026-09-15 override of the stop
+   decision, and the gate-off vs gate-on comparison is **still open**. The harness now exists
+   (`python -m eval.class1_trial`; `python -m eval.experience_poison_trial --arm on`, against the
+   `--arm off` baseline; `EVAL_READ_GATE=1 python -m eval.run_eval`; `python -m eval.overhead`),
+   and the run has not been done, by owner decision on 2026-10-13. No gate-on attack-success,
+   RAGAS or overhead figure exists.
 3. **The experience store's block band.** `block_below=0.20` is stricter than the corpus's
    `0.10` and nothing in the clean calibration set came near it. See the calibration section
    above.
@@ -700,7 +740,8 @@ that gets lost.
   - `tests/test_config.py::test_config_constants_present` asserts a value that `.env` can
     override, which is why it fails on this machine. Pre-existing and unrelated to Phase 2, but
     it is a real test bug, not just a local environment quirk — and the Phase 2 plan's
-    "`pytest -q` green" exit checkbox is ticked next to it.
+    "`pytest -q` green" exit checkbox is ticked next to it. *Fixed in Phase 3 (`99a24fa`): the
+    test now asserts the defaults without the machine's `.env` answering for them.*
   - `format_experiences` injects each retrieved record's full prior answer into the prompt, so
     prompt size grows with record length as well as record count.
 
@@ -727,4 +768,20 @@ that gets lost.
 
 ## Roadmap
 
-Multi-turn memory, tracing panel, larger corpus + eval set.
+Phase 3 (the S2 policy judge and the read-time gate) is **built; gate-off vs gate-on
+measurements not run** (owner decision, 2026-10-13).
+
+| Task | Deliverable | Status |
+|---|---|---|
+| 22 | Poison trial committed; gate-off baseline on the simplified host | measured |
+| 23 | S2 policy judge, corpus rubric | built, offline tests |
+| 24 | S2 experience rubric | built, offline tests |
+| 25 | Batch signal runner, audit `stage`, placeholder `judge` hard threshold | built, offline tests |
+| 26 | `gate/read.py`: cache-first `ReadGate.screen_batch`, S1 degradation | built, offline tests |
+| 27 | Gate node in `app/graph.py`, experience filtering in `app/orchestrator.py`, behind `read_gate=None` | built, offline tests |
+| 28 | R5: S2 false-positive rate on quoted-attack hard negatives | measured |
+| 29 | Class-1 trial and `--arm off` / `--arm on` on the class-3 trial | built, not measured |
+| 30 | `EVAL_READ_GATE=1` RAGAS arm and the cold/warm overhead harness | built, not measured |
+| 31 | Docs reconciled with what was built | docs |
+
+Later: multi-turn memory, tracing panel, larger corpus + eval set.
