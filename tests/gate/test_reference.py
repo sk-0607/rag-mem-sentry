@@ -34,8 +34,25 @@ def test_untrusted_chunk_never_returned():
 
 
 def test_search_returns_best_match_first():
-    idx = ReferenceIndex(_chunks())
-    assert idx.search("falcon dives", 3)[0]["id"] == "src-d::0"
+    # Input order puts the weaker match first so order cannot pass by accident.
+    idx = ReferenceIndex([
+        _c("src-a::0", "zebra plains walking tall"),
+        _c("src-b::0", "zebra savanna grazing quietly"),
+        _c("src-c::0", "quartz crystal forms slowly"),
+        _c("src-d::0", "glacier melts every summer"),
+        _c("src-e::0", "falcon dives toward prey"),
+    ])
+    assert [c["id"] for c in idx.search("zebra savanna grazing", 5)] == ["src-b::0", "src-a::0"]
+
+
+def test_search_breaks_score_ties_by_chunk_id():
+    idx = ReferenceIndex([
+        _c("src-b::0", "zebra grazing"),
+        _c("src-a::0", "zebra grazing"),
+        _c("src-c::0", "quartz crystal forms slowly"),
+        _c("src-d::0", "glacier melts every summer"),
+    ])
+    assert [c["id"] for c in idx.search("zebra", 5)] == ["src-a::0", "src-b::0"]
 
 
 def test_search_respects_k():
