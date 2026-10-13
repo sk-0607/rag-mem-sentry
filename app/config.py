@@ -41,3 +41,8 @@ MAX_SUBQUERIES = 3
 # override separately if the judge should run a different (e.g. cheaper) model.
 JUDGE_MODEL = os.getenv("JUDGE_MODEL", LLM_MODEL)
 JUDGE_BATCH_MAX = 5   # chunking into batches of this size is ReadGate's job, not the signal's
+
+
+# --- Phase 4: S3 corroboration ---
+S3_MAX_CLAIMS = 5   # per item; a cap keeps one long chunk from dominating the call and the reference lookups
+S3_REF_K = 3        # reference passages retrieved per claim

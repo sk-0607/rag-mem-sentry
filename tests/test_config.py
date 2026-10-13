@@ -36,3 +36,10 @@ def test_judge_model_defaults_to_llm_model(monkeypatch):
 
 def test_judge_batch_max_is_five():
     assert config.JUDGE_BATCH_MAX == 5
+
+
+def test_s3_max_claims_is_five():
+    assert config.S3_MAX_CLAIMS == 5
+
+def test_s3_ref_k_is_three():
+    assert config.S3_REF_K == 3
