@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from gate.audit import AuditLog
-from gate.cache import VerdictCache, content_hash
+from gate.cache import VerdictCache, cache_key
 from gate.policy import DEFAULT_POLICY, GatePolicy
 from gate.quarantine import Quarantine
 from gate.score import aggregate
@@ -32,8 +32,7 @@ class WriteGate:
         # the same text under a different store or signal set is a different
         # question, and this keeps a future added signal (or a new store's
         # rubric) from silently reusing a verdict computed without it.
-        signal_names = ",".join(sorted(s.name for s in self.signals))
-        key = content_hash(f"{store}|{signal_names}|{item.text}")
+        key = cache_key(store, self.signals, item.text)
         results = self.cache.get(key)
         failed: list[str] = []
 

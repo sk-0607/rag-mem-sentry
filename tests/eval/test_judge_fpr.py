@@ -1,4 +1,4 @@
-from eval.judge_fpr import hard_negative_items, summarize
+from eval.judge_fpr import hard_negative_items, read_verdict, summarize
 from gate.types import Item
 
 
@@ -68,3 +68,10 @@ def test_summarize_judge_labels():
         entry("quarantine", [("structural", 0.9, "pattern"), ("judge", 0.8, "quotes")]),
     ]
     assert summarize(log)["judge_labels"] == {"clean": 1, "quotes": 2}
+
+
+def test_read_verdict_tolerates_entries_without_stage():
+    old = {"item_id": "x", "store": "corpus", "action": "admit", "trust": 1.0, "reason": "r", "signals": []}
+    new = {**entry("quarantine"), "trust": 0.4, "reason": "r"}
+    assert read_verdict([old], "x", "corpus") is None
+    assert read_verdict([old, new], "x", "corpus")["action"] == "quarantine"

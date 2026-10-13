@@ -232,6 +232,17 @@ The "every signal failed → admit" row is a deliberate choice and is recorded a
 alternative, excluding content whenever the LLM is unreachable, turns a quota wall into a system
 that answers from nothing.
 
+**Note, 2026-10-13 (final branch review).** The first table row above is narrowed: an *unparseable*
+judge reply is no longer an outage. Text under review can ask the judge to "reply in prose", and
+treating that as a failure would let poisoned content switch S2 off for itself and its batch-mates.
+Now a batch whose reply cannot be parsed is re-scored one item at a time; an item whose own reply
+still cannot be parsed gets a fixed suspicion (`UNPARSEABLE_SUSPICION`, 0.6) with a "could not be
+parsed" reason, which quarantines (excluded at read time) in both stores and never hard-blocks.
+That result is a real signal result, so it is cached and the run is not `reduced_assurance`. Only
+transport failures (`chat()` raising) still degrade to S1 as the table says. The verdict cache key
+also now carries the judge's model and a hash of its rubric (`judge@<model>:<hash>`), so changing
+either misses the cache; S1's key is unchanged.
+
 ## 8. Testing
 
 TDD per task, one commit per task, RED verified before GREEN — the repo's convention.

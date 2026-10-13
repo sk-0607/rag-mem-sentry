@@ -15,6 +15,17 @@ def content_hash(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
+def cache_key(store: str, signals, text: str) -> str:
+    """Key = store | signal set | text. A signal exposing fingerprint(store)
+    (the judge: model + rubric hash) contributes `name@fingerprint`, so changing
+    either misses the cache; one without it keeps the plain `name`."""
+    names = sorted(
+        f"{s.name}@{s.fingerprint(store)}" if hasattr(s, "fingerprint") else s.name
+        for s in signals
+    )
+    return content_hash(f"{store}|{','.join(names)}|{text}")
+
+
 class VerdictCache:
     """Append-only JSONL cache of signal results, keyed by content hash.
 

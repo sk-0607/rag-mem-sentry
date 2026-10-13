@@ -1,5 +1,7 @@
+import hashlib
 import json
 import re
+from html import escape
 
 from gate.types import GateContext, Item, SignalResult
 
@@ -67,12 +69,21 @@ def _system_prompt(store: str, labels: tuple[str, ...]) -> str:
 def _user_prompt(items: list[Item]) -> str:
     # Batch-local ids (i0, i1, ...) in input order — the model never sees
     # Item.id, which keeps the prompt short and the mapping unambiguous.
-    return "\n".join(f'<item id="i{idx}">{item.text}</item>' for idx, item in enumerate(items))
+    # Escaped so a chunk cannot close its own element and open a forged one.
+    return "\n".join(f'<item id="i{idx}">{escape(item.text, quote=False)}</item>' for idx, item in enumerate(items))
 
 
 class JudgeResponseError(ValueError):
     """Raised when the model's response violates the batch contract."""
 
+
+# Score for an item whose judge reply cannot be parsed even when asked alone.
+# Poisoned text can ask the judge to "reply in prose"; treating that as an outage
+# would let the text switch S2 off for itself. 0.6 gives trust 0.4 alone, which
+# lands in the quarantine band of both stores (corpus block<0.10 / quarantine<0.60,
+# experience block<0.20 / quarantine<0.70) and sits under the judge hard
+# threshold (0.90), so it never blocks irreversibly.
+UNPARSEABLE_SUSPICION = 0.6
 
 _FENCE = re.compile(r"^```(?:json)?\s*(.*?)\s*```$", re.DOTALL)
 
@@ -148,16 +159,21 @@ class JudgeSignal:
         self._chat = chat
         self._model = model
 
-    def score_batch(self, items: list[Item], ctx: GateContext) -> list[SignalResult | None]:
-        if not items:
-            return []
+    def _resolve_model(self) -> str:
+        if self._model is not None:
+            return self._model
+        from app import config
+        return config.JUDGE_MODEL
 
-        labels = _LABELS_BY_STORE.get(ctx.store)
-        if labels is None:
-            return [None] * len(items)
+    def fingerprint(self, store: str) -> str:
+        # Part of the verdict cache key: a changed model or rubric is a
+        # different judge, and must not reuse verdicts the old one cached.
+        rubric = _RUBRIC_BY_STORE.get(store, "")
+        return f"{self._resolve_model()}:{hashlib.sha256(rubric.encode('utf-8')).hexdigest()[:8]}"
 
+    def _judge(self, items: list[Item], store: str, labels: tuple[str, ...]) -> list[SignalResult]:
         messages = [
-            {"role": "system", "content": _system_prompt(ctx.store, labels)},
+            {"role": "system", "content": _system_prompt(store, labels)},
             {"role": "user", "content": _user_prompt(items)},
         ]
 
@@ -170,13 +186,30 @@ class JudgeSignal:
             import app.llm
             chat = app.llm.chat
 
-        model = self._model
-        if model is None:
-            from app import config
-            model = config.JUDGE_MODEL
-
-        raw = chat(messages, model=model)
+        # Transport errors from chat() propagate on purpose: those are outages
+        # and degrade to S1. Only an unparseable reply is handled by the caller.
+        raw = chat(messages, model=self._resolve_model())
         return _parse_response(raw, items, labels)
+
+    def score_batch(self, items: list[Item], ctx: GateContext) -> list[SignalResult | None]:
+        if not items:
+            return []
+
+        labels = _LABELS_BY_STORE.get(ctx.store)
+        if labels is None:
+            return [None] * len(items)
+
+        try:
+            return self._judge(items, ctx.store, labels)
+        except JudgeResponseError as e:
+            if len(items) > 1:
+                # One bad reply must not fail its batch-mates: re-ask per item.
+                return [self.score_batch([item], ctx)[0] for item in items]
+            return [SignalResult(
+                signal="judge",
+                score=UNPARSEABLE_SUSPICION,
+                reason=f"judge reply could not be parsed: {e}",
+            )]
 
     def score(self, item: Item, ctx: GateContext) -> SignalResult | None:
         return self.score_batch([item], ctx)[0]

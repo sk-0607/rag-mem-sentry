@@ -7,6 +7,7 @@ from gate.policy import DEFAULT_POLICY, GatePolicy, StoreThresholds
 from gate.quarantine import Quarantine
 from gate.read import ReadGate, ReadResult, default_read_gate
 from gate.screen import WriteGate
+from gate.signals.judge import JudgeSignal
 from gate.signals.structural import StructuralSignal
 from gate.types import Action, Item, SignalResult
 
@@ -210,3 +211,75 @@ def test_default_read_gate_wiring(tmp_path):
 
     gate.screen_batch([Item(id="a", text=CLEAN, kind="corpus")], "corpus")
     assert fake.calls == 1
+
+
+class ProseChat:
+    """A judge model that has been told to reply in prose."""
+
+    def __init__(self):
+        self.calls = 0
+
+    def __call__(self, messages, model=None):
+        self.calls += 1
+        return "no JSON for you"
+
+
+@pytest.mark.parametrize("store", ["corpus", "experience"])
+def test_unparseable_judge_reply_quarantines_without_reduced_assurance(tmp_path, store):
+    # S1 abstains (no hit): the quarantine must come from the judge result alone.
+    gate = build(tmp_path, [StructuralSignal(), JudgeSignal(chat=ProseChat(), model="m")])
+    result = gate.screen_batch([Item(id="a", text=CLEAN, kind=store)], store)
+    verdict = result.verdicts[0]
+    assert verdict.action is Action.QUARANTINE
+    assert "could not be parsed" in verdict.score.results[0].reason
+    assert result.reduced_assurance is False
+
+
+def test_chat_outage_still_degrades_to_s1(tmp_path):
+    def down(messages, model=None):
+        raise RuntimeError("rate limited")
+
+    gate = build(tmp_path, [StructuralSignal(), JudgeSignal(chat=down, model="m")])
+    result = gate.screen_batch([Item(id="a", text=CLEAN, kind="corpus")], "corpus")
+    assert result.reduced_assurance is True
+    assert result.verdicts[0].action is Action.ADMIT
+
+
+def _judge_gate(tmp_path, model, chat):
+    return build(tmp_path, [StructuralSignal(), JudgeSignal(chat=chat, model=model)], cache_name="c.jsonl")
+
+
+class CleanChat:
+    def __init__(self):
+        self.calls = 0
+
+    def __call__(self, messages, model=None):
+        self.calls += 1
+        return '[{"id": "i0", "suspicion": 0.0, "label": "clean", "evidence_span": null}]'
+
+
+def test_judge_model_change_is_a_cache_miss(tmp_path):
+    chat = CleanChat()
+    items = [Item(id="a", text=CLEAN, kind="corpus")]
+    _judge_gate(tmp_path, "A", chat).screen_batch(items, "corpus")
+    _judge_gate(tmp_path, "A", chat).screen_batch(items, "corpus")
+    assert chat.calls == 1  # unchanged judge: hit
+    _judge_gate(tmp_path, "B", chat).screen_batch(items, "corpus")
+    assert chat.calls == 2  # new model: miss
+
+
+def test_judge_rubric_change_is_a_cache_miss(tmp_path, monkeypatch):
+    import gate.signals.judge as judge_mod
+
+    chat = CleanChat()
+    items = [Item(id="a", text=CLEAN, kind="corpus")]
+    _judge_gate(tmp_path, "A", chat).screen_batch(items, "corpus")
+    monkeypatch.setitem(judge_mod._RUBRIC_BY_STORE, "corpus", "a different rubric")
+    _judge_gate(tmp_path, "A", chat).screen_batch(items, "corpus")
+    assert chat.calls == 2
+
+
+def test_s1_only_cache_key_format_is_unchanged():
+    from gate.cache import cache_key, content_hash
+
+    assert cache_key("corpus", [StructuralSignal()], "t") == content_hash("corpus|structural|t")

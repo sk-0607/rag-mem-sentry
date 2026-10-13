@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from gate.audit import AuditLog
-from gate.cache import VerdictCache, content_hash
+from gate.cache import VerdictCache, cache_key
 from gate.policy import DEFAULT_POLICY, GatePolicy
 from gate.score import aggregate
 from gate.signals.base import Signal, run_signals_batch
@@ -45,12 +45,11 @@ class ReadGate:
             return ReadResult([], False)
 
         # Same cache-key scheme as WriteGate: store + active signal set + text.
-        signal_names = ",".join(sorted(s.name for s in self.signals))
         verdicts: list[Verdict | None] = [None] * len(items)
         misses: list[tuple[int, Item, str]] = []
 
         for idx, item in enumerate(items):
-            key = content_hash(f"{store}|{signal_names}|{item.text}")
+            key = cache_key(store, self.signals, item.text)
             results = self.cache.get(key)
             if results is None:
                 misses.append((idx, item, key))

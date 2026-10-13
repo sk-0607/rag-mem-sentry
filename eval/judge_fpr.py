@@ -44,7 +44,7 @@ def read_verdict(entries: list[dict], item_id: str, store: str) -> dict | None:
     "reduced assurance: <signal> unavailable" when a signal failed, which is the
     only trace that an admit was reached without every signal having run."""
     match = [e for e in entries
-             if e["item_id"] == item_id and e["store"] == store and e["stage"] == "read"]
+             if e["item_id"] == item_id and e["store"] == store and e.get("stage", "write") == "read"]
     if not match:
         return None
     return {k: match[-1][k] for k in ("action", "trust", "reason", "signals")}
