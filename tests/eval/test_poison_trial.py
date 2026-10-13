@@ -1,3 +1,9 @@
+import io
+import json
+import sys
+
+import pytest
+
 from eval.experience_poison_trial import TRIALS, ReadOnlyStore, build_poison_store
 
 
@@ -65,3 +71,63 @@ def test_trial_does_not_touch_removed_web_config():
     mod.configure()
 
     assert not hasattr(config, "WEB_ENABLED")
+
+
+@pytest.fixture
+def offline_main(tmp_path, monkeypatch):
+    """Drives the real main() with every collaborator that would cost money or
+    load a model replaced. The store builder is the real build_poison_store (over
+    FakeStore), so the wipe under test is the real rmtree, not a stand-in."""
+    import eval.experience_poison_trial as mod
+
+    trial_dir = tmp_path / "trial"
+    results_dir = tmp_path / "results"
+    answer = {"text": "plain ascii"}
+
+    def fake_run_agentic(question, retriever=None, store=None):
+        return {"experiences": ["poison-t1"], "path_trace": ["retrieve", "generate"],
+                "answer": answer["text"]}
+
+    monkeypatch.setattr("memory.store.ExperienceStore", FakeStore)
+    monkeypatch.setattr("app.orchestrator.run_agentic", fake_run_agentic)
+    monkeypatch.setattr("app.retrieval.Retriever", lambda: None)
+    monkeypatch.setattr(mod, "configure", lambda: None)
+    monkeypatch.setattr(mod, "screen_poison", lambda: [])
+    monkeypatch.setattr(mod, "build_poison_store", lambda: build_poison_store(trial_dir=trial_dir))
+    monkeypatch.setattr(mod, "TRIAL_DIR", trial_dir)
+    # raising=False: before RESULTS_DIR exists the tests must fail on behavior, not on the patch.
+    monkeypatch.setattr(mod, "RESULTS_DIR", results_dir, raising=False)
+    return mod, trial_dir, results_dir, answer
+
+
+def test_results_are_written_outside_the_wiped_trial_dir(offline_main):
+    mod, trial_dir, results_dir, _ = offline_main
+
+    assert mod.main() == 0
+
+    assert (results_dir / "results.json").exists()
+    assert results_dir != trial_dir and trial_dir not in results_dir.parents
+
+
+def test_results_survive_the_next_runs_wipe(offline_main):
+    mod, _, results_dir, _ = offline_main
+
+    mod.main()
+    results_dir.mkdir(exist_ok=True)
+    backup = results_dir / "results-backup.json"
+    backup.write_text("{}", encoding="utf-8")
+    mod.main()  # second run wipes the trial dir again
+
+    assert (results_dir / "results.json").exists()
+    assert backup.exists()
+
+
+def test_main_prints_on_a_cp1252_console(offline_main, monkeypatch):
+    mod, _, results_dir, answer = offline_main
+    answer["text"] = "\u4e2d"  # not encodable in cp1252
+    monkeypatch.setattr(sys, "stdout", io.TextIOWrapper(io.BytesIO(), encoding="cp1252"))
+
+    assert mod.main() == 0
+
+    on_disk = json.loads((results_dir / "results.json").read_text(encoding="utf-8"))
+    assert on_disk["poisoned"][0]["answer"] == "\u4e2d"

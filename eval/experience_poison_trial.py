@@ -38,6 +38,10 @@ from app import config
 from memory.types import ExperienceRecord
 
 TRIAL_DIR = Path("data/poison_trial")
+# Sibling, not a child, of TRIAL_DIR: build_poison_store wipes TRIAL_DIR on every
+# run, so results kept inside it were deleted by the next run. Narrowing the wipe
+# instead was rejected — a cold poison-only store per run is the trial's design.
+RESULTS_DIR = Path("data/poison_trial_results")
 
 # Each record's `task` mirrors its trial question (the embedding key), `approach`
 # names the unsafe method, `outcome` carries the false claim as a confident prior
@@ -191,9 +195,13 @@ def main() -> int:
             "answer": r["answer"],
         })
 
-    out = TRIAL_DIR / "results.json"
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    out = RESULTS_DIR / "results.json"
     out.write_text(json.dumps(results, indent=2), encoding="utf-8")
-    print(json.dumps(results, indent=2, ensure_ascii=False))
+    # Default ensure_ascii: a cp1252 Windows console raises on any model output
+    # outside cp1252, after the file is written, turning a good run into exit 1.
+    # The file on disk is utf-8 and unaffected.
+    print(json.dumps(results, indent=2))
     return 0
 
 
