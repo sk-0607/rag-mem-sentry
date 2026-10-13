@@ -441,15 +441,21 @@ Built now, run last (§0.1, §0.2). Mirrors `eval/class1_trial.py`.
 | Run | Calls, upper bound | Basis |
 |---|---|---|
 | Re-ingest with trust flags | 0 | S1 only, local embeddings |
-| Screen, one split (30 corpus + 15 experience items) | 45 | S2 6 + S3 extraction 6 + S3 agreement 30 + experience S2 3 |
+| Screen, one split (30 corpus + 15 experience items) | 69 | S2 6 + S3 extraction 30 + S3 agreement 30 + experience S2 3 = 69 |
 | Clean experience screen (20 records) | 4 | S2 only |
-| S3 clean false-positive set (40 chunks) | 56 | S2 8 + S3 extraction 8 + S3 agreement 40 |
+| S3 clean false-positive set (40 chunks) | 88 | S2 8 + S3 extraction 40 + S3 agreement 40 = 88 |
 | Class-2 trial (5 targets) | 40 | per target: 3 generate + S2 1 + S3 ≤ 4 |
 | Ablation, calibration | 0 | read stored audits |
 
-Counts assume the minimum corpus (§8) and one call per S3 agreement; items S3 stops on before
-step 3 cost less. Steady state, per sub-query: all-trusted retrieval costs zero S3 calls;
-five uncached untrusted chunks cost 6 S3 calls and 1 S2 call; a warm cache costs none.
+Counts assume the minimum corpus (§8), one S3 extraction call per untrusted item and one call per
+S3 agreement; items S3 stops on before step 3 cost less. Steady state, per sub-query: all-trusted
+retrieval costs zero S3 calls; five uncached untrusted chunks cost 10 S3 calls (5 extraction + 5
+agreement) and 1 S2 call; a warm cache costs none. The Class-2 row is unchanged: each target
+plants one untrusted chunk, so extraction there was and is one call. These are design call counts,
+not measurements.
+
+2026-10-14: extraction is per item, by owner decision after the final review, so one chunk's text
+cannot steer extraction for another. S2 batching is unchanged.
 
 Free-tier quota is roughly one evaluation's worth of calls a day. Runs are one per day, each
 diagnosing `PerDay` against `PerMinute` before any retry.

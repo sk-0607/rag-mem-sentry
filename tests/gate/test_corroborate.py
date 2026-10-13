@@ -42,12 +42,6 @@ def sig(fake, **kw):
     return CorroborationSignal(None, chat=fake, **kw)
 
 
-def test_one_extraction_call_per_batch():
-    fake = FakeChat(reply([], [], []))
-    sig(fake).extract_claims(items(3))
-    assert len(fake.calls) == 1
-
-
 def test_claims_align_with_input_order():
     raw = json.dumps([
         {"id": "i1", "claims": [claim("second")]},
@@ -240,11 +234,22 @@ def test_empty_items_returns_empty():
 
 def test_one_extraction_call_then_one_agreement_call_per_item():
     fake = FakeChat(
-        reply([claim("c0")], [claim("c1")], [claim("c2")]),
+        reply([claim("c0")]), reply([claim("c1")]), reply([claim("c2")]),
         agree(verdict("k0", "supported")), agree(verdict("k0", "supported")), agree(verdict("k0", "supported")),
     )
     s3(fake).score_batch(items(3), CTX)
-    assert len(fake.calls) == 4
+    assert len(fake.calls) == 6
+
+
+def test_each_extraction_prompt_holds_exactly_one_items_text():
+    # One chunk's text must not be able to steer extraction for another.
+    its = [Item(id=f"m{i}", text=f"MARKER-{i}-END", kind="corpus") for i in range(3)]
+    fake = FakeChat(*[reply([]) for _ in its])
+    s3(fake).score_batch(its, CTX)
+    assert len(fake.calls) == 3
+    for call in fake.calls:
+        user = call[0][1]["content"]
+        assert sum(f"MARKER-{i}-END" in user for i in range(3)) == 1
 
 
 def test_mixed_batch_results_align_with_input_order():
@@ -404,19 +409,18 @@ def test_transport_failure_in_agreement_propagates():
         s3(Second(reply([claim("c0")]))).score_batch(items(1), CTX)
 
 
-def test_unparseable_extraction_is_retried_per_item():
+def test_unparseable_extraction_does_not_affect_other_items():
     fake = FakeChat(
-        "not json",
-        reply([claim("c0")]), reply([claim("c1")]),
-        agree(verdict("k0", "contradicted", 0.5)), agree(verdict("k0", "supported")),
+        "not json", reply([claim("c1")]),
+        agree(verdict("k0", "supported")),
     )
     out = s3(fake).score_batch(items(2), CTX)
-    assert [r.reason for r in out] == ["contradicted", "supported"]
-    assert len(fake.calls) == 5
+    assert out[0].score == UNPARSEABLE_SUSPICION and out[1].reason == "supported"
+    assert len(fake.calls) == 3
 
 
 def test_item_still_unparseable_scores_unparseable_suspicion():
-    fake = FakeChat("not json", "still not json", reply([claim("c1")]), agree(verdict("k0", "supported")))
+    fake = FakeChat("not json", reply([claim("c1")]), agree(verdict("k0", "supported")))
     out = s3(fake).score_batch(items(2), CTX)
     assert out[0].score == UNPARSEABLE_SUSPICION and "could not be parsed" in out[0].reason
     assert out[1].reason == "supported"

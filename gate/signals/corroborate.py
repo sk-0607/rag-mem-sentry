@@ -214,14 +214,11 @@ class CorroborationSignal:
         # chat() raising is an outage and propagates; only a bad reply is parsed out.
         return _parse_agreement(chat(messages, model=self._model_name()), len(claims))
 
-    def _extract_per_item(self, items: list[Item]) -> list[list[Claim] | None]:
+    def _extract_one(self, item: Item) -> list[Claim] | None:
         try:
-            return self.extract_claims(items)
+            return self.extract_claims([item])[0]
         except CorroborationResponseError:
-            if len(items) > 1:
-                # One bad reply must not fail its batch-mates: re-ask per item.
-                return [self._extract_per_item([it])[0] for it in items]
-            return [None]
+            return None
 
     def _score_item(self, item: Item, claims: list[Claim] | None) -> SignalResult:
         from app import config
@@ -268,8 +265,11 @@ class CorroborationSignal:
         if not todo:
             return results
 
-        # Transport errors propagate on purpose, same split as judge.py.
-        claims = self._extract_per_item([items[i] for i in todo])
+        # One extraction call per item, not per batch: text in a shared prompt
+        # lets one chunk steer extraction for its neighbour, and the result is
+        # cached as a content-only verdict. Transport errors propagate on
+        # purpose, same split as judge.py.
+        claims = [self._extract_one(items[i]) for i in todo]
         for idx, c in zip(todo, claims):
             results[idx] = self._score_item(items[idx], c)
         return results
