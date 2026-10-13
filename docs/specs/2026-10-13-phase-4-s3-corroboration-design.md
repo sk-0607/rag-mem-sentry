@@ -455,7 +455,9 @@ plants one untrusted chunk, so extraction there was and is one call. These are d
 not measurements.
 
 2026-10-14: extraction is per item, by owner decision after the final review, so one chunk's text
-cannot steer extraction for another. S2 batching is unchanged.
+cannot steer extraction for another. S2 batching is unchanged. An unparseable extraction reply
+costs one extra call for that item (one re-ask, then 0.6); the counts above are upper bounds that
+assume parseable replies.
 
 Free-tier quota is roughly one evaluation's worth of calls a day. Runs are one per day, each
 diagnosing `PerDay` against `PerMinute` before any retry.

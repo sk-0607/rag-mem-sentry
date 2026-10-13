@@ -409,21 +409,52 @@ def test_transport_failure_in_agreement_propagates():
         s3(Second(reply([claim("c0")]))).score_batch(items(1), CTX)
 
 
-def test_unparseable_extraction_does_not_affect_other_items():
-    fake = FakeChat(
-        "not json", reply([claim("c1")]),
-        agree(verdict("k0", "supported")),
-    )
-    out = s3(fake).score_batch(items(2), CTX)
-    assert out[0].score == UNPARSEABLE_SUSPICION and out[1].reason == "supported"
+def test_bad_then_good_extraction_reply_uses_the_retry():
+    fake = FakeChat("not json", reply([claim("c0")]), agree(verdict("k0", "contradicted", 0.5)))
+    out = s3(fake).score_batch(items(1), CTX)
+    assert (out[0].reason, out[0].score) == ("contradicted", 0.5)
     assert len(fake.calls) == 3
 
 
+def test_retry_prompt_holds_only_that_items_text():
+    its = [Item(id=f"m{i}", text=f"MARKER-{i}-END", kind="corpus") for i in range(2)]
+    fake = FakeChat("not json", reply([]), reply([]))
+    s3(fake).score_batch(its, CTX)
+    assert len(fake.calls) == 3
+    users = [c[0][1]["content"] for c in fake.calls]
+    assert "MARKER-0-END" in users[0] and "MARKER-0-END" in users[1]
+    assert all("MARKER-1-END" not in u for u in users[:2])
+    assert "MARKER-0-END" not in users[2] and "MARKER-1-END" in users[2]
+
+
+def test_unparseable_extraction_does_not_affect_other_items():
+    fake = FakeChat(
+        "not json", reply([claim("c0")]),
+        reply([claim("c1")]),
+        agree(verdict("k0", "contradicted", 0.5)), agree(verdict("k0", "supported")),
+    )
+    out = s3(fake).score_batch(items(2), CTX)
+    assert [r.reason for r in out] == ["contradicted", "supported"]
+    assert len(fake.calls) == 5
+
+
 def test_item_still_unparseable_scores_unparseable_suspicion():
-    fake = FakeChat("not json", reply([claim("c1")]), agree(verdict("k0", "supported")))
+    fake = FakeChat("not json", "still not json", reply([claim("c1")]), agree(verdict("k0", "supported")))
     out = s3(fake).score_batch(items(2), CTX)
     assert out[0].score == UNPARSEABLE_SUSPICION and "could not be parsed" in out[0].reason
     assert out[1].reason == "supported"
+    assert len(fake.calls) == 4
+
+
+def test_transport_failure_on_extraction_retry_propagates():
+    class Second(FakeChat):
+        def __call__(self, messages, model=None, **kw):
+            if self.calls:
+                raise RuntimeError("down")
+            return super().__call__(messages, model)
+
+    with pytest.raises(RuntimeError):
+        s3(Second("not json")).score_batch(items(1), CTX)
 
 
 def fp(ref_fp="ref-1", **kw):

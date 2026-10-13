@@ -215,10 +215,14 @@ class CorroborationSignal:
         return _parse_agreement(chat(messages, model=self._model_name()), len(claims))
 
     def _extract_one(self, item: Item) -> list[Claim] | None:
-        try:
-            return self.extract_claims([item])[0]
-        except CorroborationResponseError:
-            return None
+        # One re-ask, still single-item: a transient format glitch must not
+        # become a cached quarantine verdict. A second bad reply is real.
+        for attempt in range(2):
+            try:
+                return self.extract_claims([item])[0]
+            except CorroborationResponseError:
+                if attempt == 1:
+                    return None
 
     def _score_item(self, item: Item, claims: list[Claim] | None) -> SignalResult:
         from app import config
