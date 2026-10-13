@@ -26,6 +26,12 @@ def download_pdf_text(arxiv_id):
     return "\n".join(page.extract_text() or "" for page in reader.pages)
 
 
+def source_trusted(entry):
+    # `is True`, not truthiness: "false" or 1 in a hand-edited manifest must not
+    # silently grant trust.
+    return entry.get("trusted") is True
+
+
 def index_chunks(chunks, embedder, client):
     col = client.get_or_create_collection(config.COLLECTION)
     embeddings = embedder.encode([c["text"] for c in chunks]).tolist()
@@ -34,7 +40,7 @@ def index_chunks(chunks, embedder, client):
         embeddings=embeddings,
         documents=[c["text"] for c in chunks],
         metadatas=[{"paper_id": c["paper_id"], "title": c["title"],
-                    "chunk_index": c["chunk_index"]} for c in chunks],
+                    "chunk_index": c["chunk_index"], "trusted": c["trusted"]} for c in chunks],
     )
     return len(chunks)
 
@@ -60,6 +66,11 @@ def main():
         try:
             text = download_pdf_text(p["arxiv_id"])
             chunks = chunk_text(text, p["arxiv_id"], p["title"])
+            # Assigned after chunking and from the manifest only, so nothing a
+            # chunk arrives with (or says) can claim trust.
+            trusted = source_trusted(p)
+            for chunk in chunks:
+                chunk["trusted"] = trusted
 
             admitted_chunks = []
             for chunk in chunks:
