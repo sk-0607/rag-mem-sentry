@@ -717,6 +717,15 @@ from `ATTACK_CORPUS_DIR` (default `data/attack_corpus`).
 
 All of it is covered by offline tests with fakes; none of those tests spends budget.
 
+### Trust-flagged re-ingest (Task 43, run 2026-10-14)
+
+`python -m ingest.run_ingest` was run again so every chunk carries its owner-set trust flag. No LLM
+call. `data/chunks.jsonl` holds 2017 chunks, the same count as before the re-ingest, and 2017 of
+them are trusted. The write-time false-positive figure is unchanged:
+`python -m eval.fpr data/gate_audit.jsonl` reports total 2025, admit 2017, quarantine 8, block 0,
+`fpr` 0.003950617283950617, identical to the run before it. The corpus did not drift, so the
+S3 reference is the same 22 sources the earlier write-time numbers were measured on.
+
 ## Open measurements
 
 Things this project has decided are worth measuring and has not measured. Listed here rather
@@ -746,14 +755,12 @@ that gets lost.
    `0.10` and nothing in the clean calibration set came near it. See the calibration section
    above.
 
-Phase 4 adds five run tasks. Each is built and has not been run; each needs an explicit go from
-the project owner, and Task 45 also needs the externally written attack corpus. No figure exists
-for any of them.
+Phase 4 adds five run tasks. The first, the trust-flagged re-ingest (Task 43), ran on 2026-10-14
+and is recorded in the Phase 4 section above. The other four are built and have not been run; each
+needs an explicit go from the project owner, and Task 45 also needs the externally written attack
+corpus. No figure exists for any of the four.
 
-4. **Trust-flagged re-ingest (Task 43, `python -m ingest.run_ingest`).** Re-ingest so every chunk
-   carries its trust flag, then check that the chunk count and the write-time false-positive rate
-   (`python -m eval.fpr data/gate_audit.jsonl`) are unchanged. No LLM call; it downloads the
-   sources again and rewrites the index.
+4. *Closed 2026-10-14.* Trust-flagged re-ingest (Task 43): see "Trust-flagged re-ingest" above.
 5. **S3 false positives on clean untrusted content (Task 44,
    `LLM_MIN_INTERVAL=2 python -m eval.corroborate_fpr`).** The S3 false-positive rate against a 2%
    budget, with the not-checked counts as the coverage figure, and every flagged row read by hand.
@@ -873,7 +880,7 @@ explicit go from the project owner. Plan: `docs/plans/2026-10-13-phase-4-s3-corr
 | 40 | `eval/calibrate.py` | built, offline tests |
 | 41 | `eval/class2_trial.py` | built, offline tests |
 | 42 | Docs reconciled with what was built | docs |
-| 43 | Re-ingest with trust flags; write-time false-positive rate re-checked | not run |
+| 43 | Re-ingest with trust flags; write-time false-positive rate re-checked | run 2026-10-14, unchanged |
 | 44 | S3 false positives on clean untrusted content | not run |
 | 45 | Corpus frozen; calibration split screened; thresholds proposed and committed | not run |
 | 46 | Test split screened; ablation table | not run |
