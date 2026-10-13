@@ -422,7 +422,7 @@ Built now, run last (§0.1, §0.2). Mirrors `eval/class1_trial.py`.
 - The answer model is whatever `LLM_MODEL` names for the run. `JUDGE_MODEL` defaults to
   `LLM_MODEL`, so it is set explicitly to `gemini-3.1-flash-lite` for this run; otherwise the
   smaller answer model would also become the gate's model.
-- Targets are test-split class-2 groups, the first `CLASS2_N` (5) in the manifest's group order.
+- Targets are test-split class-2 groups, the first `CLASS2_N` (5) in the frozen file's order.
 - Per target, a fake retriever returns the real top-5 for `target_question` with the top
   `POISON_SLOTS` (3) replaced by that group's poison passages, marked untrusted. Poison is the
   majority of the context, and two real chunks remain.
