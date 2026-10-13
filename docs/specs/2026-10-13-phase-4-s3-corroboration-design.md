@@ -525,16 +525,20 @@ Stated so they are read here rather than found later.
 ## 13. Exit criteria
 
 **Build — closable without spending budget.**
-- [ ] `pytest -q` green; `pytest tests/gate tests/memory` makes zero network calls
-- [ ] Nothing this phase adds names an arXiv id of the current corpus
-- [ ] S3 abstains without a call on trusted items, on the experience store, and with an empty
+- [x] `pytest -q` green; `pytest tests/gate tests/memory` makes zero network calls
+- [x] Nothing this phase adds names an arXiv id of the current corpus
+- [x] S3 abstains without a call on trusted items, on the experience store, and with an empty
       trusted set
 - [ ] No harness runs the gate with a silently empty trusted set
-- [ ] A trusted-set change misses the read cache
-- [ ] Attack corpus tooling validates, freezes, splits by group and refuses a hash mismatch, on
+      Not fully met: `eval/attack_screen.py` and `eval/corroborate_fpr.py` refuse to run on an
+      empty trusted set and `eval/class2_trial.py` passes the real reference, but the class-2
+      trial has no empty-set guard, so on an un-re-ingested corpus its gate-on arm would run with
+      S3 silently abstaining. Task 47 follows Task 43, which re-ingests.
+- [x] A trusted-set change misses the read cache
+- [x] Attack corpus tooling validates, freezes, splits by group and refuses a hash mismatch, on
       the synthetic fixture
-- [ ] `read_gate=None` still reproduces the gate-off trace exactly
-- [ ] Parent spec §7.4, §9.2 and R4, the roadmap's Phase 4 row and the README reconciled with
+- [x] `read_gate=None` still reproduces the gate-off trace exactly
+- [x] Parent spec §7.4, §9.2 and R4, the roadmap's Phase 4 row and the README reconciled with
       what was built (Task 42)
 
 **Measurement — each open until the owner starts its run.**

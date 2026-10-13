@@ -193,6 +193,12 @@ candidate, raises the signal.
 
 Read-time only. Meaningless without sibling context.
 
+*Note, 2026-10-13:* as built, S3 checks an untrusted chunk's claims against owner-trusted chunks
+only. Sibling comparison was dropped because it would make the result depend on which chunks were
+co-retrieved, which breaks the content-keyed cache. Trusted chunks and the experience store
+abstain. See the Phase 4 spec (`docs/specs/2026-10-13-phase-4-s3-corroboration-design.md`) §0 and
+§4.
+
 ### 7.5 Aggregation
 
 **Not a weighted sum.** Weighted averaging dilutes a confident detection — one screaming
@@ -265,6 +271,11 @@ This table decides whether the multi-signal design is justified. If S2 alone cat
 that is reported as a negative result and S3 is cut. **Run at week 9**, while there is still time
 to react.
 
+*Note, 2026-10-13:* as built, the ablation is computed at detection level (items caught out of
+items scored), recomputed offline from one screen's stored per-signal scores. It has a fifth row,
+S1 + S2, so S3's contribution is the difference between the last two rows. It is report-only: S3
+is not cut whatever it shows. See the Phase 4 spec §9.2.
+
 **9.3 Clean-task regression.** RAGAS faithfulness / answer relevancy / context precision on the
 clean question set, gate off vs on, using the host's existing harness unchanged. A gate that
 costs significant faithfulness is not shippable regardless of its detection rate.
@@ -326,6 +337,10 @@ Week 12 is the only slack in the schedule.
 poisoning works on the ungated system before week 6–7 defends it. A defense against an attack
 that was never demonstrated is unfalsifiable.
 
+*Note, 2026-10-13:* this rule was overridden for class 2 (factual poisoning). S3 is built before
+class 2 has been run against the ungated host, and the ungated measurement is taken last. This is
+the second override of the rule; the first is Phase 3 spec §0. See the Phase 4 spec §0.
+
 **Testing.** TDD per component, matching the host repo's existing discipline. Each signal is unit
 tested in isolation with synthetic poison and synthetic clean input. The gate's integration into
 the graph is tested against recorded retrieval traces. The evaluation harness is not a test — it
@@ -365,6 +380,9 @@ headline on classes 2 and 3, which alignment does not catch; and state the model
 **R4 — S2 may dominate the ablation**, falsifying the multi-signal premise. Measured week 9. S3
 is cut and the negative result is reported. A negative result measured on purpose reads as rigor;
 the same result discovered in week 12 reads as failure.
+
+*Note, 2026-10-13:* this is no longer an exit. S3 ships in the default read gate whatever the
+ablation shows; if S3 adds nothing, the write-up says so. See the Phase 4 spec §0.4 and §14.
 
 **R5 — S2's quote-vs-instruct distinction may not hold.** The corpus rubric asks the judge to
 separate content that *instructs* the model from content that *quotes* an instruction. If the

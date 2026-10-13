@@ -1763,19 +1763,36 @@ Tasks 29 and 30 are harness only. **Decided 2026-10-13 by the project owner: no 
 
 **Gate check (week 7), as it stands:** R5 was measured (README, "Phase 3: R5") and the S2 fallback was not triggered. Class 1 and 3 detection by the read gate and the RAGAS faithfulness delta are not measured.
 
-### Phase 4 — S3 corroboration and ablation (weeks 8–9)
+### Phase 4 — S3 corroboration and ablation (weeks 8–9) — **built; measurement runs not run**
 
-| Task | Deliverable |
-|---|---|
-| 23 | `gate/signals/corroborate.py` — claim extraction from a candidate |
-| 24 | `gate/signals/corroborate.py` — agreement check against siblings + trusted reference subset |
-| 25 | Attack corpus frozen and split into calibration / test |
-| 26 | Full ablation run — each signal against each class |
-| 27 | Threshold recalibration on the calibration split, all three signals |
+The table originally here (Tasks 23–27) is superseded; those numbers collided with Phase 3's. The plan is `docs/plans/2026-10-13-phase-4-s3-corroboration.md` and the design is `docs/specs/2026-10-13-phase-4-s3-corroboration-design.md`. The owner decisions it rests on, including the departures from this roadmap, are in that spec's §0.
 
-**Gate check (week 9) — decision point.** If S2 alone catches everything, cut S3, report the negative result, and reclaim weeks 9–10 as buffer. This is a planned outcome, not a failure.
+| Task | Deliverable | Status |
+|---|---|---|
+| 32 | Trust marking: manifest `trusted`, ingest stamps chunks, legacy chunks read as untrusted | built, offline tests |
+| 33 | `gate/reference.py` — `ReferenceIndex`, `default_reference` | built, offline tests |
+| 34 | `gate/signals/corroborate.py` — claim extraction | built, offline tests |
+| 35 | `gate/signals/corroborate.py` — applicability, reference lookup, agreement, score, fingerprint | built, offline tests |
+| 36 | Wiring: gate node passes the trust flag, `default_read_gate` runs S3, `corroborate` placeholder threshold | built, offline tests |
+| 37 | `eval/attack_corpus.py` — validate, freeze, split, hash-checked loader | built, offline tests |
+| 38 | `eval/attack_screen.py` and `eval/ablation.py` | built, offline tests |
+| 39 | `eval/corroborate_fpr.py` | built, offline tests |
+| 40 | `eval/calibrate.py` | built, offline tests |
+| 41 | `eval/class2_trial.py` | built, offline tests |
+| 42 | Docs reconciled with what was built | docs |
+| 43 | Re-ingest with trust flags; write-time false-positive rate re-checked | not run |
+| 44 | S3 false positives on clean untrusted content, hand-read | not run |
+| 45 | Corpus frozen; calibration split screened; thresholds proposed and committed | not run |
+| 46 | Test split screened; ablation table | not run |
+| 47 | Class-2 trial, control / gate off / gate on, smaller answer model | not run |
+
+Tasks 43–47 each wait for an explicit go from the project owner; 45 also waits for the externally written attack corpus.
+
+**Gate check (week 9), as it stands:** the planned "cut S3 if S2 alone catches everything" exit was dropped on 2026-10-13. S3 ships in the default read gate whatever the ablation shows, and the ablation is reported either way. The ablation is not run yet.
 
 ### Phase 5 — Adaptive round (week 10)
+
+The task numbers below are stale: Phase 4 now uses Tasks 32–47. They will be renumbered when this phase is planned.
 
 | Task | Deliverable |
 |---|---|
@@ -1786,6 +1803,8 @@ Tasks 29 and 30 are harness only. **Decided 2026-10-13 by the project owner: no 
 No gate changes during week 10. A defense patched mid-round produces a number that means nothing.
 
 ### Phase 6 — Demo and report (weeks 11–12)
+
+The task numbers below are stale for the same reason. They will be renumbered when this phase is planned.
 
 | Task | Deliverable |
 |---|---|

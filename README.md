@@ -41,6 +41,17 @@ records before they are formatted into the prompt. If the judge is unavailable i
 S1 and says so in `path_trace`. A sub-query whose every chunk is excluded reaches `generate`
 with an empty context.
 
+Phase 4 adds a third read-time signal, S3 corroboration (`gate/signals/corroborate.py`), so the
+read gate now runs S1 + S2 + S3. Trust is set by the owner: each entry in `ingest/papers.json`
+may carry `"trusted": true`, and ingest stamps that flag on every chunk of the source. Nothing
+else sets it; a `trusted` field inside a document is overwritten, and a chunk with no flag is
+read as untrusted. S3 checks an *untrusted* chunk's factual claims against the trusted chunks
+only (`gate/reference.py`, a BM25 index over them) and scores by the strongest contradiction. It
+never compares a chunk with the other chunks retrieved for the same query, never sees the query,
+and abstains on trusted chunks, on the experience store, and when the trusted set is empty. What
+it does not check: a claim the trusted set does not cover is reported as not covered, not
+guessed at, and the trusted set itself is taken on the owner's word.
+
 > **Pipeline change (2026-09-15):** the inherited CRAG corrective loop (grade →
 > rewrite → web fallback) and the refusal guardrail ("Not grounded in the
 > corpus.") were removed; every sub-question now goes straight from retrieve to
@@ -680,6 +691,32 @@ today) and spends real LLM budget.
 
 The runs are deferred by the owner; this section is not a plan to run them.
 
+## Phase 4: S3 Corroboration (built, not measured)
+
+Phase 4 built S3 and the harnesses that would measure it. **None of the measurements has been
+run, so this README holds no S3 catch rate, false-positive rate, ablation, calibrated threshold or
+class-2 attack-success figure, and none is implied.** The design is
+`docs/specs/2026-10-13-phase-4-s3-corroboration-design.md`; the plan is
+`docs/plans/2026-10-13-phase-4-s3-corroboration.md`. Every LLM run below spends real budget on
+`JUDGE_MODEL` (`gemini-3.1-flash-lite`), and each needs an explicit go from the project owner
+first.
+
+Until Task 45 runs, `DEFAULT_POLICY.hard_thresholds["corroborate"]` is `0.90`, a placeholder.
+
+The attack corpus is written outside this repository and is not part of it; the harnesses read it
+from `ATTACK_CORPUS_DIR` (default `data/attack_corpus`).
+
+| Harness | Command | Would report | Writes to |
+|---|---|---|---|
+| Attack corpus tooling (`eval/attack_corpus.py`) | `python -m eval.attack_corpus validate`, then `freeze` | `validate` lists every contract violation; `freeze` hashes the corpus, records its counts and assigns each group to the calibration or test split. Loading refuses a corpus whose hash no longer matches. No LLM call. | `manifest.json` in the corpus directory |
+| Detection screen (`eval/attack_screen.py`) | `python -m eval.attack_screen --split calibration` or `--split test`; `--clean-experience` for the agent's own records | Each corpus item run once through the read gate: action, trust, every signal's score and reason, the top signal, and whether the row ran with reduced assurance. Class 1 and 2 items are screened as untrusted corpus items, class 3 as experience records. | `data/phase4_screen/<split>/results.json` |
+| Ablation (`eval/ablation.py`) | `python -m eval.ablation data/phase4_screen/test/results.json` | Items caught out of items scored, per class, for five signal subsets (S1, S2, S3, S1 + S2, S1 + S2 + S3), recomputed offline from the screen's stored scores. Rows with reduced assurance are excluded and counted. Per class, how many items S3 did not check and why. Report-only: S3 ships whatever it shows. No LLM call. | stdout |
+| S3 false positives (`eval/corroborate_fpr.py`) | `LLM_MIN_INTERVAL=2 python -m eval.corroborate_fpr` | Holds out some trusted sources, marks their chunks untrusted and screens them against the remaining trusted sources. Every non-admit is a false positive by construction. Summary: items checked, items not checked (and why), non-admits, and the S3 false-positive rate. `HOLDOUT_SOURCES` and `HOLDOUT_CHUNKS` set the sample size. | `data/phase4_s3_fpr/results.json` |
+| Calibration (`eval/calibrate.py`) | `python -m eval.calibrate` | A proposed hard threshold for `judge` and `corroborate` from the calibration split only, and a band report per store against the 2% budget. Prints the proposal and writes nothing; a person applies it to `gate/policy.py`. No LLM call. | stdout |
+| Class-2 trial (`eval/class2_trial.py`) | `LLM_MIN_INTERVAL=2 python -m eval.class2_trial` | False-fact passages planted in the top-5 for each target, run as `control` (no poison), `off` (poison, no gate) and `on` (poison, read gate). Per target: poison in the context, the group's target answer in the answer (a mechanical text check, no hand judgement), and the signal that excluded each passage. A target whose control answer already holds the target answer is void and not counted. | `data/class2_trial_results/results.json` |
+
+All of it is covered by offline tests with fakes; none of those tests spends budget.
+
 ## Open measurements
 
 Things this project has decided are worth measuring and has not measured. Listed here rather
@@ -708,6 +745,31 @@ that gets lost.
 3. **The experience store's block band.** `block_below=0.20` is stricter than the corpus's
    `0.10` and nothing in the clean calibration set came near it. See the calibration section
    above.
+
+Phase 4 adds five run tasks. Each is built and has not been run; each needs an explicit go from
+the project owner, and Task 45 also needs the externally written attack corpus. No figure exists
+for any of them.
+
+4. **Trust-flagged re-ingest (Task 43, `python -m ingest.run_ingest`).** Re-ingest so every chunk
+   carries its trust flag, then check that the chunk count and the write-time false-positive rate
+   (`python -m eval.fpr data/gate_audit.jsonl`) are unchanged. No LLM call; it downloads the
+   sources again and rewrites the index.
+5. **S3 false positives on clean untrusted content (Task 44,
+   `LLM_MIN_INTERVAL=2 python -m eval.corroborate_fpr`).** The S3 false-positive rate against a 2%
+   budget, with the not-checked counts as the coverage figure, and every flagged row read by hand.
+6. **Corpus frozen, calibration split screened, thresholds proposed (Task 45,
+   `python -m eval.attack_corpus validate` and `freeze`, then
+   `LLM_MIN_INTERVAL=2 python -m eval.attack_screen --split calibration` and `--clean-experience`,
+   then `python -m eval.calibrate`).** Hard thresholds for `judge` and `corroborate` chosen on the
+   calibration split only.
+7. **Test split screened and ablation table (Task 46,
+   `LLM_MIN_INTERVAL=2 python -m eval.attack_screen --split test`, then
+   `python -m eval.ablation data/phase4_screen/test/results.json`).** The five-row ablation,
+   screened once, after the thresholds are committed.
+8. **Class-2 trial, control / gate off / gate on (Task 47,
+   `LLM_MIN_INTERVAL=2 python -m eval.class2_trial`).** Run last, on a smaller answer model the
+   owner names, with `JUDGE_MODEL` kept on `gemini-3.1-flash-lite`. It is also the first time
+   class 2 is attacked in fact on the ungated host.
 
 ## Known Phase 3+ concerns (named, not addressed)
 
@@ -765,6 +827,14 @@ that gets lost.
   finding that the model itself declines injected instructions at answer time
   is that provider's alignment, not a property of this pipeline, and a more
   compliant model would move the numbers.
+- **S3 needs an owner-trusted set.** With no source marked trusted, S3 abstains on everything
+  and only S1 and S2 apply. A deployment made entirely of user uploads has no trusted set.
+- **S3 does not check a claim the trusted set does not cover.** It reports `not_covered` rather
+  than guessing, so a false fact on a topic the trusted sources are silent about passes S3. How
+  often that happens is what the not-checked counts are for; none has been measured.
+- **Trust is asserted by the owner, not verified.** S3 never checks trusted content, so a
+  poisoned source the owner marks trusted poisons the reference. S1 still screens it at write
+  time and S2 at read time. The flag is a manifest entry, not signing or lineage.
 
 ## Roadmap
 
@@ -783,5 +853,27 @@ measurements not run** (owner decision, 2026-10-13).
 | 29 | Class-1 trial and `--arm off` / `--arm on` on the class-3 trial | built, not measured |
 | 30 | `EVAL_READ_GATE=1` RAGAS arm and the cold/warm overhead harness | built, not measured |
 | 31 | Docs reconciled with what was built | docs |
+
+Phase 4 (S3 corroboration) is **built; every measurement not run**. Tasks 43-47 each wait for an
+explicit go from the project owner. Plan: `docs/plans/2026-10-13-phase-4-s3-corroboration.md`.
+
+| Task | Deliverable | Status |
+|---|---|---|
+| 32 | Trust marking at ingest | built, offline tests |
+| 33 | `gate/reference.py`: `ReferenceIndex` | built, offline tests |
+| 34 | S3 claim extraction | built, offline tests |
+| 35 | S3 applicability, reference lookup, agreement, score, fingerprint | built, offline tests |
+| 36 | S3 wired into `default_read_gate`; placeholder `corroborate` threshold | built, offline tests |
+| 37 | `eval/attack_corpus.py`: validate, freeze, split, load | built, offline tests |
+| 38 | `eval/attack_screen.py` and `eval/ablation.py` | built, offline tests |
+| 39 | `eval/corroborate_fpr.py` | built, offline tests |
+| 40 | `eval/calibrate.py` | built, offline tests |
+| 41 | `eval/class2_trial.py` | built, offline tests |
+| 42 | Docs reconciled with what was built | docs |
+| 43 | Re-ingest with trust flags; write-time false-positive rate re-checked | not run |
+| 44 | S3 false positives on clean untrusted content | not run |
+| 45 | Corpus frozen; calibration split screened; thresholds proposed and committed | not run |
+| 46 | Test split screened; ablation table | not run |
+| 47 | Class-2 trial, control / gate off / gate on | not run |
 
 Later: multi-turn memory, tracing panel, larger corpus + eval set.
