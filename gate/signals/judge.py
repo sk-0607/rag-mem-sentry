@@ -94,6 +94,10 @@ def _strip_fence(text: str) -> str:
 
 
 def _parse_response(raw: str, items: list[Item], labels: tuple[str, ...]) -> list[SignalResult]:
+    # A non-string reply is a bad reply, not an outage: an AttributeError here
+    # would escape as one and switch S2 off for the batch.
+    if not isinstance(raw, str):
+        raise JudgeResponseError(f"reply was {type(raw).__name__}, not text")
     try:
         parsed = json.loads(_strip_fence(raw))
     except json.JSONDecodeError as e:
@@ -137,7 +141,7 @@ def _parse_response(raw: str, items: list[Item], labels: tuple[str, ...]) -> lis
         # Non-verbatim span is dropped, not fatal: the score/label are still
         # a usable verdict even when the model paraphrases its own quote.
         span = entry.get("evidence_span")
-        if span is not None and span not in item.text:
+        if not isinstance(span, str) or span not in item.text:
             span = None
 
         results.append(SignalResult(signal="judge", score=float(suspicion), reason=label, evidence_span=span))
@@ -168,8 +172,11 @@ class JudgeSignal:
     def fingerprint(self, store: str) -> str:
         # Part of the verdict cache key: a changed model or rubric is a
         # different judge, and must not reuse verdicts the old one cached.
-        rubric = _RUBRIC_BY_STORE.get(store, "")
-        return f"{self._resolve_model()}:{hashlib.sha256(rubric.encode('utf-8')).hexdigest()[:8]}"
+        # The whole system prompt, not the rubric alone: the label list and the
+        # untrusted-content rule steer the score as much as the rubric does.
+        labels = _LABELS_BY_STORE.get(store)
+        prompt = _system_prompt(store, labels) if labels else ""
+        return f"{self._resolve_model()}:{hashlib.sha256(prompt.encode('utf-8')).hexdigest()[:8]}"
 
     def _judge(self, items: list[Item], store: str, labels: tuple[str, ...]) -> list[SignalResult]:
         messages = [
@@ -208,7 +215,9 @@ class JudgeSignal:
             return [SignalResult(
                 signal="judge",
                 score=UNPARSEABLE_SUSPICION,
-                reason=f"judge reply could not be parsed: {e}",
+                # Bounded: the error quotes model output, and this string is
+                # persisted to the cache and the audit log.
+                reason=f"judge reply could not be parsed: {e}"[:200],
             )]
 
     def score(self, item: Item, ctx: GateContext) -> SignalResult | None:

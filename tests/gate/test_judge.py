@@ -319,3 +319,32 @@ def test_fingerprint_changes_with_model_and_rubric():
     assert a.fingerprint("corpus") != JudgeSignal(chat=FakeChat(), model="B").fingerprint("corpus")
     assert a.fingerprint("corpus") != a.fingerprint("experience")
     assert a.name == "judge"
+
+
+@pytest.mark.parametrize("span", [5, ["x"], {"a": 1}])
+def test_non_string_evidence_span_is_dropped_not_an_outage(span):
+    # A TypeError here used to escape as an "outage" and switch S2 off for the batch.
+    fake = FakeChat(response(entry(0, suspicion=0.7, label="instructs", evidence_span=span)))
+    result = JudgeSignal(chat=fake).score_batch(items(1), CTX)[0]
+    assert result.score == 0.7
+    assert result.evidence_span is None
+
+
+def test_non_string_reply_is_unparseable_not_an_outage():
+    assert_unparseable(JudgeSignal(chat=FakeChat(None)).score_batch(items(1), CTX)[0])
+
+
+def test_unparseable_reason_is_bounded():
+    # The reason is persisted to the cache and audit log, and quotes model output.
+    fake = FakeChat(response(entry(0, label="x" * 5000)))
+    result = JudgeSignal(chat=fake).score_batch(items(1), CTX)[0]
+    assert_unparseable(result)
+    assert len(result.reason) <= 240
+
+
+def test_fingerprint_covers_the_whole_system_prompt(monkeypatch):
+    import gate.signals.judge as judge_mod
+    signal = JudgeSignal(chat=FakeChat(), model="A")
+    before = signal.fingerprint("corpus")
+    monkeypatch.setattr(judge_mod, "_UNTRUSTED_RULE", judge_mod._UNTRUSTED_RULE + " changed")
+    assert signal.fingerprint("corpus") != before
