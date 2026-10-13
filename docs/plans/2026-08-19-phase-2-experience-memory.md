@@ -1112,6 +1112,10 @@ strategy less instruction-override-shaped, per R3a's class 2/3) are in the READM
 **"Phase 2 Results: Experience-Store Calibration and the Ungated Poisoning Demonstration"**
 section. Read that before reopening this.
 
+*Note, 2026-09-15: overridden by the project owner. Phase 3 proceeds; see the Phase 3 spec
+(`docs/specs/2026-09-15-phase-3-read-time-gate-design.md`) §0. The decision above is kept as
+written.*
+
 ## Handoff to Phase 3, if it is unpaused
 
 **Superseded by the stop decision above** — kept because it is still the right starting point

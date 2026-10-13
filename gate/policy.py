@@ -109,5 +109,9 @@ DEFAULT_POLICY = GatePolicy(
     #
     # This dict, not any attribute on the Signal instance, is what
     # GatePolicy.decide() actually reads.
-    hard_thresholds={"structural": 0.93},
+    #
+    # judge's 0.90 is a placeholder, not calibrated — Phase 4 calibrates it on
+    # the attack corpus's calibration split. 0.90 sits above any plausible
+    # "unsure" judge output, so only a confident judgement hard-blocks.
+    hard_thresholds={"structural": 0.93, "judge": 0.90},
 )

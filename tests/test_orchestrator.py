@@ -23,7 +23,7 @@ def test_runs_each_subquery_sequentially_and_merges():
     out = run_agentic("compound?",
                       retriever=object(),
                       llm_module=make_llm(["sq1", "sq2"]),
-                      graph_builder=lambda r, lm=None: fake_app)
+                      graph_builder=lambda r, lm=None, read_gate=None: fake_app)
     assert fake_app.invocations == ["sq1", "sq2"]          # sequential, both run
     assert out["answer"] == "ans-sq1 + ans-sq2"
     assert out["citations"] == ["[sq1, chunk#0]", "[sq2, chunk#0]"]
@@ -33,7 +33,7 @@ def test_runs_each_subquery_sequentially_and_merges():
 
 def test_llm_module_is_injected_into_graph():
     fake_app, seen = FakeApp(), {}
-    def builder(retriever, llm_module=None):
+    def builder(retriever, llm_module=None, read_gate=None):
         seen["llm_module"] = llm_module
         return fake_app
     lm = make_llm(["only"])

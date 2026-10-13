@@ -232,6 +232,17 @@ The "every signal failed → admit" row is a deliberate choice and is recorded a
 alternative, excluding content whenever the LLM is unreachable, turns a quota wall into a system
 that answers from nothing.
 
+**Note, 2026-10-13 (final branch review).** The first table row above is narrowed: an *unparseable*
+judge reply is no longer an outage. Text under review can ask the judge to "reply in prose", and
+treating that as a failure would let poisoned content switch S2 off for itself and its batch-mates.
+Now a batch whose reply cannot be parsed is re-scored one item at a time; an item whose own reply
+still cannot be parsed gets a fixed suspicion (`UNPARSEABLE_SUSPICION`, 0.6) with a "could not be
+parsed" reason, which quarantines (excluded at read time) in both stores and never hard-blocks.
+That result is a real signal result, so it is cached and the run is not `reduced_assurance`. Only
+transport failures (`chat()` raising) still degrade to S1 as the table says. The verdict cache key
+also now carries the judge's model and a hash of its rubric (`judge@<model>:<hash>`), so changing
+either misses the cache; S1's key is unchanged.
+
 ## 8. Testing
 
 TDD per task, one commit per task, RED verified before GREEN — the repo's convention.
@@ -264,14 +275,21 @@ are scheduled one per day, each diagnosing `PerDay` vs `PerMinute` before any re
 
 ## 10. Exit criteria
 
-- [ ] `pytest -q` green; `pytest tests/gate tests/memory` makes zero network calls
-- [ ] Gate-off baseline re-measured on the simplified host, both ASR levels, model named
+Reconciled 2026-10-13. Criteria 3, 4, 6 and 7 are unmet by owner decision: on 2026-10-13 the
+owner chose not to run any gate-off vs gate-on measurement. The harnesses exist; the runs do not.
+
+- [x] `pytest -q` green; `pytest tests/gate tests/memory` makes zero network calls
+- [x] Gate-off baseline re-measured on the simplified host, both ASR levels, model named (Task 22; README "Gate-off baseline on the simplified host (2026-09-16)")
 - [ ] Read gate excludes the class-1 and class-3 trial poison: context-level ASR gate-on < gate-off
+  - Harness built (`eval/class1_trial.py`, `eval/experience_poison_trial.py --arm on`); measurement not run, owner decision 2026-10-13, recorded in README "Open measurements".
 - [ ] Behavior-level ASR reported gate-off and gate-on — whatever the numbers are
-- [ ] S2 false-positive rate on the hard-negative set measured, every flag hand-read (R5)
+  - Gate-off reported (Task 22). Gate-on harness built (`eval/experience_poison_trial.py --arm on`); measurement not run, owner decision 2026-10-13, recorded in README "Open measurements".
+- [x] S2 false-positive rate on the hard-negative set measured, every flag hand-read (R5; README "Phase 3: R5")
 - [ ] RAGAS delta gate off vs on recorded
+  - Harness built (`EVAL_READ_GATE=1` arm in `eval/run_eval.py`); measurement not run, owner decision 2026-10-13, recorded in README "Open measurements".
 - [ ] Overhead recorded cache-cold and cache-warm
-- [ ] Parent spec §6.1 / §9.5 and the Phase 3 roadmap row reconciled with what shipped
+  - Harness built (`eval/overhead.py`); measurement not run, owner decision 2026-10-13, recorded in README "Open measurements".
+- [x] Parent spec §6.1 / §9.5 and the Phase 3 roadmap row reconciled with what was built (Task 31)
 
 ## 11. Risks
 

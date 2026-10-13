@@ -16,11 +16,12 @@ class AuditLog:
     def __init__(self, path: Path):
         self.path = Path(path)
 
-    def record(self, item: Item, verdict: Verdict, store: str) -> None:
+    def record(self, item: Item, verdict: Verdict, store: str, stage: str = "write") -> None:
         entry = {
             "ts": datetime.now(timezone.utc).isoformat(),
             "item_id": item.id,
             "store": store,
+            "stage": stage,
             "action": verdict.action.value,
             "trust": verdict.score.trust,
             "reason": verdict.reason,

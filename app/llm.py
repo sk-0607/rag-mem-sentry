@@ -41,20 +41,21 @@ def _backoff(exc, attempt):
     return min(2 * 2 ** attempt, 60)
 
 
-def chat(messages, client=None):
+def chat(messages, client=None, model=None):
     client = client or get_client()
+    model = model or config.LLM_MODEL
     for attempt in range(6):
         _pace()
         try:
             resp = client.chat.completions.create(
-                model=config.LLM_MODEL,
+                model=model,
                 messages=messages,
                 temperature=0.2,
             )
             return resp.choices[0].message.content.strip()
         except RateLimitError as e:
             time.sleep(_backoff(e, attempt) + 0.5)
-    raise RuntimeError(f"{config.LLM_MODEL} rate limit: exhausted retries")
+    raise RuntimeError(f"{model} rate limit: exhausted retries")
 
 
 def _cite_tag(d):

@@ -60,3 +60,23 @@ def test_experience_verdicts_are_excluded():
 
 def test_entry_without_a_store_is_excluded():
     assert false_positive_rate([{"action": "admit"}])["total"] == 0
+
+
+def test_read_stage_entries_excluded_by_default():
+    log = entries("admit") + [{"action": "quarantine", "store": "corpus", "stage": "read"}]
+    stats = false_positive_rate(log)
+    assert stats["total"] == 1
+    assert stats["admit"] == 1
+
+
+def test_stage_read_counts_only_read_entries():
+    log = entries("admit") + [{"action": "quarantine", "store": "corpus", "stage": "read"}]
+    stats = false_positive_rate(log, stage="read")
+    assert stats["total"] == 1
+    assert stats["quarantine"] == 1
+
+
+def test_entry_without_stage_counts_as_write():
+    # Entries written before this change have no "stage" key at all.
+    log = [{"action": "admit", "store": "corpus"}]
+    assert false_positive_rate(log)["total"] == 1

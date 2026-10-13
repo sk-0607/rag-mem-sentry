@@ -30,3 +30,21 @@ def test_counts_broken_out_by_action():
 
 def test_no_experience_entries_is_zero_not_a_division_error():
     assert flagged_experience_report([e("admit", store="corpus")])["flag_rate"] == 0.0
+
+
+def test_read_stage_entries_excluded_by_default():
+    r = flagged_experience_report([e("admit"), {"action": "quarantine", "store": "experience", "stage": "read"}])
+    assert r["total"] == 1
+    assert r["admit"] == 1
+
+
+def test_stage_read_counts_only_read_entries():
+    log = [e("admit"), {"action": "quarantine", "store": "experience", "stage": "read"}]
+    r = flagged_experience_report(log, stage="read")
+    assert r["total"] == 1
+    assert r["quarantine"] == 1
+
+
+def test_entry_without_stage_counts_as_write():
+    # Entries written before this change have no "stage" key at all.
+    assert flagged_experience_report([{"action": "admit", "store": "experience"}])["total"] == 1
