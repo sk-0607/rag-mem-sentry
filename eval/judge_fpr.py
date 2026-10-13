@@ -31,13 +31,30 @@ def hard_negative_items(questions: list[str], retriever, held: list[Item]) -> li
     return list(seen.values())
 
 
+def top_signal(entry: dict) -> str:
+    # "Top" is the highest-scoring signal in the entry: it names what drove a
+    # flag, so S2-topped false positives can be told apart from S1-topped ones.
+    # Shared with the attack trials, which credit each exclusion the same way.
+    return max(entry["signals"], key=lambda s: s["score"])["signal"]
+
+
+def read_verdict(entries: list[dict], item_id: str, store: str) -> dict | None:
+    """The last read-stage audit entry for `item_id` in `store`, trimmed to what
+    a write-up needs; None when there is none. The `reason` matters: it carries
+    "reduced assurance: <signal> unavailable" when a signal failed, which is the
+    only trace that an admit was reached without every signal having run."""
+    match = [e for e in entries
+             if e["item_id"] == item_id and e["store"] == store and e["stage"] == "read"]
+    if not match:
+        return None
+    return {k: match[-1][k] for k in ("action", "trust", "reason", "signals")}
+
+
 def summarize(audit_entries: list[dict]) -> dict:
     stats = false_positive_rate(audit_entries, stage="read")
     read = [e for e in audit_entries if e.get("store") == "corpus" and e.get("stage") == "read"]
-    # "Top" is the highest-scoring signal in the entry: it names what drove a
-    # flag, so S2-topped false positives can be told apart from S1-topped ones.
     flagged = [e for e in read if e["action"] != "admit"]
-    top = Counter(max(e["signals"], key=lambda s: s["score"])["signal"] for e in flagged)
+    top = Counter(top_signal(e) for e in flagged)
     # Over every read entry, admits included: a judge that labels 40 chunks
     # `quotes` and admits them is the evidence the rubric separates the two.
     labels = Counter(s["reason"] for e in read for s in e["signals"] if s["signal"] == "judge")

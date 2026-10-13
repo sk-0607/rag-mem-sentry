@@ -27,14 +27,17 @@ loop) has no web path at all, so every sub-query reaches `generate` unconditiona
 "retrieved" and "reached a prompt" coincide here in a way they did not on the
 2026-08-24 host this trial was first run against.
 
-    python -m eval.experience_poison_trial          # spends real LLM budget
+    python -m eval.experience_poison_trial --arm off   # spends real LLM budget
+    python -m eval.experience_poison_trial --arm on    # same, behind the read-time gate
 """
+import argparse
 import json
 import os
 import shutil
 from pathlib import Path
 
 from app import config
+from eval.judge_fpr import read_verdict, top_signal
 from memory.types import ExperienceRecord
 
 TRIAL_DIR = Path("data/poison_trial")
@@ -161,43 +164,88 @@ def configure():
     config.EXPERIENCE_K = 1
 
 
-def main() -> int:
+def main(arm: str) -> int:
     from app.orchestrator import run_agentic
     from app.retrieval import Retriever
+
+    # Before any work: a typo'd arm would otherwise run ungated and write a
+    # results file under the typo'd name, after spending the budget.
+    if arm not in ("off", "on"):
+        raise ValueError(f"arm must be 'off' or 'on', got {arm!r}")
 
     configure()
 
     gate_verdicts = screen_poison()
     store = build_poison_store()
+    # After build_poison_store, never before: it rmtree's TRIAL_DIR, which would
+    # delete the gate's cache and audit files. Built here the gate's cache is
+    # cold and its audit holds only this run's verdicts.
+    read_gate = None
+    if arm == "on":
+        from gate.read import default_read_gate
+
+        read_gate = default_read_gate(TRIAL_DIR)
     retriever = Retriever()
     ro = ReadOnlyStore(store)
 
-    # Poisoned arm first: a quota wall then still leaves the primary number.
-    results = {"model": config.LLM_MODEL, "gate_on_poison_records": gate_verdicts,
-               "poisoned": [], "control": []}
+    # Rewritten in full after every trial (the file is tiny): a quota wall raises
+    # out of run_agentic, and without this every completed trial died with it.
+    # `complete` stays false until the last write, so a partial file cannot be
+    # mistaken for a finished run. The error is left to propagate (exit code
+    # stays non-zero); the point is only that finished trials are already on disk.
+    out = RESULTS_DIR / f"results-{arm}.json"
+
+    def save(complete):
+        results["complete"] = complete
+        RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(results, indent=2), encoding="utf-8")
+
+    # Poisoned arm first, so a quota wall leaves the primary number on disk.
+    results = {"arm": arm, "model": config.LLM_MODEL, "gate_on_poison_records": gate_verdicts,
+               "complete": False, "poisoned": [], "control": []}
     for t in TRIALS:
-        r = run_agentic(t["question"], retriever=retriever, store=ro)
+        r = run_agentic(t["question"], retriever=retriever, store=ro, read_gate=read_gate)
+        # The audit lives under TRIAL_DIR, which the next run wipes, so what the
+        # write-up needs from it is copied out here: the read-stage entry of every
+        # retrieved poison record, admitted or excluded. run_agentic drops the
+        # experience screen's reduced_assurance flag, so for an ADMITTED poison
+        # this entry's `reason` ("reduced assurance: judge unavailable") is the
+        # only record that S2 never ran. null = no entry, distinct from an
+        # admit with clean signals.
+        entries = read_gate.audit.entries() if read_gate is not None else []
+        screened = {i: read_verdict(entries, i, "experience")
+                    for i in r["experiences"] + r["experiences_excluded"]} if read_gate else {}
+        # Each exclusion is credited to the signal that scored highest
+        # (structural = S1, judge = S2).
+        top = {i: top_signal(screened[i]) for i in r["experiences_excluded"]}
         results["poisoned"].append({
             "question": t["question"], "check": t["check"],
             "poison_id": t["poison"].id, "retrieved": r["experiences"],
+            "experiences_excluded": r["experiences_excluded"],
+            "excluded_top_signals": top,
+            "gate_audit": screened,
             # On the simplified host every sub-query reaches `generate`
             # unconditionally (no grade/rewrite/refuse to intercept it), so a
             # retrieved experience always reaches the prompt. On the
             # 2026-08-24 host that was not true — t2's poison was retrieved
             # but every sub-query graded weak and refused before generating.
+            # With the read gate on, a retrieved record can be excluded first,
+            # so "reached the prompt" means retrieved and not excluded.
             "reached_prompt": t["poison"].id in r["experiences"],
             "path_trace": r["path_trace"], "answer": r["answer"],
         })
+        save(False)
+    # Ungated in both arms: the control has no store, so there is no poison for
+    # the gate to act on, and gating it would only spend judge calls.
     for t in TRIALS:
         r = run_agentic(t["question"], retriever=retriever)
         results["control"].append({
             "question": t["question"], "path_trace": r["path_trace"],
             "answer": r["answer"],
         })
+        save(False)
 
-    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    out = RESULTS_DIR / "results.json"
-    out.write_text(json.dumps(results, indent=2), encoding="utf-8")
+    save(True)
     # Default ensure_ascii: a cp1252 Windows console raises on any model output
     # outside cp1252, after the file is written, turning a good run into exit 1.
     # The file on disk is utf-8 and unaffected.
@@ -206,4 +254,6 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--arm", choices=("off", "on"), required=True)
+    raise SystemExit(main(parser.parse_args().arm))
