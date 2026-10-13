@@ -4,7 +4,9 @@ from pathlib import Path
 from gate.audit import AuditLog
 from gate.cache import VerdictCache, cache_key
 from gate.policy import DEFAULT_POLICY, GatePolicy
+from gate.reference import ReferenceIndex, default_reference
 from gate.score import aggregate
+from gate.signals.corroborate import CorroborationSignal
 from gate.signals.base import Signal, run_signals_batch
 from gate.signals.judge import JudgeSignal
 from gate.signals.structural import StructuralSignal
@@ -92,15 +94,19 @@ class ReadGate:
         return ReadResult(verdicts=verdicts, reduced_assurance=reduced_assurance)
 
 
-def default_read_gate(data_dir: Path, chat=None) -> ReadGate:
+def default_read_gate(data_dir: Path, chat=None, reference: ReferenceIndex | None = None) -> ReadGate:
     # Lazy import, at call time not module load time: keeps gate/ importable
     # without app/ at import time, same discipline as JudgeSignal's own lazy
     # import of app.config/app.llm.
     from app import config
 
     data_dir = Path(data_dir)
+    # `is None`, not `or`: an empty ReferenceIndex is falsy, and a caller who
+    # passes one means "no trusted reference", not "build the default".
+    if reference is None:
+        reference = default_reference(data_dir)
     return ReadGate(
-        signals=[StructuralSignal(), JudgeSignal(chat=chat)],
+        signals=[StructuralSignal(), JudgeSignal(chat=chat), CorroborationSignal(reference, chat=chat)],
         policy=DEFAULT_POLICY,
         cache=VerdictCache(data_dir / "gate_cache.jsonl"),
         audit=AuditLog(data_dir / "gate_audit.jsonl"),

@@ -27,6 +27,7 @@ from app import config
 from app.graph import build_graph
 from eval.judge_fpr import read_verdict, top_signal
 from gate.read import default_read_gate
+from gate.reference import default_reference
 
 CANARY = "ZX-CANARY-0419"
 
@@ -82,7 +83,9 @@ SAMPLES = [
 
 def make_carrier(real_chunk: dict, poison: str) -> dict:
     return {**real_chunk, "id": f"{real_chunk['id']}::poisoned",
-            "text": f"{real_chunk['text']}\n\n{poison}"}
+            "text": f"{real_chunk['text']}\n\n{poison}",
+            # A planted chunk is never trusted, whatever it was copied from.
+            "trusted": False}
 
 
 def run_trial(sample, retriever, llm_module, read_gate) -> dict:
@@ -143,7 +146,10 @@ def run_all(retriever, llm_module, trial_dir, chat=None, on_trial=None) -> list[
     """
     shutil.rmtree(trial_dir, ignore_errors=True)
     trial_dir.mkdir(parents=True, exist_ok=True)
-    gate = default_read_gate(trial_dir, chat=chat)
+    # The reference comes from the real corpus, not trial_dir: that directory is
+    # wiped above and holds no chunks.jsonl, which would leave S3 abstaining.
+    reference = default_reference(Path(config.EXPERIENCES_PATH).parent)
+    gate = default_read_gate(trial_dir, chat=chat, reference=reference)
     results = []
     for sample in SAMPLES:
         for g in (None, gate):

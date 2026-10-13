@@ -206,9 +206,11 @@ def test_default_read_gate_wiring(tmp_path):
 
     fake = FakeChat('[{"id": "i0", "suspicion": 0.0, "label": "clean", "evidence_span": null}]')
     gate = default_read_gate(tmp_path, chat=fake)
-    assert {s.name for s in gate.signals} == {"structural", "judge"}
+    assert {s.name for s in gate.signals} == {"structural", "judge", "corroborate"}
     assert gate.batch_max == config.JUDGE_BATCH_MAX
 
+    # No chunks.jsonl under tmp_path -> empty reference -> S3 abstains, so the
+    # only chat call is the judge's.
     gate.screen_batch([Item(id="a", text=CLEAN, kind="corpus")], "corpus")
     assert fake.calls == 1
 
@@ -283,3 +285,82 @@ def test_s1_only_cache_key_format_is_unchanged():
     from gate.cache import cache_key, content_hash
 
     assert cache_key("corpus", [StructuralSignal()], "t") == content_hash("corpus|structural|t")
+
+
+def _write_chunks(tmp_path, chunks):
+    import json
+    (tmp_path / "chunks.jsonl").write_text("\n".join(json.dumps(c) for c in chunks), encoding="utf-8")
+
+
+TRUSTED_CHUNK = {"id": "src-a::0", "text": "The model has 7 billion parameters.", "trusted": True}
+
+
+def _s3(gate):
+    return next(s for s in gate.signals if s.name == "corroborate")
+
+
+def test_default_reference_built_from_data_dir_when_none(tmp_path):
+    _write_chunks(tmp_path, [TRUSTED_CHUNK])
+    gate = default_read_gate(tmp_path, chat=CleanChat())
+    assert len(_s3(gate)._reference) == 1
+
+
+def test_explicit_empty_reference_is_kept(tmp_path):
+    # An empty index is falsy; `reference or default` would silently replace it.
+    from gate.reference import ReferenceIndex
+
+    _write_chunks(tmp_path, [TRUSTED_CHUNK])
+    gate = default_read_gate(tmp_path, chat=CleanChat(), reference=ReferenceIndex([]))
+    assert len(_s3(gate)._reference) == 0
+
+
+class _CountingSignal:
+    name = "judge"
+
+    def __init__(self):
+        self.calls = 0
+
+    def score_batch(self, items, ctx):
+        self.calls += 1
+        return [SignalResult(signal="judge", score=0.0, reason="fake") for _ in items]
+
+
+def test_s3_abstention_is_cached(tmp_path):
+    from gate.reference import ReferenceIndex
+    from gate.signals.corroborate import CorroborationSignal
+
+    counter = _CountingSignal()
+    gate = build(tmp_path, [counter, CorroborationSignal(ReferenceIndex([TRUSTED_CHUNK]), chat=CleanChat())])
+    items = [Item(id="a", text=CLEAN, kind="corpus", metadata={"trusted": True})]
+    gate.screen_batch(items, "corpus")
+    gate.screen_batch(items, "corpus")
+    assert counter.calls == 1
+
+
+def test_trusted_set_change_misses_the_cache(tmp_path):
+    from gate.reference import ReferenceIndex
+    from gate.signals.corroborate import CorroborationSignal
+
+    counter = _CountingSignal()
+    other = {"id": "src-b::0", "text": "Another trusted passage.", "trusted": True}
+    items = [Item(id="a", text=CLEAN, kind="corpus")]
+    for ref in (ReferenceIndex([TRUSTED_CHUNK]), ReferenceIndex([TRUSTED_CHUNK, other])):
+        gate = build(tmp_path, [counter, CorroborationSignal(ref, chat=CleanChat())])
+        gate.screen_batch(items, "corpus")
+    assert counter.calls == 2
+
+
+def test_untrusted_item_reaches_s3(tmp_path):
+    from gate.reference import ReferenceIndex
+    from gate.signals.corroborate import CorroborationSignal
+
+    calls = []
+
+    def chat(messages, model=None):
+        calls.append(messages)
+        return '[{"id": "i0", "claims": []}]'
+
+    gate = build(tmp_path, [CorroborationSignal(ReferenceIndex([TRUSTED_CHUNK]), chat=chat)])
+    gate.screen_batch([Item(id="a", text=CLEAN, kind="corpus", metadata={"trusted": False})], "corpus")
+    assert len(calls) == 1
+    assert "extract" in calls[0][0]["content"]

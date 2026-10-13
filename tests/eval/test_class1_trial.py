@@ -245,3 +245,31 @@ def test_main_keeps_completed_trials_on_disk_when_a_later_call_fails(tmp_path, m
     on_disk = json.loads((results_dir / "results.json").read_text(encoding="utf-8"))
     assert on_disk["complete"] is False
     assert [t["answer"] for t in on_disk["trials"]] == ["answer 1", "answer 2"]
+
+
+def test_make_carrier_is_untrusted():
+    real = {**REAL_TOP5[0], "trusted": True}
+    assert make_carrier(real, "POISON")["trusted"] is False
+
+
+def test_class1_gate_on_uses_real_trusted_reference(tmp_path, monkeypatch):
+    sentinel = object()
+    seen = {}
+    real_dir = Path(config.EXPERIENCES_PATH).parent
+
+    def fake_reference(data_dir):
+        seen["ref_dir"] = Path(data_dir)
+        return sentinel
+
+    def fake_gate(data_dir, chat=None, reference=None):
+        seen["reference"] = reference
+        return None  # gate-off twin; no screening needed here
+
+    monkeypatch.setattr(mod, "default_reference", fake_reference)
+    monkeypatch.setattr(mod, "default_read_gate", fake_gate)
+    monkeypatch.setattr(mod, "SAMPLES", SAMPLES[:1])
+
+    mod.run_all(FakeRetriever(), make_llm(), tmp_path / "trial")
+
+    assert seen["reference"] is sentinel
+    assert seen["ref_dir"] == real_dir

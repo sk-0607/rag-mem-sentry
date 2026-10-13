@@ -29,7 +29,9 @@ def build_graph(retriever, llm_module=_llm, read_gate=None):
         # still has something stable to key its cache/audit on.
         items = [
             Item(id=doc["id"] if "id" in doc else content_hash(doc["text"])[:16],
-                 text=doc["text"], kind="corpus")
+                 text=doc["text"], kind="corpus",
+                 # `is True`: a stored "true" string must not count as trusted.
+                 metadata={"trusted": doc.get("trusted") is True})
             for doc in docs
         ]
         result = read_gate.screen_batch(items, "corpus")

@@ -133,3 +133,14 @@ def test_gate_screens_with_store_corpus():
     build_graph(FakeRetriever(), make_llm(), read_gate=gate).invoke(_init())
     _, store = gate.calls[0]
     assert store == "corpus"
+
+
+import pytest
+
+
+@pytest.mark.parametrize("stored,expected", [({"trusted": True}, True), ({}, False), ({"trusted": "true"}, False)])
+def test_gate_item_carries_trust_flag(stored, expected):
+    gate = FakeReadGate()
+    build_graph(FakeRetriever([{**ONE_CHUNK[0], **stored}]), make_llm(), read_gate=gate).invoke(_init())
+    items, _ = gate.calls[0]
+    assert items[0].metadata == {"trusted": expected}

@@ -113,5 +113,7 @@ DEFAULT_POLICY = GatePolicy(
     # judge's 0.90 is a placeholder, not calibrated — Phase 4 calibrates it on
     # the attack corpus's calibration split. 0.90 sits above any plausible
     # "unsure" judge output, so only a confident judgement hard-blocks.
-    hard_thresholds={"structural": 0.93, "judge": 0.90},
+    #
+    # corroborate's 0.90 is a placeholder, not calibrated; Task 45 replaces it.
+    hard_thresholds={"structural": 0.93, "judge": 0.90, "corroborate": 0.90},
 )
