@@ -4,6 +4,8 @@ import sys
 import types
 from pathlib import Path
 
+import pytest
+
 from app import config
 from eval import class2_trial as mod
 from eval.class2_trial import (POISON_SLOTS, normalize, poisoned_docs, run_group, run_trial,
@@ -19,6 +21,13 @@ REAL = [
      "score": 1.0 - i / 10, "trusted": True}
     for i in range(5)
 ]
+
+
+@pytest.fixture(autouse=True)
+def hermetic_data_dir(tmp_path, monkeypatch):
+    # run_all builds the reference from EXPERIENCES_PATH's directory; left alone
+    # that is the real data/, whose chunks.jsonl the tests would read.
+    monkeypatch.setattr(config, "EXPERIENCES_PATH", str(tmp_path / "experiences.jsonl"))
 
 
 def entries(n=3, group="c2-g0"):
@@ -188,6 +197,7 @@ def test_gate_on_uses_real_trusted_reference(tmp_path, monkeypatch):
     mod.run_all([entries(3)], FakeRetriever(), make_llm(), tmp_path / "trial")
     assert seen["reference"] is sentinel and seen["reference"] is not None
     assert seen["ref_dir"] == Path(config.EXPERIENCES_PATH).parent
+    assert seen["ref_dir"] == tmp_path  # never the real data/
 
 
 def test_run_all_wipes_only_the_directory_it_is_given(tmp_path):
