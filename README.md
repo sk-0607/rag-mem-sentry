@@ -832,6 +832,9 @@ for any of them.
 - **S3 does not check a claim the trusted set does not cover.** It reports `not_covered` rather
   than guessing, so a false fact on a topic the trusted sources are silent about passes S3. How
   often that happens is what the not-checked counts are for; none has been measured.
+- **S3 checks at most `S3_MAX_CLAIMS` (5) claims per chunk.** A false claim outside the
+  extracted claims is not checked, and the chunk can still read as supported. No rate has been
+  measured.
 - **Trust is asserted by the owner, not verified.** S3 never checks trusted content, so a
   poisoned source the owner marks trusted poisons the reference. S1 still screens it at write
   time and S2 at read time. The flag is a manifest entry, not signing or lineage.

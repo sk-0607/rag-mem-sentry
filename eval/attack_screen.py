@@ -58,13 +58,26 @@ def build_gate(out_dir: Path, data_dir: Path) -> ReadGate:
     return default_read_gate(out_dir, reference=default_reference(data_dir))
 
 
-def write_results(out_dir: Path, split: str, rows: list[dict]) -> Path:
-    commit = subprocess.run(["git", "log", "-1", "--format=%H", "--", "gate/policy.py"],
-                            capture_output=True, text=True, check=True).stdout.strip()
+def _git(args: list[str], cwd: Path) -> str:
+    return subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True,
+                          check=True).stdout
+
+
+def policy_commit(git=_git) -> str:
+    # Taken before screening and from the repo root, not the cwd. `-dirty` because
+    # the last commit alone would label rows screened under an uncommitted edit.
+    root = Path(__file__).resolve().parent.parent
+    commit = git(["log", "-1", "--format=%H", "--", "gate/policy.py"], root).strip()
+    if git(["status", "--porcelain", "--", "gate/policy.py"], root).strip():
+        commit += "-dirty"
+    return commit
+
+
+def write_results(out_dir: Path, split: str, rows: list[dict], policy_commit: str) -> Path:
     out_dir.mkdir(parents=True, exist_ok=True)
     path = out_dir / "results.json"
     path.write_text(json.dumps({"split": split, "model": config.JUDGE_MODEL,
-                                "policy_commit": commit, "rows": rows}, indent=2),
+                                "policy_commit": policy_commit, "rows": rows}, indent=2),
                     encoding="utf-8")
     return path
 
@@ -94,8 +107,9 @@ def main(argv: list[str], reference=None, gate_builder=build_gate, data_dir=None
     # Not wiped: after a daily-cap interruption the rerun must find the cache.
     out_dir = Path(out_root) / name
     out_dir.mkdir(parents=True, exist_ok=True)
+    commit = policy_commit()
     rows = screen(entries, gate_builder(out_dir, data_dir))
-    print(write_results(out_dir, name, rows))
+    print(write_results(out_dir, name, rows, commit))
     return 0
 
 

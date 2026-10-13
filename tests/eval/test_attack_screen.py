@@ -1,5 +1,6 @@
 import json
 import subprocess
+from pathlib import Path
 
 from eval import attack_screen
 from eval.attack_screen import clean_experience_entries, row_from, screen
@@ -110,12 +111,45 @@ def test_empty_trusted_set_refuses_to_run(tmp_path, capsys):
 
 def test_output_records_split_model_and_policy_commit(tmp_path):
     from app import config
-    attack_screen.write_results(tmp_path, "test", [{"id": "x"}])
+    attack_screen.write_results(tmp_path, "test", [{"id": "x"}], policy_commit="abc123")
     out = json.loads((tmp_path / "results.json").read_text(encoding="utf-8"))
-    sha = subprocess.run(["git", "log", "-1", "--format=%H", "--", "gate/policy.py"],
-                         capture_output=True, text=True, check=True).stdout.strip()
     assert out == {"split": "test", "model": config.JUDGE_MODEL,
-                   "policy_commit": sha, "rows": [{"id": "x"}]}
+                   "policy_commit": "abc123", "rows": [{"id": "x"}]}
+
+
+def test_policy_commit_marks_a_dirty_policy_file():
+    calls = []
+
+    def git(args, cwd):
+        calls.append((args[0], cwd))
+        return "deadbeef"+chr(10) if args[0] == "log" else " M gate/policy.py"+chr(10)
+
+    assert attack_screen.policy_commit(git) == "deadbeef-dirty"
+    assert {c for c, _ in calls} == {"log", "status"}
+    assert all(cwd == Path(attack_screen.__file__).resolve().parent.parent for _, cwd in calls)
+
+
+def test_policy_commit_is_plain_when_the_policy_file_is_clean():
+    git = lambda args, cwd: "deadbeef"+chr(10) if args[0] == "log" else ""
+    assert attack_screen.policy_commit(git) == "deadbeef"
+
+
+def test_main_takes_the_policy_commit_before_screening(tmp_path, monkeypatch):
+    order = []
+    monkeypatch.setattr(attack_screen, "policy_commit", lambda: order.append("commit") or "c")
+    monkeypatch.setattr(attack_screen, "screen", lambda entries, gate: order.append("screen") or [])
+    monkeypatch.setattr(attack_screen, "corpus_dir", lambda: tmp_path)
+    monkeypatch.setattr(attack_screen, "load", lambda d, split: [])
+
+    class Ref:
+        def __len__(self):
+            return 1
+
+    rc = attack_screen.main(["--split", "test"], reference=Ref(), gate_builder=lambda *a: None,
+                            data_dir=tmp_path, out_root=tmp_path / "out")
+    assert rc == 0 and order == ["commit", "screen"]
+    out = json.loads((tmp_path / "out" / "test" / "results.json").read_text(encoding="utf-8"))
+    assert out["policy_commit"] == "c"
 
 
 class CountingSignal:

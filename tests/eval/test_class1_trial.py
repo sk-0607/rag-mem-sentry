@@ -22,6 +22,19 @@ REAL_TOP5 = [
 ]
 
 
+@pytest.fixture(autouse=True)
+def hermetic_data_dir(tmp_path, monkeypatch):
+    # run_all and main build the reference from CHUNKS_PATH's directory; left alone
+    # that is the real data/, which no test may read.
+    monkeypatch.setattr(config, "EXPERIENCES_PATH", str(tmp_path / "experiences.jsonl"))
+    monkeypatch.setattr(config, "CHUNKS_PATH", str(tmp_path / "chunks.jsonl"))
+
+
+def write_reference():
+    Path(config.CHUNKS_PATH).write_text(
+        json.dumps({"id": "ref::0", "text": "trusted", "trusted": True}) + chr(10), encoding="utf-8")
+
+
 class FakeRetriever:
     def __init__(self, chunks=None):
         self.chunks = chunks if chunks is not None else REAL_TOP5
@@ -212,6 +225,7 @@ def test_main_writes_results_outside_the_wiped_dir_and_prints_on_cp1252(tmp_path
     monkeypatch.setattr("app.llm.answer", make_llm("\u4e2d").answer)
     monkeypatch.setattr("app.llm.chat", fake_judge_chat)
     monkeypatch.setattr(sys, "stdout", io.TextIOWrapper(io.BytesIO(), encoding="cp1252"))
+    write_reference()
 
     assert mod.main() == 0
 
@@ -238,6 +252,7 @@ def test_main_keeps_completed_trials_on_disk_when_a_later_call_fails(tmp_path, m
         return {"answer": f"answer {len(calls)}", "citations": []}
 
     monkeypatch.setattr("app.llm.answer", flaky_answer)
+    write_reference()
 
     with pytest.raises(RuntimeError):  # the error still propagates: exit code stays non-zero
         mod.main()
@@ -255,7 +270,7 @@ def test_make_carrier_is_untrusted():
 def test_class1_gate_on_uses_real_trusted_reference(tmp_path, monkeypatch):
     sentinel = object()
     seen = {}
-    real_dir = Path(config.EXPERIENCES_PATH).parent
+    real_dir = Path(config.CHUNKS_PATH).parent
 
     def fake_reference(data_dir):
         seen["ref_dir"] = Path(data_dir)
@@ -273,3 +288,30 @@ def test_class1_gate_on_uses_real_trusted_reference(tmp_path, monkeypatch):
 
     assert seen["reference"] is sentinel
     assert seen["ref_dir"] == real_dir
+
+
+def test_empty_reference_stops_main_before_any_spend(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(mod, "TRIAL_DIR", tmp_path / "trial")
+    monkeypatch.setattr(mod, "RESULTS_DIR", tmp_path / "results")
+
+    def boom(*a, **k):
+        raise AssertionError("spent something before the empty-reference guard")
+
+    class BoomRetriever:
+        def __init__(self):
+            boom()
+
+    monkeypatch.setattr("app.retrieval.Retriever", BoomRetriever)
+    monkeypatch.setattr("app.llm.answer", boom)
+    monkeypatch.setattr("app.llm.chat", boom)
+    monkeypatch.setattr(mod.shutil, "rmtree", boom)
+    assert mod.main() == 1  # no chunks.jsonl under tmp_path: empty reference
+    assert "Task 43" in capsys.readouterr().err
+
+
+def test_gate_off_arm_needs_no_reference(tmp_path):
+    # The guard lives in main: run_all with an empty reference still runs both arms.
+    from gate.reference import ReferenceIndex
+    out = mod.run_all(FakeRetriever(), make_llm(), tmp_path / "trial", chat=fake_judge_chat,
+                      reference=ReferenceIndex([]))
+    assert len(out) == 10

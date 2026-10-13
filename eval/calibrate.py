@@ -11,9 +11,14 @@ from pathlib import Path
 from eval.fpr import dedupe_by_item_id
 from eval.judge_fpr import top_signal
 from gate.policy import DEFAULT_POLICY
+from gate.signals.judge import UNPARSEABLE_SUSPICION
 
 PRIMARY_CLASSES = {"judge": (1, 3), "corroborate": (2,)}
 BUDGET = 0.02
+# Matched by prefix: neither signal exposes the text as a constant.
+UNPARSEABLE_PREFIXES = ("judge reply could not be parsed", "corroborate reply could not be parsed")
+# Stores whose quarantine band each signal's hard threshold must sit above.
+SIGNAL_STORES = {"judge": ("corpus", "experience"), "corroborate": ("corpus",)}
 
 CALIBRATION = Path("data/phase4_screen/calibration/results.json")
 CLEAN_EXPERIENCE = Path("data/phase4_screen/clean_experience/results.json")
@@ -22,7 +27,9 @@ R5_AUDIT = Path("data/phase3_r5/gate_audit.jsonl")
 
 
 def signal_scores(rows: list[dict], signal: str) -> list[float]:
-    return [s["score"] for r in rows for s in r["signals"] if s["signal"] == signal]
+    # An unparseable reply scores a fixed 0.6, which says nothing about the text.
+    return [s["score"] for r in rows for s in r["signals"] if s["signal"] == signal
+            and not s.get("reason", "").startswith(UNPARSEABLE_PREFIXES)]
 
 
 def propose_hard_threshold(attack_scores: list[float], clean_scores: list[float]) -> float | None:
@@ -104,9 +111,12 @@ def main(calibration: Path = CALIBRATION, clean_experience: Path = CLEAN_EXPERIE
         attack = signal_scores([r for r in calib if r["class"] in classes], signal)
         clean = signal_scores(clean_by_signal[signal], signal)
         proposed = propose_hard_threshold(attack, clean)
+        edge = min(1 - DEFAULT_POLICY.thresholds[st].quarantine_below for st in SIGNAL_STORES[signal])
         out[signal] = {"proposed": proposed, "clean_max": max(clean, default=None),
                        "clean_n": len(clean), "attack_n": len(attack),
-                       "separable": proposed is not None}
+                       "separable": proposed is not None,
+                       "below_unparseable": proposed is not None and proposed <= UNPARSEABLE_SUSPICION,
+                       "below_band_edge": proposed is not None and proposed < edge}
     attack_rows = [r for r in calib if r["class"] != "clean"]
     for store in DEFAULT_POLICY.thresholds:
         out[store] = band_report(r5_rows + s3_rows + exp_rows, attack_rows, store)

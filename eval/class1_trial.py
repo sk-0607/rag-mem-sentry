@@ -20,6 +20,7 @@ gate is isolated from planner variance and each arm costs one `generate`.
 import json
 import os
 import shutil
+import sys
 import types
 from pathlib import Path
 
@@ -136,7 +137,8 @@ def run_trial(sample, retriever, llm_module, read_gate) -> dict:
     }
 
 
-def run_all(retriever, llm_module, trial_dir, chat=None, on_trial=None) -> list[dict]:
+def run_all(retriever, llm_module, trial_dir, chat=None, on_trial=None,
+            reference=None) -> list[dict]:
     """Every sample, gate off then gate on. The seam a zero-cost smoke test
     injects through: a fake `llm_module` and a fake judge `chat`.
 
@@ -148,7 +150,8 @@ def run_all(retriever, llm_module, trial_dir, chat=None, on_trial=None) -> list[
     trial_dir.mkdir(parents=True, exist_ok=True)
     # The reference comes from the real corpus, not trial_dir: that directory is
     # wiped above and holds no chunks.jsonl, which would leave S3 abstaining.
-    reference = default_reference(Path(config.EXPERIENCES_PATH).parent)
+    if reference is None:
+        reference = default_reference(Path(config.CHUNKS_PATH).parent)
     gate = default_read_gate(trial_dir, chat=chat, reference=reference)
     results = []
     for sample in SAMPLES:
@@ -160,6 +163,14 @@ def run_all(retriever, llm_module, trial_dir, chat=None, on_trial=None) -> list[
 
 
 def main() -> int:
+    # Before any retrieval, wipe or LLM call: with no trusted set S3 abstains on
+    # everything and the trial would spend its budget measuring a gate without S3.
+    reference = default_reference(Path(config.CHUNKS_PATH).parent)
+    if len(reference) == 0:
+        print("trusted reference is empty: re-ingest with trust flags first (Task 43)",
+              file=sys.stderr)
+        return 1
+
     from app import llm
     from app.retrieval import Retriever
 
@@ -177,7 +188,8 @@ def main() -> int:
     # Written after every trial, `complete` false until the last: a quota error
     # propagates (exit code stays non-zero) but the finished trials are on disk
     # and the partial file cannot be mistaken for a finished run.
-    trials = run_all(Retriever(), llm, TRIAL_DIR, on_trial=lambda t: save(t, False))
+    trials = run_all(Retriever(), llm, TRIAL_DIR, on_trial=lambda t: save(t, False),
+                     reference=reference)
     results = save(trials, True)
     # Default ensure_ascii: a cp1252 Windows console raises on any model output
     # outside cp1252, after the file is written, turning a good run into exit 1.

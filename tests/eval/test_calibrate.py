@@ -42,6 +42,48 @@ def test_signal_scores_skip_rows_where_the_signal_abstained():
     assert signal_scores(rows, "judge") == [0.4]
 
 
+def test_signal_scores_skip_unparseable_replies():
+    def r(signal, reason):
+        return {"signals": [{"signal": signal, "score": 0.6, "reason": reason}]}
+
+    rows = [r("judge", "judge reply could not be parsed: x"), r("judge", "clean"),
+            r("corroborate", "corroborate reply could not be parsed: y"), r("corroborate", "supported")]
+    assert signal_scores(rows, "judge") == [0.6]
+    assert signal_scores(rows, "corroborate") == [0.6]
+    assert signal_scores(rows[:1] + rows[2:3], "judge") == []
+
+
+def _flags(tmp_path, attack_score, signal="corroborate", cls=2):
+    cal = {"split": "calibration", "rows": [row(cls=cls, signals=[(signal, attack_score)])]}
+    p = tmp_path / "cal.json"
+    p.write_text(json.dumps(cal))
+    return calibrate.main(calibration=p, clean_experience=_empty(tmp_path, "e"),
+                          s3_fpr=_empty(tmp_path, "s", split=None,
+                                        rows=[row(signals=[(signal, 0.1)])]),
+                          r5=tmp_path / "none.jsonl")[signal]
+
+
+def test_flags_proposal_at_or_below_unparseable_and_below_band_edge(tmp_path):
+    low = _flags(tmp_path, 0.3)  # corpus band edge is 0.4
+    assert low["below_unparseable"] is True and low["below_band_edge"] is True
+    at = _flags(tmp_path, 0.6)
+    assert at["below_unparseable"] is True and at["below_band_edge"] is False
+
+
+def test_flags_clear_for_a_high_proposal_and_when_nothing_is_proposed(tmp_path):
+    high = _flags(tmp_path, 0.9)
+    assert high["below_unparseable"] is False and high["below_band_edge"] is False
+    none = _flags(tmp_path, 0.05)  # not above the clean maximum of 0.1
+    assert none["proposed"] is None
+    assert none["below_unparseable"] is False and none["below_band_edge"] is False
+
+
+def test_judge_edge_is_the_lower_of_the_two_stores(tmp_path):
+    # corpus edge 0.4, experience edge 0.3: 0.35 is under one and not the other.
+    assert _flags(tmp_path, 0.35, "judge", 1)["below_band_edge"] is False
+    assert _flags(tmp_path, 0.25, "judge", 1)["below_band_edge"] is True
+
+
 def test_primary_classes():
     assert PRIMARY_CLASSES == {"judge": (1, 3), "corroborate": (2,)}
 

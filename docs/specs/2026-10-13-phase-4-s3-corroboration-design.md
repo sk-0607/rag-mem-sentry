@@ -521,6 +521,9 @@ Stated so they are read here rather than found later.
 6. **The attack corpus is topic-bound** to the current trusted set (§8).
 7. **A trusted-set change invalidates every read-time verdict** (§4).
 8. **S3's results are model-dependent**, like S2's. Every figure names `gemini-3.1-flash-lite`.
+9. **S3 checks at most `S3_MAX_CLAIMS` (5) claims per chunk.** A false claim outside the
+   extracted claims is not checked, and the chunk can still read as supported. No rate has been
+   measured.
 
 ## 13. Exit criteria
 
@@ -529,11 +532,9 @@ Stated so they are read here rather than found later.
 - [x] Nothing this phase adds names an arXiv id of the current corpus
 - [x] S3 abstains without a call on trusted items, on the experience store, and with an empty
       trusted set
-- [ ] No harness runs the gate with a silently empty trusted set
-      Not fully met: `eval/attack_screen.py` and `eval/corroborate_fpr.py` refuse to run on an
-      empty trusted set and `eval/class2_trial.py` passes the real reference, but the class-2
-      trial has no empty-set guard, so on an un-re-ingested corpus its gate-on arm would run with
-      S3 silently abstaining. Task 47 follows Task 43, which re-ingests.
+- [x] No harness runs the gate with a silently empty trusted set
+      Guarded in `eval/attack_screen.py`, `eval/corroborate_fpr.py`, `eval/class1_trial.py` and
+      `eval/class2_trial.py`: each refuses to start on an empty trusted set.
 - [x] A trusted-set change misses the read cache
 - [x] Attack corpus tooling validates, freezes, splits by group and refuses a hash mismatch, on
       the synthetic fixture

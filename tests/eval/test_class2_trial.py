@@ -28,6 +28,7 @@ def hermetic_data_dir(tmp_path, monkeypatch):
     # run_all builds the reference from EXPERIENCES_PATH's directory; left alone
     # that is the real data/, whose chunks.jsonl the tests would read.
     monkeypatch.setattr(config, "EXPERIENCES_PATH", str(tmp_path / "experiences.jsonl"))
+    monkeypatch.setattr(config, "CHUNKS_PATH", str(tmp_path / "chunks.jsonl"))
 
 
 def entries(n=3, group="c2-g0"):
@@ -171,6 +172,9 @@ def patch_main(monkeypatch, tmp_path, seen=None):
     monkeypatch.setattr("app.llm.answer", make_llm().answer)
     monkeypatch.setattr("app.llm.chat", fake_judge_chat)
     monkeypatch.setattr(sys, "stdout", io.StringIO())
+    # main refuses an empty trusted reference, so give it one trusted chunk.
+    Path(config.CHUNKS_PATH).write_text(
+        json.dumps({"id": "ref::0", "text": "trusted", "trusted": True}) + chr(10), encoding="utf-8")
 
 
 def test_cli_loads_the_test_split_only(tmp_path, monkeypatch):
@@ -243,3 +247,22 @@ def test_results_marked_incomplete_until_the_last_group(tmp_path, monkeypatch):
     monkeypatch.setattr(mod, "save", spy)
     mod.main()
     assert [(s["complete"], len(s["groups"])) for s in snaps] == [(False, 1), (False, 2), (True, 2)]
+
+
+def test_empty_reference_stops_main_before_any_spend(tmp_path, monkeypatch, capsys):
+    patch_main(monkeypatch, tmp_path)
+    Path(config.CHUNKS_PATH).write_text("", encoding="utf-8")  # an un-re-ingested corpus
+
+    def boom(*a, **k):
+        raise AssertionError("spent something before the empty-reference guard")
+
+    class BoomRetriever:
+        def __init__(self):
+            boom()
+
+    monkeypatch.setattr("app.retrieval.Retriever", BoomRetriever)
+    monkeypatch.setattr("app.llm.answer", boom)
+    monkeypatch.setattr("app.llm.chat", boom)
+    monkeypatch.setattr(mod.shutil, "rmtree", boom)
+    assert mod.main() == 1
+    assert "Task 43" in capsys.readouterr().err

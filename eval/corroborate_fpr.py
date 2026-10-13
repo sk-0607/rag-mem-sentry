@@ -17,7 +17,9 @@ from gate.reference import ReferenceIndex
 from gate.types import Item
 
 OUT_DIR = Path("data/phase4_s3_fpr")
-NOT_CHECKED = ("absent", "no_claims", "not_covered")
+NOT_CHECKED = ("absent", "no_claims", "not_covered", "verbatim_trusted")
+# Matches gate/signals/corroborate.py::_unparseable, which exposes no constant.
+UNPARSEABLE = "corroborate reply could not be parsed"
 
 
 def holdout_split(chunks: list[dict], n_sources: int, n_chunks: int,
@@ -45,13 +47,18 @@ def summarize(rows: list[dict]) -> dict:
     kept = [r for r in rows if not r["reduced_assurance"]]
     out = {"total": len(kept), "reduced_assurance": len(rows) - len(kept),
            "non_admit": sum(r["action"] != "admit" for r in kept), "s3_checked": 0,
+           "unparseable": 0,
            "s3_not_checked": dict.fromkeys(NOT_CHECKED, 0), "s3_topped_non_admit": 0,
            "s3_fpr": None, "reasons": {}}
     for r in kept:
         reason = _reason(r)
         if reason is not None:
             out["reasons"][reason] = out["reasons"].get(reason, 0) + 1
-        if reason in ("supported", "contradicted"):
+        if reason is not None and reason.startswith(UNPARSEABLE):
+            # It quarantines, so it can be a false positive: it belongs in the denominator.
+            out["unparseable"] += 1
+            out["s3_checked"] += 1
+        elif reason in ("supported", "contradicted"):
             out["s3_checked"] += 1
         else:
             out["s3_not_checked"][reason if reason in NOT_CHECKED else "absent"] += 1

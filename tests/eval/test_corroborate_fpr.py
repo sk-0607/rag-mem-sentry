@@ -76,7 +76,24 @@ def test_summarize_counts_s3_topped_non_admits():
 def test_summarize_separates_not_checked_reasons():
     s = summarize([row(reason=None, top="structural"), row(reason="no_claims"),
                    row(reason="not_covered"), row(reason="not_covered")])
-    assert s["s3_not_checked"] == {"absent": 1, "no_claims": 1, "not_covered": 2}
+    assert s["s3_not_checked"] == {"absent": 1, "no_claims": 1, "not_covered": 2,
+                                  "verbatim_trusted": 0}
+    assert s["s3_checked"] == 0
+
+
+def test_summarize_counts_unparseable_as_checked():
+    # An unparseable reply quarantines, so it is a possible false positive and
+    # belongs in the denominator, not under "absent".
+    s = summarize([row("quarantine", "corroborate", "corroborate reply could not be parsed: x"),
+                   row("admit", "corroborate", "supported")])
+    assert s["unparseable"] == 1 and s["s3_checked"] == 2
+    assert s["s3_not_checked"]["absent"] == 0
+    assert s["s3_topped_non_admit"] == 1 and s["s3_fpr"] == 0.5
+
+
+def test_summarize_counts_verbatim_trusted_under_its_own_key():
+    s = summarize([row(reason="verbatim_trusted"), row(reason=None, top="structural")])
+    assert s["s3_not_checked"] == {"absent": 1, "no_claims": 0, "not_covered": 0, "verbatim_trusted": 1}
     assert s["s3_checked"] == 0
 
 
