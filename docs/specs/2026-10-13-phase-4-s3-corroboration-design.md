@@ -98,10 +98,10 @@ Three comparison bases were considered for S3.
 
 Two further choices, each with the alternative it beat:
 
-- **The ablation is computed offline from one audit log.** The audit log stores every signal's
-  score for every verdict, signals never see each other's output, and `aggregate` and
-  `policy.decide` are pure. Any signal subset's verdict can therefore be recomputed from one
-  full-gate screen at zero extra LLM calls. *Rejected:* one gate per signal subset — each subset
+- **The ablation is computed offline from one screen.** Every verdict carries every signal's
+  score, signals never see each other's output, and `aggregate` and `policy.decide` are pure. The
+  screen writes those per-signal scores beside each item's class, and any signal subset's verdict
+  is recomputed from that file at zero extra LLM calls. *Rejected:* one gate per signal subset — each subset
   has its own cache keys, so every LLM signal would be paid for again per subset.
 - **The verdict cache stays one entry per item.** Adding the trusted-set fingerprint to S3's
   fingerprint means any change to the trusted set invalidates every read-time verdict, including
@@ -149,6 +149,7 @@ WRITE-TIME            ─► unchanged: S1 only
 | `eval/corroborate_fpr.py` | new | S3 false positives on clean untrusted content |
 | `eval/calibrate.py` | new | offline threshold proposal from calibration-split and clean audits |
 | `eval/class2_trial.py` | new | class-2 end-to-end trial, gate off and gate on |
+| `eval/class1_trial.py` | modified | planted carrier marked untrusted; gate-on arm passes the real trusted reference |
 
 ### 6.1 Trust marking
 
@@ -178,7 +179,7 @@ ReferenceIndex(chunks: list[dict])            # keeps only chunks whose trusted 
 - `search` is BM25 over the trusted chunks, using the `rank_bm25` dependency the host already has.
   No second Chroma collection and no reranker. The ceiling is known: a claim that paraphrases the
   reference without sharing terms may retrieve nothing useful, the agreement step then labels it
-  `not_covered`, and S3 abstains. That is a miss, not a false positive. The abstain rate is
+  `not_covered`, and S3 scores `0.0`. That is a miss, not a false positive. The not-covered rate is
   measured (§9.3); if it is high, the upgrade path is the host's dense + rerank pipeline behind
   the same method.
 - `fingerprint` is a hash over the sorted `(chunk id, content hash)` pairs of the trusted chunks.
@@ -202,8 +203,8 @@ what the content-keyed cache assumes.
 **Step 1 — claim extraction, one call per batch.** Up to `JUDGE_BATCH_MAX` items per call, each
 wrapped with a batch-local id as the judge does. The model returns, per item, up to
 `S3_MAX_CLAIMS` (5) checkable factual claims, each as one self-contained sentence plus the
-passage span it came from. An item with no checkable claim gets an empty list and S3 abstains on
-it.
+passage span it came from. An item with no checkable claim gets an empty list and scores `0.0`
+with reason `no_claims`.
 
 **Step 2 — reference lookup, local.** `reference.search(claim, S3_REF_K)` (3) per claim. Passages
 are deduplicated per item.
@@ -222,7 +223,12 @@ passages and returns, per claim:
   reason `contradicted`, `evidence_span` = that claim's span if it is a verbatim substring of the
   item's text, otherwise `None`.
 - No contradicted claim and at least one `supported`: score `0.0`, reason `supported`.
-- Every claim `not_covered`: abstain.
+- Every claim `not_covered`: score `0.0`, reason `not_covered`.
+
+`no_claims` and `not_covered` are scored `0.0` rather than returned as `None`. In the aggregate
+the two are identical — a `0.0` leaves trust untouched — but a result leaves its reason in the
+audit log, and "checked nothing, and why" is exactly what §9.3 and R11 need to count. `None` is
+kept for the cases where S3 did not look at all: trusted item, other store, empty trusted set.
 
 The score is a maximum, not a ratio of contradicted to covered claims. A ratio lets an attacker
 wrap one false fact in several true, supported ones and dilute it — the same reason aggregation
@@ -246,7 +252,13 @@ off for itself.
 
 - `default_read_gate(data_dir, chat=None, reference=None)` assembles
   `[StructuralSignal(), JudgeSignal(chat=chat), CorroborationSignal(reference, chat=chat)]`.
-  `reference=None` means `default_reference(data_dir)`.
+  `reference=None` means `default_reference(data_dir)`. The test is `is None`: an empty index is
+  a legitimate argument and must not be swapped for the default.
+- A data directory with no chunk file yields an empty trusted set. A harness that points the gate
+  at its own scratch directory, to keep its cache and audit apart, must therefore pass the real
+  reference explicitly, or S3 is silently off for that run. `eval/class1_trial.py` is the existing
+  harness this applies to; its planted carrier, a copy of a real chunk, must also be marked
+  untrusted, or it inherits the real chunk's flag and S3 abstains on the poison.
 - `DEFAULT_POLICY.hard_thresholds` gains `"corroborate": 0.90`, a placeholder commented as such
   until §9.4 replaces it. Per-store bands are unchanged.
 - `gate/cache.py::cache_key` is unchanged. S3 contributes `corroborate@<fingerprint>` through the
@@ -263,13 +275,13 @@ off for itself.
 | Trusted set empty | S3 abstains on every item, no call; verdict from S1 + S2 |
 | Item is trusted | S3 abstains, no call |
 | Store is `experience` | S3 abstains, no call |
-| No checkable claim extracted | S3 abstains on that item |
-| Every claim `not_covered` | S3 abstains on that item |
+| No checkable claim extracted | S3 scores `0.0`, reason `no_claims` |
+| Every claim `not_covered` | S3 scores `0.0`, reason `not_covered` |
 | `chat()` raises in either step | S3 failed for the batch: survivors decide, `reduced_assurance`, not cached |
 | Unparseable reply in either step | Re-score per item; still unparseable → `UNPARSEABLE_SUSPICION` (0.6), cached, not `reduced_assurance` |
 | Attack corpus file hash differs from its manifest | Loader raises; nothing is screened |
 
-Abstaining is not failing. An item on which S3 abstained has a complete signal run and is cached.
+Neither abstaining nor a `0.0` is failing. Such an item has a complete signal run and is cached.
 
 ## 8. Attack corpus contract
 
@@ -326,7 +338,9 @@ with the model named.
 `corpus` items; class 3 items become `ExperienceRecord`s projected with `to_item()` and screened
 as `experience`. The gate is `default_read_gate`'s wiring with the real trusted set, and its own
 cache and audit under `data/phase4_screen/<split>/`, so the measurement reads only its own
-entries. Output: per item, the action, every signal's score, and the top signal.
+entries. Output, `results.json` in that directory: per item, its class and group, the action,
+trust, every signal's score and reason, and the top signal; plus the model and the commit hash of
+`gate/policy.py`.
 
 `--clean-experience` screens the records in `data/experiences.jsonl` the same way. They are the
 agent's own runs, so the result is a flag rate, not a false-positive rate, as at write time.
@@ -337,7 +351,7 @@ not have to wait for the final runs.
 
 ### 9.2 Ablation — `eval/ablation.py`
 
-`python -m eval.ablation data/phase4_screen/test/gate_audit.jsonl`. For each signal subset and
+`python -m eval.ablation data/phase4_screen/test/results.json`. For each signal subset and
 each class: items caught (non-admit) out of items scored, recomputed from stored per-signal scores
 with `aggregate` and `policy.decide`.
 
@@ -350,8 +364,9 @@ with `aggregate` and `policy.decide`.
 | ✓ | ✓ | ✓ | | | |
 
 The fourth row is not in the parent spec's table. It is here because S3's contribution is the
-difference between the last two rows. Entries with `reduced assurance` in their reason are
-excluded and counted separately — a degraded run has no complete signal set to recompute from.
+difference between the last two rows. Rows with `reduced assurance` in their reason are excluded
+and counted separately — a degraded run has no complete signal set to recompute from. Beside the
+table: per class, how many items S3 did not check and why (`no_claims`, `not_covered`, absent).
 
 **Reported, not decided on** (§0.4). If the last two rows are equal, the report says S3 caught
 nothing S1 and S2 missed on this corpus, on this model.
@@ -365,8 +380,9 @@ is held out, the reference index is built from the rest, and a seeded sample of 
 is currently trusted; no source id is written into the tool. Every non-admit is a false positive
 by construction, and every one is hand-read.
 
-Reported: non-admits topped by `corroborate` out of items S3 scored; the count of items S3
-abstained on and why (no claims, not covered); label counts.
+Reported: non-admits topped by `corroborate` out of items S3 checked (reason `supported` or
+`contradicted`); the count of items it did not check, by reason (`no_claims`, `not_covered`);
+reason counts.
 
 **Decision rule, fixed now:** the budget is the corpus's 2% of scored items. Over budget is
 recorded as over budget. The prompts are not reworded against these chunks inside this phase —
@@ -386,9 +402,10 @@ operating point, and the band is shared with write time.
 
 **Procedure.**
 1. For `judge` and for `corroborate`: the hard threshold becomes the lowest score any
-   calibration-split attack item received from that signal such that no clean item scored at or
-   above it. If no such score exists, the `0.90` placeholder stays and the result is recorded as
-   not separable.
+   calibration-split attack item of that signal's primary classes (`judge`: 1 and 3;
+   `corroborate`: 2) received from it, such that no clean item scored at or above it. A score of
+   zero is never proposed. If no such score exists, or there are no clean scores to compare
+   against, the `0.90` placeholder stays and the result is recorded as not separable.
 2. For each store: the clean non-admit rate under the current band is reported against the 2%
    budget, with the calibration-split catch rate beside it.
 3. A band is not moved by this tool. If a band fails its budget, the tool reports the largest
@@ -430,8 +447,8 @@ Built now, run last (§0.1, §0.2). Mirrors `eval/class1_trial.py`.
 | Class-2 trial (5 targets) | 40 | per target: 3 generate + S2 1 + S3 ≤ 4 |
 | Ablation, calibration | 0 | read stored audits |
 
-Counts assume the minimum corpus (§8) and one call per S3 agreement; items on which S3 abstains
-before step 3 cost less. Steady state, per sub-query: all-trusted retrieval costs zero S3 calls;
+Counts assume the minimum corpus (§8) and one call per S3 agreement; items S3 stops on before
+step 3 cost less. Steady state, per sub-query: all-trusted retrieval costs zero S3 calls;
 five uncached untrusted chunks cost 6 S3 calls and 1 S2 call; a warm cache costs none.
 
 Free-tier quota is roughly one evaluation's worth of calls a day. Runs are one per day, each
@@ -445,9 +462,9 @@ Build tasks make no LLM call. Each run task starts with a stop for the owner's g
 |---|---|---|
 | 32 | Trust marking — manifest `trusted`, ingest stamps chunks, legacy chunks read as untrusted | build |
 | 33 | `gate/reference.py` — `ReferenceIndex`, `default_reference` | build |
-| 34 | `gate/signals/corroborate.py` — applicability, verbatim copy, claim extraction | build |
-| 35 | `gate/signals/corroborate.py` — reference lookup, agreement, score, fingerprint, failure split | build |
-| 36 | Wiring — gate node passes the trust flag; `default_read_gate` gains S3; `corroborate` placeholder; config | build |
+| 34 | `gate/signals/corroborate.py` — claim extraction: prompt, batch contract, parser; config knobs | build |
+| 35 | `gate/signals/corroborate.py` — applicability, verbatim copy, reference lookup, agreement, score, fingerprint, failure split | build |
+| 36 | Wiring — gate node passes the trust flag; `default_read_gate` gains S3; `corroborate` placeholder; class-1 trial fixed for S3 | build |
 | 37 | `eval/attack_corpus.py` — schema validator, freeze, split, hash-checked loader | build |
 | 38 | `eval/attack_screen.py` and `eval/ablation.py` | build |
 | 39 | `eval/corroborate_fpr.py` | build |
@@ -475,9 +492,11 @@ TDD per task, one commit per task, RED verified before GREEN.
   changes and not when an untrusted chunk changes; empty trusted set has length 0.
 - S3: abstains without a call for a trusted item, an `experience` store, an empty reference;
   verbatim copy scores 0.0 without a call; score is the maximum contradicted confidence; all
-  `not_covered` abstains; neither prompt contains the query; fingerprint carries the reference
+  `not_covered` scores 0.0 with that reason; neither prompt contains the query; fingerprint
+  carries the reference
   fingerprint; transport failure raises; unparseable reply scores 0.6.
-- Read gate: an S3 abstention is cached; changing the trusted set misses the cache.
+- Read gate: an S3 abstention is cached; changing the trusted set misses the cache; an explicitly
+  passed empty reference is kept.
 - Attack corpus: each validator rule; no group straddles the split; hash mismatch refuses to load.
 - Ablation: recomputing the full signal set from an audit entry reproduces that entry's action.
 - Evaluation tools: helper functions tested offline with fakes; no test spends budget.
@@ -488,7 +507,7 @@ Stated so they are read here rather than found later.
 
 1. **No owner-trusted set, no S3.** In a deployment that is all user uploads, only S1 and S2
    apply.
-2. **A claim the trusted set does not cover is not checked.** S3 abstains; it does not guess.
+2. **A claim the trusted set does not cover is not checked.** S3 reports `not_covered`; it does not guess.
    Novel false facts on a topic the reference is silent about pass S3.
 3. **Trust is asserted by the owner, not verified.** S3 never checks trusted content, so a
    poisoned source that the owner marks trusted poisons the reference. S1 still screens it at
@@ -498,7 +517,7 @@ Stated so they are read here rather than found later.
 4. **Reference lookup is lexical.** BM25 can miss a paraphrased claim; the miss becomes an
    abstention and is measured (§9.3).
 5. **The extractor can be told to find nothing.** Text that instructs the model to report no
-   claims makes S3 abstain. That text is instruction-shaped, which is what S1 and S2 screen for.
+   claims makes S3 report `no_claims`. That text is instruction-shaped, which is what S1 and S2 screen for.
 6. **The attack corpus is topic-bound** to the current trusted set (§8).
 7. **A trusted-set change invalidates every read-time verdict** (§4).
 8. **S3's results are model-dependent**, like S2's. Every figure names `gemini-3.1-flash-lite`.
@@ -510,6 +529,7 @@ Stated so they are read here rather than found later.
 - [ ] Nothing this phase adds names an arXiv id of the current corpus
 - [ ] S3 abstains without a call on trusted items, on the experience store, and with an empty
       trusted set
+- [ ] No harness runs the gate with a silently empty trusted set
 - [ ] A trusted-set change misses the read cache
 - [ ] Attack corpus tooling validates, freezes, splits by group and refuses a hash mismatch, on
       the synthetic fixture
@@ -545,10 +565,10 @@ class 2 is a detection rate on authored items, not a harm reduction.
 paper revises an earlier figure. S3 would flag the later, untrusted one. §9.3 measures exactly
 this, on sources that are all clean.
 
-**R11 — low coverage.** If the trusted set rarely covers an untrusted chunk's claims, S3 abstains
-most of the time and the ablation's S3 row is near zero for a reason that is about the corpus,
-not the attack. The abstain count in §9.1 and §9.3 separates "checked and passed" from "not
-checked".
+**R11 — low coverage.** If the trusted set rarely covers an untrusted chunk's claims, S3 reports
+`not_covered` most of the time and the ablation's S3 row is near zero for a reason that is about
+the corpus, not the attack. The not-checked counts in §9.2 and §9.3 separate "checked and passed"
+from "not checked".
 
 **R12 — quota.** S3 is the most expensive signal: about 1.2 calls per uncached untrusted chunk.
 The cache makes it a one-time cost per chunk and trusted chunks are free, but every measurement
