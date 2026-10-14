@@ -12,6 +12,7 @@ is the baseline, and judge calls are the difference.
 import json
 import os
 import shutil
+import sys
 import tempfile
 import time
 from collections import Counter
@@ -19,6 +20,10 @@ from contextlib import contextmanager
 from pathlib import Path
 
 from app import config
+from eval.attack_screen import freeze_field
+from eval.freeze_gate import FreezeError, real_data_dir, require_frozen
+from gate.read import default_read_gate
+from gate.reference import default_reference
 
 # Rewritten after every arm, so a quota error mid-run leaves the finished arms
 # on disk. Outside any directory this script wipes.
@@ -92,14 +97,28 @@ def save_results(results):
 
 
 def main(run_agentic=None, gate_factory=None, llm_module=None, questions=None) -> int:
+    # First, before the off arm too: the three arms are one run at one gate state.
+    try:
+        require_frozen()
+    except FreezeError as e:
+        print(e, file=sys.stderr)
+        return 1
+    data_dir = real_data_dir()
+    reference = default_reference(data_dir)
+    if len(reference) == 0:
+        print("trusted reference is empty: re-ingest with trust flags first (Task 43)",
+              file=sys.stderr)
+        return 1
     if run_agentic is None:
         from app.orchestrator import run_agentic as agentic
         from app.retrieval import Retriever
-        from gate.read import default_read_gate
 
         retriever = Retriever()  # built once; every arm retrieves from the same index
         run_agentic = lambda q, read_gate=None: agentic(q, retriever=retriever, read_gate=read_gate)
-        gate_factory = default_read_gate
+    if gate_factory is None:
+        # Only the trusted set is real: the cache stays in run_arms' temp dir, so
+        # on-cold still starts empty and S3 still sees the owner's reference.
+        gate_factory = lambda d: default_read_gate(d, reference=reference)
     if questions is None:
         questions = [qa["question"] for qa in json.load(open("eval/qa_set.json", encoding="utf-8"))]
 
@@ -107,7 +126,7 @@ def main(run_agentic=None, gate_factory=None, llm_module=None, questions=None) -
     config.LLM_MIN_INTERVAL = float(os.getenv("LLM_MIN_INTERVAL", "2"))
     n = int(os.getenv("OVERHEAD_N", "5"))
     results = {"model": config.LLM_MODEL, "llm_min_interval": config.LLM_MIN_INTERVAL,
-               "overhead_n": n, "complete": False, "arms": {}}
+               "overhead_n": n, "complete": False, "freeze": freeze_field(data_dir), "arms": {}}
 
     def on_arm(arms):
         results["arms"] = dict(arms)

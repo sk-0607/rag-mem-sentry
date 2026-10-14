@@ -34,10 +34,14 @@ import argparse
 import json
 import os
 import shutil
+import sys
 from pathlib import Path
 
 from app import config
+from eval.attack_screen import freeze_field
+from eval.freeze_gate import FreezeError, real_data_dir, require_frozen
 from eval.judge_fpr import read_verdict, top_signal
+from gate.reference import default_reference
 from memory.types import ExperienceRecord
 
 TRIAL_DIR = Path("data/poison_trial")
@@ -172,6 +176,21 @@ def main(arm: str) -> int:
     # results file under the typo'd name, after spending the budget.
     if arm not in ("off", "on"):
         raise ValueError(f"arm must be 'off' or 'on', got {arm!r}")
+    # Both arms: `--arm off` and `--arm on` are one comparison only if both ran
+    # against the frozen gate.
+    try:
+        require_frozen()
+    except FreezeError as e:
+        print(e, file=sys.stderr)
+        return 1
+    data_dir = real_data_dir()
+    # TRIAL_DIR is wiped below and holds no chunks.jsonl, so the trusted set comes
+    # from the real data directory; empty, S3 would abstain unseen.
+    reference = default_reference(data_dir)
+    if len(reference) == 0:
+        print("trusted reference is empty: re-ingest with trust flags first (Task 43)",
+              file=sys.stderr)
+        return 1
 
     configure()
 
@@ -184,7 +203,7 @@ def main(arm: str) -> int:
     if arm == "on":
         from gate.read import default_read_gate
 
-        read_gate = default_read_gate(TRIAL_DIR)
+        read_gate = default_read_gate(TRIAL_DIR, reference=reference)
     retriever = Retriever()
     ro = ReadOnlyStore(store)
 
@@ -202,7 +221,7 @@ def main(arm: str) -> int:
 
     # Poisoned arm first, so a quota wall leaves the primary number on disk.
     results = {"arm": arm, "model": config.LLM_MODEL, "gate_on_poison_records": gate_verdicts,
-               "complete": False, "poisoned": [], "control": []}
+               "complete": False, "freeze": freeze_field(data_dir), "poisoned": [], "control": []}
     for t in TRIALS:
         r = run_agentic(t["question"], retriever=retriever, store=ro, read_gate=read_gate)
         # The audit lives under TRIAL_DIR, which the next run wipes, so what the

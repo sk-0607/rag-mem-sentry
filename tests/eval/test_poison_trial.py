@@ -2,10 +2,23 @@ import io
 import json
 import sys
 import types
+from pathlib import Path
 
 import pytest
 
+from app import config
 from eval.experience_poison_trial import TRIALS, ReadOnlyStore, build_poison_store
+
+
+class FakeReference:
+    def __init__(self, n=3):
+        self.n = n
+
+    def __len__(self):
+        return self.n
+
+    def fingerprint(self):
+        return "ref-fp"
 
 
 def test_every_trial_has_a_preregistered_check():
@@ -111,11 +124,18 @@ def offline_main(tmp_path, monkeypatch):
         def entries(self):
             return seen["audit_entries"]
 
-    def fake_default_read_gate(data_dir, chat=None):
+    def fake_default_read_gate(data_dir, chat=None, reference=None):
         seen["events"].append("gate")
-        gate = types.SimpleNamespace(audit=FakeAudit(), data_dir=data_dir)
+        gate = types.SimpleNamespace(audit=FakeAudit(), data_dir=data_dir, reference=reference)
         seen["gates"].append(gate)
         return gate
+
+    seen["reference"] = FakeReference()
+    seen["ref_dirs"] = []
+
+    def fake_reference(data_dir):
+        seen["ref_dirs"].append(Path(data_dir))
+        return seen["reference"]
 
     def recording_build():
         seen["events"].append("build")
@@ -126,6 +146,11 @@ def offline_main(tmp_path, monkeypatch):
     monkeypatch.setattr("gate.read.default_read_gate", fake_default_read_gate)
     monkeypatch.setattr("app.retrieval.Retriever", lambda: None)
     monkeypatch.setattr(mod, "configure", lambda: None)
+    # The real freeze record is checked against the real tree; these tests run as
+    # if the check were clean and the trusted set non-empty.
+    monkeypatch.setattr(mod, "require_frozen", lambda *a, **k: None, raising=False)
+    monkeypatch.setattr(mod, "default_reference", fake_reference, raising=False)
+    monkeypatch.setattr("eval.attack_screen.check", lambda *a, **k: [])
     monkeypatch.setattr(mod, "screen_poison", lambda: [])
     monkeypatch.setattr(mod, "build_poison_store", recording_build)
     monkeypatch.setattr(mod, "TRIAL_DIR", trial_dir)
@@ -312,3 +337,50 @@ def test_a_full_run_ends_complete(offline_main):
     on_disk = json.loads((results_dir / "results-off.json").read_text(encoding="utf-8"))
     assert on_disk["complete"] is True
     assert len(on_disk["poisoned"]) == len(TRIALS) and len(on_disk["control"]) == len(TRIALS)
+
+
+def test_poison_trial_refuses_unclean_freeze_before_building_gate(offline_main, monkeypatch, capsys):
+    from eval.freeze_gate import FreezeError
+    mod, trial_dir, results_dir, _, seen = offline_main
+
+    def unclean(*a, **k):
+        raise FreezeError("gate changed since freeze")
+
+    monkeypatch.setattr(mod, "require_frozen", unclean)
+
+    for arm in ("off", "on"):
+        assert mod.main(arm) != 0
+    assert seen["events"] == [] and seen["calls"] == []
+    assert not results_dir.exists()
+    assert "gate changed" in capsys.readouterr().err
+
+
+def test_poison_trial_records_freeze_field(offline_main):
+    from eval.freeze_gate import FROZEN_GATE
+    mod, _, results_dir, _, _ = offline_main
+
+    assert mod.main("on") == 0
+
+    assert FROZEN_GATE.exists()
+    on_disk = json.loads((results_dir / "results-on.json").read_text(encoding="utf-8"))
+    assert on_disk["freeze"] == {"record": FROZEN_GATE.as_posix(), "differences": []}
+
+
+def test_poison_trial_passes_real_reference(offline_main):
+    mod, trial_dir, _, _, seen = offline_main
+
+    assert mod.main("on") == 0
+
+    assert seen["gates"] and all(g.reference is seen["reference"] for g in seen["gates"])
+    assert seen["ref_dirs"] == [Path(config.CHUNKS_PATH).parent]
+    assert trial_dir not in seen["ref_dirs"]
+
+
+def test_poison_trial_refuses_empty_reference(offline_main):
+    mod, _, results_dir, _, seen = offline_main
+    seen["reference"] = FakeReference(0)
+
+    for arm in ("off", "on"):
+        assert mod.main(arm) != 0
+    assert seen["events"] == [] and seen["calls"] == []
+    assert not results_dir.exists()

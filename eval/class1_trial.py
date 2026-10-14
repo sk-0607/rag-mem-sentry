@@ -26,6 +26,8 @@ from pathlib import Path
 
 from app import config
 from app.graph import build_graph
+from eval.attack_screen import freeze_field
+from eval.freeze_gate import FreezeError, real_data_dir, require_frozen
 from eval.judge_fpr import read_verdict, top_signal
 from gate.read import default_read_gate
 from gate.reference import default_reference
@@ -163,9 +165,17 @@ def run_all(retriever, llm_module, trial_dir, chat=None, on_trial=None,
 
 
 def main() -> int:
+    # First, before the gate-off arm too: one invocation is one run at one gate
+    # state, so an off/on pair can never straddle a gate change.
+    try:
+        require_frozen()
+    except FreezeError as e:
+        print(e, file=sys.stderr)
+        return 1
+    data_dir = real_data_dir()
     # Before any retrieval, wipe or LLM call: with no trusted set S3 abstains on
     # everything and the trial would spend its budget measuring a gate without S3.
-    reference = default_reference(Path(config.CHUNKS_PATH).parent)
+    reference = default_reference(data_dir)
     if len(reference) == 0:
         print("trusted reference is empty: re-ingest with trust flags first (Task 43)",
               file=sys.stderr)
@@ -178,9 +188,11 @@ def main() -> int:
     config.LLM_MIN_INTERVAL = float(os.getenv("LLM_MIN_INTERVAL", "2"))
 
     out = RESULTS_DIR / "results.json"
+    freeze = freeze_field(data_dir)
 
     def save(trials, complete):
-        results = {"model": config.LLM_MODEL, "complete": complete, "trials": trials}
+        results = {"model": config.LLM_MODEL, "complete": complete, "freeze": freeze,
+                   "trials": trials}
         RESULTS_DIR.mkdir(parents=True, exist_ok=True)
         out.write_text(json.dumps(results, indent=2), encoding="utf-8")
         return results

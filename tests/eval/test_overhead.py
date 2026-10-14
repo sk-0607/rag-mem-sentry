@@ -9,6 +9,26 @@ from eval import overhead
 from eval.overhead import count_calls, measure, run_arms
 
 
+class FakeReference:
+    def __init__(self, n=3):
+        self.n = n
+
+    def __len__(self):
+        return self.n
+
+    def fingerprint(self):
+        return "ref-fp"
+
+
+@pytest.fixture(autouse=True)
+def frozen(monkeypatch):
+    # main() checks the real freeze record and builds the real reference; the
+    # tests run as if the check were clean and the trusted set non-empty.
+    monkeypatch.setattr(overhead, "require_frozen", lambda *a, **k: None, raising=False)
+    monkeypatch.setattr(overhead, "default_reference", lambda d: FakeReference(), raising=False)
+    monkeypatch.setattr("eval.attack_screen.check", lambda *a, **k: [])
+
+
 def fake_llm(log=None):
     def chat(messages, client=None, model=None):
         if log is not None:
@@ -136,3 +156,76 @@ def test_main_persists_after_each_arm_and_marks_complete(tmp_path, monkeypatch, 
     assert set(final["arms"]) == {"off", "on-cold", "on-warm"}
     assert "model" in final and "llm_min_interval" in final
     assert json.loads(capsys.readouterr().out)["complete"] is True
+
+
+def main_with_default_gate(monkeypatch, tmp_path, reference=None):
+    """main() with its own gate factory: default_read_gate and default_reference
+    are the module's, so what main hands them is observable."""
+    monkeypatch.setattr(overhead, "RESULTS_DIR", tmp_path / "out")
+    monkeypatch.setenv("OVERHEAD_N", "1")
+    monkeypatch.setattr(config, "LLM_MIN_INTERVAL", 0)
+    reference = reference if reference is not None else FakeReference()
+    seen = {"ref_dirs": [], "gates": []}
+
+    def fake_reference(data_dir):
+        seen["ref_dirs"].append(Path(data_dir))
+        return reference
+
+    def fake_gate(data_dir, chat=None, reference=None):
+        seen["gates"].append((Path(data_dir), sorted(p.name for p in Path(data_dir).iterdir()), reference))
+        return Path(data_dir)
+
+    monkeypatch.setattr(overhead, "default_reference", fake_reference)
+    monkeypatch.setattr(overhead, "default_read_gate", fake_gate, raising=False)
+    log = []
+    llm = fake_llm(log)
+    llm.log = log
+    h = Harness(llm)
+    rc = overhead.main(run_agentic=h.run_agentic, llm_module=llm, questions=["q1"])
+    return rc, seen, reference, llm
+
+
+def test_overhead_refuses_unclean_freeze_before_building_gate(tmp_path, monkeypatch, capsys):
+    from eval.freeze_gate import FreezeError
+
+    def unclean(*a, **k):
+        raise FreezeError("gate changed since freeze")
+
+    monkeypatch.setattr(overhead, "require_frozen", unclean)
+    rc, seen, _, llm = main_with_default_gate(monkeypatch, tmp_path)
+    assert rc != 0
+    assert seen["gates"] == [] and llm.log == []
+    assert not (tmp_path / "out").exists()
+    assert "gate changed" in capsys.readouterr().err
+
+
+def test_overhead_records_freeze_field(tmp_path, monkeypatch):
+    from eval.freeze_gate import FROZEN_GATE
+    rc, _, _, _ = main_with_default_gate(monkeypatch, tmp_path)
+    assert rc == 0
+    assert FROZEN_GATE.exists()
+    on_disk = json.loads((tmp_path / "out" / "results.json").read_text(encoding="utf-8"))
+    assert on_disk["freeze"] == {"record": FROZEN_GATE.as_posix(), "differences": []}
+
+
+def test_overhead_passes_real_reference(tmp_path, monkeypatch):
+    rc, seen, reference, _ = main_with_default_gate(monkeypatch, tmp_path)
+    assert rc == 0
+    assert len(seen["gates"]) == 2
+    assert all(ref is reference for _, _, ref in seen["gates"])
+    assert seen["ref_dirs"] == [Path(config.CHUNKS_PATH).parent]
+
+
+def test_overhead_refuses_empty_reference(tmp_path, monkeypatch):
+    rc, seen, _, llm = main_with_default_gate(monkeypatch, tmp_path, reference=FakeReference(0))
+    assert rc != 0
+    assert seen["gates"] == [] and llm.log == []
+
+
+def test_cold_arm_cache_is_empty_with_real_reference(tmp_path, monkeypatch):
+    rc, seen, reference, _ = main_with_default_gate(monkeypatch, tmp_path)
+    assert rc == 0
+    cold_dir, listing, ref = seen["gates"][0]
+    assert listing == []
+    assert cold_dir != Path(config.CHUNKS_PATH).parent
+    assert ref is reference

@@ -30,6 +30,25 @@ def hermetic_data_dir(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "CHUNKS_PATH", str(tmp_path / "chunks.jsonl"))
 
 
+@pytest.fixture(autouse=True)
+def frozen(monkeypatch):
+    # main() checks the real freeze record; under a tmp CHUNKS_PATH the reference
+    # fingerprint differs, so every main() test runs as if the check were clean.
+    monkeypatch.setattr(mod, "require_frozen", lambda *a, **k: None, raising=False)
+    monkeypatch.setattr("eval.attack_screen.check", lambda *a, **k: [])
+
+
+class FakeReference:
+    def __init__(self, n=3):
+        self.n = n
+
+    def __len__(self):
+        return self.n
+
+    def fingerprint(self):
+        return "ref-fp"
+
+
 def write_reference():
     Path(config.CHUNKS_PATH).write_text(
         json.dumps({"id": "ref::0", "text": "trusted", "trusted": True}) + chr(10), encoding="utf-8")
@@ -315,3 +334,89 @@ def test_gate_off_arm_needs_no_reference(tmp_path):
     out = mod.run_all(FakeRetriever(), make_llm(), tmp_path / "trial", chat=fake_judge_chat,
                       reference=ReferenceIndex([]))
     assert len(out) == 10
+
+
+def no_spend(monkeypatch):
+    calls = []
+
+    def boom(*a, **k):
+        calls.append(a)
+        raise AssertionError("spent something")
+
+    monkeypatch.setattr(mod, "default_read_gate", boom)
+    monkeypatch.setattr("app.llm.answer", boom)
+    monkeypatch.setattr("app.llm.chat", boom)
+    return calls
+
+
+def test_class1_trial_refuses_unclean_freeze_before_building_gate(tmp_path, monkeypatch, capsys):
+    from eval.freeze_gate import FreezeError
+    monkeypatch.setattr(mod, "TRIAL_DIR", tmp_path / "trial")
+    monkeypatch.setattr(mod, "RESULTS_DIR", tmp_path / "results")
+
+    def unclean(*a, **k):
+        raise FreezeError("gate changed since freeze")
+
+    monkeypatch.setattr(mod, "require_frozen", unclean)
+    calls = no_spend(monkeypatch)
+    write_reference()
+
+    assert mod.main() != 0
+    assert calls == []
+    assert not (tmp_path / "results").exists()
+    assert "gate changed" in capsys.readouterr().err
+
+
+def test_class1_trial_records_freeze_field(tmp_path, monkeypatch):
+    results_dir = tmp_path / "results"
+    monkeypatch.setattr(mod, "TRIAL_DIR", tmp_path / "trial")
+    monkeypatch.setattr(mod, "RESULTS_DIR", results_dir)
+    monkeypatch.setattr(config, "LLM_MIN_INTERVAL", 0)
+    monkeypatch.setattr("app.retrieval.Retriever", FakeRetriever)
+    monkeypatch.setattr("app.llm.answer", make_llm().answer)
+    monkeypatch.setattr("app.llm.chat", fake_judge_chat)
+    write_reference()
+
+    assert mod.main() == 0
+
+    from eval.freeze_gate import FROZEN_GATE
+    assert FROZEN_GATE.exists()
+    on_disk = json.loads((results_dir / "results.json").read_text(encoding="utf-8"))
+    assert on_disk["freeze"] == {"record": FROZEN_GATE.as_posix(), "differences": []}
+
+
+def test_class1_trial_passes_real_reference(tmp_path, monkeypatch):
+    monkeypatch.setattr(mod, "TRIAL_DIR", tmp_path / "trial")
+    monkeypatch.setattr(mod, "RESULTS_DIR", tmp_path / "results")
+    monkeypatch.setattr(config, "LLM_MIN_INTERVAL", 0)
+    monkeypatch.setattr("app.retrieval.Retriever", FakeRetriever)
+    monkeypatch.setattr("app.llm.answer", make_llm().answer)
+    monkeypatch.setattr(mod, "SAMPLES", SAMPLES[:1])
+    fake = FakeReference()
+    seen = {"ref_dirs": [], "refs": []}
+
+    def fake_reference(data_dir):
+        seen["ref_dirs"].append(Path(data_dir))
+        return fake
+
+    def fake_gate(data_dir, chat=None, reference=None):
+        seen["refs"].append(reference)
+        return None
+
+    monkeypatch.setattr(mod, "default_reference", fake_reference)
+    monkeypatch.setattr(mod, "default_read_gate", fake_gate)
+
+    assert mod.main() == 0
+    assert seen["refs"] and all(r is fake for r in seen["refs"])
+    assert seen["ref_dirs"] == [Path(config.CHUNKS_PATH).parent]
+    assert tmp_path / "trial" not in seen["ref_dirs"]
+
+
+def test_class1_trial_refuses_empty_reference(tmp_path, monkeypatch):
+    monkeypatch.setattr(mod, "TRIAL_DIR", tmp_path / "trial")
+    monkeypatch.setattr(mod, "RESULTS_DIR", tmp_path / "results")
+    monkeypatch.setattr(mod, "default_reference", lambda d: FakeReference(0))
+    calls = no_spend(monkeypatch)
+
+    assert mod.main() != 0
+    assert calls == []
