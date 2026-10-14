@@ -235,10 +235,15 @@ class CorroborationSignal:
         sent = [(c, f) for c, f in zip(claims, found) if f]
         if not sent:
             return SignalResult("corroborate", 0.0, "not_covered", None)
-        try:
-            verdicts = self.judge_agreement(item, [c for c, _ in sent], [f for _, f in sent])
-        except CorroborationResponseError as e:
-            return _unparseable(str(e))
+        # Same one re-ask as extraction: the Task 44 run lost 2 of 3 false
+        # positives to a single malformed agreement reply.
+        for attempt in range(2):
+            try:
+                verdicts = self.judge_agreement(item, [c for c, _ in sent], [f for _, f in sent])
+                break
+            except CorroborationResponseError as e:
+                if attempt == 1:
+                    return _unparseable(str(e))
         # Maximum, not a ratio: a ratio of contradicted to covered claims lets
         # one false fact hide among several true ones.
         top = None

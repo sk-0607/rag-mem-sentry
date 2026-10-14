@@ -368,9 +368,11 @@ def test_agreement_system_prompt_marks_content_as_untrusted():
 
 
 def assert_unparseable(agreement):
-    fake = FakeChat(reply([claim("c0")]), agreement)
+    # The same bad reply twice: the re-ask is spent before it scores unparseable.
+    fake = FakeChat(reply([claim("c0")]), agreement, agreement)
     r = s3(fake).score_batch(items(1), CTX)[0]
     assert r.score == UNPARSEABLE_SUSPICION and "could not be parsed" in r.reason
+    assert len(fake.calls) == 3
 
 
 def test_agreement_unknown_label_raises_then_scores_unparseable():
@@ -455,6 +457,30 @@ def test_transport_failure_on_extraction_retry_propagates():
 
     with pytest.raises(RuntimeError):
         s3(Second("not json")).score_batch(items(1), CTX)
+
+
+def test_bad_then_good_agreement_reply_uses_the_retry():
+    fake = FakeChat(reply([claim("c0")]), agree(verdict("c0", "supported")), agree(verdict("k0", "contradicted", 0.5)))
+    out = s3(fake).score_batch(items(1), CTX)
+    assert (out[0].reason, out[0].score) == ("contradicted", 0.5)
+    assert len(fake.calls) == 3
+
+
+def test_agreement_retry_sends_the_same_prompt():
+    fake = FakeChat(reply([claim("c0")]), "not json", agree(verdict("k0", "supported")))
+    s3(fake).score_batch(items(1), CTX)
+    assert fake.calls[1] == fake.calls[2]
+
+
+def test_transport_failure_on_agreement_retry_propagates():
+    class Third(FakeChat):
+        def __call__(self, messages, model=None, **kw):
+            if len(self.calls) == 2:
+                raise RuntimeError("down")
+            return super().__call__(messages, model)
+
+    with pytest.raises(RuntimeError):
+        s3(Third(reply([claim("c0")]), "not json")).score_batch(items(1), CTX)
 
 
 def fp(ref_fp="ref-1", **kw):

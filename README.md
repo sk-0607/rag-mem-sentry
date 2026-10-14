@@ -791,8 +791,9 @@ phase.
 
 **What this shows.** Two of the three false positives are not disagreements at all: they are
 agreement replies that failed to parse, which scores `UNPARSEABLE_SUSPICION` (0.6) and
-quarantines by design. The extraction step re-asks once on an unparseable reply; the agreement
-step does not. The third is a real misjudgment, and at score 1.0 it clears the `corroborate`
+quarantines by design. The extraction step re-asked once on an unparseable reply; the agreement
+step did not at the time of this run. It does now, and the rate above has not been re-measured
+with it; the two unparseable verdicts are still in this run's cache. The third is a real misjudgment, and at score 1.0 it clears the `corroborate`
 hard threshold, still the `0.90` placeholder, so it blocks rather than quarantines. At read time a
 block drops the chunk from this query's context and nothing else; no store is changed. The
 sample is 40 chunks from four sources, one seed, one model; it is a small first measurement,
