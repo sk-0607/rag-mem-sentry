@@ -12,13 +12,13 @@
   {"arxiv_id": "2402.07867", "title": "PoisonedRAG: Knowledge Poisoning Attacks on RAG", "trusted": true},
   {"arxiv_id": "1708.06733", "title": "BadNets: Identifying Vulnerabilities in the ML Supply Chain", "trusted": true},
   {"arxiv_id": "1610.05820", "title": "Membership Inference Attacks Against ML Models", "trusted": true},
-  {"arxiv_id": "1712.05526", "title": "Targeted Backdoor Attacks via Data Poisoning", "trusted": true},
-  {"arxiv_id": "2306.05499", "title": "Prompt Injection Attacks Against LLM-Integrated Applications", "trusted": true},
+  {"arxiv_id": "1712.05526", "title": "Targeted Backdoor Attacks via Data Poisoning", "trusted": false},
+  {"arxiv_id": "2306.05499", "title": "Prompt Injection Attacks Against LLM-Integrated Applications", "trusted": false},
   {"arxiv_id": "1602.02697", "title": "Practical Black-Box Attacks Against ML", "trusted": true},
-  {"arxiv_id": "1511.07528", "title": "The Limitations of Deep Learning in Adversarial Settings (JSMA)", "trusted": true},
+  {"arxiv_id": "1511.07528", "title": "The Limitations of Deep Learning in Adversarial Settings (JSMA)", "trusted": false},
   {"arxiv_id": "1608.04644", "title": "Towards Evaluating the Robustness of Neural Networks (C&W)", "trusted": true},
   {"arxiv_id": "2308.03825", "title": "Do Anything Now: Characterizing In-The-Wild Jailbreak Prompts", "trusted": true},
   {"arxiv_id": "2402.06664", "title": "LLM Agents Can Autonomously Hack Websites", "trusted": true},
   {"arxiv_id": "2401.05566", "title": "Sleeper Agents: Training Deceptive LLMs", "trusted": true},
-  {"arxiv_id": "2306.11698", "title": "DecodingTrust: Trustworthiness of GPT Models", "trusted": true}
+  {"arxiv_id": "2306.11698", "title": "DecodingTrust: Trustworthiness of GPT Models", "trusted": false}
 ]
