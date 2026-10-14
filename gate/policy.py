@@ -123,14 +123,15 @@ DEFAULT_POLICY = GatePolicy(
     # This dict, not any attribute on the Signal instance, is what
     # GatePolicy.decide() actually reads.
     #
-    # judge's 0.90 is a placeholder, not calibrated — Phase 4 calibrates it on
-    # the attack corpus's calibration split. 0.90 sits above any plausible
-    # "unsure" judge output, so only a confident judgement hard-blocks.
+    # judge's 0.80 is calibrated (2026-10-14, gemini-flash-lite-latest) on the
+    # attack corpus's calibration split: clean max 0.0 over 60 rows, separable.
+    # It replaced the 0.90 placeholder. Read-through in README "Phase 4:
+    # Calibration".
     #
     # corroborate has no hard threshold and is quarantine-only. Task 44
     # measured 3 / 16 false positives on clean content (2% budget), one of them a
     # misjudged contradiction at 1.0 that the old 0.90 placeholder hard-blocked.
     # A signal that far over budget may hold content back, never block it.
-    hard_thresholds={"structural": 0.93, "judge": 0.90},
+    hard_thresholds={"structural": 0.93, "judge": 0.80},
     quarantine_only=frozenset({"corroborate"}),
 )

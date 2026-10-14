@@ -82,7 +82,7 @@ class JudgeResponseError(ValueError):
 # would let the text switch S2 off for itself. 0.6 gives trust 0.4 alone, which
 # lands in the quarantine band of both stores (corpus block<0.10 / quarantine<0.60,
 # experience block<0.20 / quarantine<0.70) and sits under the judge hard
-# threshold (0.90), so it never blocks irreversibly.
+# threshold (0.80), so it never blocks irreversibly.
 UNPARSEABLE_SUSPICION = 0.6
 
 _FENCE = re.compile(r"^```(?:json)?\s*(.*?)\s*```$", re.DOTALL)

@@ -64,13 +64,13 @@ def test_verdict_carries_the_score_through():
 
 
 def test_judge_at_hard_threshold_blocks():
-    verdict = DEFAULT_POLICY.decide(score_of(("judge", 0.90)), "corpus")
+    verdict = DEFAULT_POLICY.decide(score_of(("judge", 0.80)), "corpus")
     assert verdict.action is Action.BLOCK
 
 
 def test_judge_below_hard_threshold_uses_store_band():
-    verdict = DEFAULT_POLICY.decide(score_of(("judge", 0.89)), "corpus")
-    assert verdict.score.trust == pytest.approx(0.11)
+    verdict = DEFAULT_POLICY.decide(score_of(("judge", 0.79)), "corpus")
+    assert verdict.score.trust == pytest.approx(0.21)
     assert verdict.action is Action.QUARANTINE
 
 

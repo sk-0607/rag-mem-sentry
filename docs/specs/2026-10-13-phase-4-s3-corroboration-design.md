@@ -571,7 +571,8 @@ Stated so they are read here rather than found later.
 - [x] Write-time false-positive rate re-checked after re-ingest (Task 43)
 - [x] S3 false-positive rate on clean untrusted content measured, every flag hand-read (Task 44)
       3 / 16 = 0.1875, over the 2% budget; recorded, prompts not reworded (README).
-- [ ] Thresholds calibrated on the calibration split only and committed (Task 45)
+- [x] Thresholds calibrated on the calibration split only and committed (Task 45; judge 0.80,
+  `gemini-flash-lite-latest`; corpus band over budget at 2 / 40, recorded, not moved)
 - [ ] Ablation table filled from the test split, model named (Task 46)
 - [ ] Class-2 attack success reported at both levels, control / gate off / gate on, whatever the
       numbers are (Task 47)
