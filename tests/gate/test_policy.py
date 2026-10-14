@@ -74,12 +74,36 @@ def test_judge_below_hard_threshold_uses_store_band():
     assert verdict.action is Action.QUARANTINE
 
 
-def test_corroborate_at_hard_threshold_blocks():
-    verdict = DEFAULT_POLICY.decide(score_of(("corroborate", 0.90)), "corpus")
-    assert verdict.action is Action.BLOCK
-
-
 def test_corroborate_below_hard_threshold_uses_store_band():
     verdict = DEFAULT_POLICY.decide(score_of(("corroborate", 0.89)), "corpus")
     assert verdict.score.trust == pytest.approx(0.11)
+    assert verdict.action is Action.QUARANTINE
+
+
+QO_POLICY = GatePolicy(
+    thresholds={"corpus": StoreThresholds(block_below=0.1, quarantine_below=0.6)},
+    hard_thresholds={"s1": 0.95},
+    quarantine_only=frozenset({"s3"}),
+)
+
+
+def test_quarantine_only_signal_alone_quarantines_at_full_suspicion():
+    verdict = QO_POLICY.decide(score_of(("s3", 1.0)), "corpus")
+    assert verdict.action is Action.QUARANTINE
+    assert "s3" in verdict.reason
+
+
+def test_quarantine_only_signal_cannot_tip_others_into_block():
+    # s1 alone would quarantine (trust 0.5); s3 is what takes the product under 0.1.
+    assert QO_POLICY.decide(score_of(("s1", 0.5), ("s3", 0.9)), "corpus").action is Action.QUARANTINE
+
+
+def test_other_signals_still_block_with_a_quarantine_only_signal_present():
+    verdict = QO_POLICY.decide(score_of(("s1", 0.8), ("s2", 0.8), ("s3", 0.9)), "corpus")
+    assert verdict.action is Action.BLOCK
+
+
+def test_default_policy_never_blocks_on_corroborate_alone():
+    assert "corroborate" not in DEFAULT_POLICY.hard_thresholds
+    verdict = DEFAULT_POLICY.decide(score_of(("corroborate", 1.0)), "corpus")
     assert verdict.action is Action.QUARANTINE

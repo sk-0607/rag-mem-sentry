@@ -64,16 +64,18 @@ def _flags(tmp_path, attack_score, signal="corroborate", cls=2):
 
 
 def test_flags_proposal_at_or_below_unparseable_and_below_band_edge(tmp_path):
-    low = _flags(tmp_path, 0.3)  # corpus band edge is 0.4
+    # judge, not corroborate: corroborate is quarantine-only and gets no proposal.
+    low = _flags(tmp_path, 0.25, "judge", 1)  # judge's band edge is 0.3 (experience)
     assert low["below_unparseable"] is True and low["below_band_edge"] is True
-    at = _flags(tmp_path, 0.6)
+    at = _flags(tmp_path, 0.6, "judge", 1)
     assert at["below_unparseable"] is True and at["below_band_edge"] is False
 
 
 def test_flags_clear_for_a_high_proposal_and_when_nothing_is_proposed(tmp_path):
-    high = _flags(tmp_path, 0.9)
+    high = _flags(tmp_path, 0.9, "judge", 1)
+    assert high["proposed"] == 0.9
     assert high["below_unparseable"] is False and high["below_band_edge"] is False
-    none = _flags(tmp_path, 0.05)  # not above the clean maximum of 0.1
+    none = _flags(tmp_path, 0.05, "judge", 1)  # not above the clean maximum of 0.1
     assert none["proposed"] is None
     assert none["below_unparseable"] is False and none["below_band_edge"] is False
 
@@ -99,7 +101,9 @@ def test_attack_scores_use_primary_classes_only(tmp_path):
                          s3_fpr=_empty(tmp_path, "s", split=None,
                                        rows=[row(signals=[("corroborate", 0.1), ("judge", 0.1)])]),
                          r5=tmp_path / "none.jsonl")
-    assert out["corroborate"]["proposed"] == 0.7
+    # corroborate is quarantine-only: its scores are reported, no hard threshold proposed.
+    assert out["corroborate"]["proposed"] is None
+    assert out["corroborate"]["quarantine_only"] is True
     assert out["corroborate"]["attack_n"] == 1
     assert out["judge"]["proposed"] == 0.8
 

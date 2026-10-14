@@ -702,7 +702,9 @@ and none is implied.** The design is
 `JUDGE_MODEL` (`gemini-3.1-flash-lite`), and each needs an explicit go from the project owner
 first.
 
-Until Task 45 runs, `DEFAULT_POLICY.hard_thresholds["corroborate"]` is `0.90`, a placeholder.
+`corroborate` has no hard threshold and is quarantine-only (`DEFAULT_POLICY.quarantine_only`): S3
+can hold a chunk back but never block it, and a block stands only if the other signals alone would
+block. This replaced the `0.90` placeholder after Task 44, below.
 
 The attack corpus is written outside this repository and is not part of it; the harnesses read it
 from `ATTACK_CORPUS_DIR` (default `data/attack_corpus`).
@@ -713,7 +715,7 @@ from `ATTACK_CORPUS_DIR` (default `data/attack_corpus`).
 | Detection screen (`eval/attack_screen.py`) | `python -m eval.attack_screen --split calibration` or `--split test`; `--clean-experience` for the agent's own records | Each corpus item run once through the read gate: action, trust, every signal's score and reason, the top signal, and whether the row ran with reduced assurance. Class 1 and 2 items are screened as untrusted corpus items, class 3 as experience records. | `data/phase4_screen/<split>/results.json` |
 | Ablation (`eval/ablation.py`) | `python -m eval.ablation data/phase4_screen/test/results.json` | Items caught out of items scored, per class, for five signal subsets (S1, S2, S3, S1 + S2, S1 + S2 + S3), recomputed offline from the screen's stored scores. Rows with reduced assurance are excluded and counted. Per class, how many items S3 did not check and why. Report-only: S3 ships whatever it shows. No LLM call. | stdout |
 | S3 false positives (`eval/corroborate_fpr.py`) | `LLM_MIN_INTERVAL=2 python -m eval.corroborate_fpr` | Holds out some trusted sources, marks their chunks untrusted and screens them against the remaining trusted sources. Every non-admit is a false positive by construction. Summary: items checked, items not checked (and why), non-admits, and the S3 false-positive rate. `HOLDOUT_SOURCES` and `HOLDOUT_CHUNKS` set the sample size. | `data/phase4_s3_fpr/results.json` |
-| Calibration (`eval/calibrate.py`) | `python -m eval.calibrate` | A proposed hard threshold for `judge` and `corroborate` from the calibration split only, and a band report per store against the 2% budget. Prints the proposal and writes nothing; a person applies it to `gate/policy.py`. No LLM call. | stdout |
+| Calibration (`eval/calibrate.py`) | `python -m eval.calibrate` | A proposed hard threshold for `judge` from the calibration split only (`corroborate` is quarantine-only: its scores are reported, no threshold proposed), and a band report per store against the 2% budget. Prints the proposal and writes nothing; a person applies it to `gate/policy.py`. No LLM call. | stdout |
 | Class-2 trial (`eval/class2_trial.py`) | `LLM_MIN_INTERVAL=2 python -m eval.class2_trial` | False-fact passages planted in the top-5 for each target, run as `control` (no poison), `off` (poison, no gate) and `on` (poison, read gate). Per target: poison in the context, the group's target answer in the answer (a mechanical text check, no hand judgement), and the signal that excluded each passage. A target whose control answer already holds the target answer is void and not counted. | `data/class2_trial_results/results.json` |
 
 All of it is covered by offline tests with fakes; none of those tests spends budget.
@@ -793,9 +795,10 @@ phase.
 agreement replies that failed to parse, which scores `UNPARSEABLE_SUSPICION` (0.6) and
 quarantines by design. The extraction step re-asked once on an unparseable reply; the agreement
 step did not at the time of this run. It does now, and the rate above has not been re-measured
-with it; the two unparseable verdicts are still in this run's cache. The third is a real misjudgment, and at score 1.0 it clears the `corroborate`
-hard threshold, still the `0.90` placeholder, so it blocks rather than quarantines. At read time a
-block drops the chunk from this query's context and nothing else; no store is changed. The
+with it; the two unparseable verdicts are still in this run's cache. The third is a real misjudgment, and at score 1.0 it cleared the `corroborate`
+hard threshold, then the `0.90` placeholder, so it blocked rather than quarantined. At read time a
+block drops the chunk from this query's context and nothing else; no store is changed. After this
+run S3 was made quarantine-only, so the same score now quarantines. The
 sample is 40 chunks from four sources, one seed, one model; it is a small first measurement,
 not a stable rate.
 
@@ -840,7 +843,7 @@ the three.
 6. **Corpus frozen, calibration split screened, thresholds proposed (Task 45,
    `python -m eval.attack_corpus validate` and `freeze`, then
    `LLM_MIN_INTERVAL=2 python -m eval.attack_screen --split calibration` and `--clean-experience`,
-   then `python -m eval.calibrate`).** Hard thresholds for `judge` and `corroborate` chosen on the
+   then `python -m eval.calibrate`).** A hard threshold for `judge` chosen on the
    calibration split only.
 7. **Test split screened and ablation table (Task 46,
    `LLM_MIN_INTERVAL=2 python -m eval.attack_screen --split test`, then

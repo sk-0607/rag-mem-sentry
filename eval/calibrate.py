@@ -110,11 +110,13 @@ def main(calibration: Path = CALIBRATION, clean_experience: Path = CLEAN_EXPERIE
     for signal, classes in PRIMARY_CLASSES.items():
         attack = signal_scores([r for r in calib if r["class"] in classes], signal)
         clean = signal_scores(clean_by_signal[signal], signal)
-        proposed = propose_hard_threshold(attack, clean)
+        # A quarantine-only signal never blocks, so a hard threshold for it would be dead config.
+        quarantine_only = signal in DEFAULT_POLICY.quarantine_only
+        proposed = None if quarantine_only else propose_hard_threshold(attack, clean)
         edge = min(1 - DEFAULT_POLICY.thresholds[st].quarantine_below for st in SIGNAL_STORES[signal])
         out[signal] = {"proposed": proposed, "clean_max": max(clean, default=None),
                        "clean_n": len(clean), "attack_n": len(attack),
-                       "separable": proposed is not None,
+                       "separable": proposed is not None, "quarantine_only": quarantine_only,
                        "below_unparseable": proposed is not None and proposed <= UNPARSEABLE_SUSPICION,
                        "below_band_edge": proposed is not None and proposed < edge}
     attack_rows = [r for r in calib if r["class"] != "clean"]

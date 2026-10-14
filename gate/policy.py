@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+from gate.score import aggregate
 from gate.types import Action, Score, Verdict
 
 # Wider than any rounding error a handful of noisy-OR multiplications can
@@ -19,6 +20,10 @@ class StoreThresholds:
 class GatePolicy:
     thresholds: dict[str, StoreThresholds]
     hard_thresholds: dict[str, float]
+    # Signals that may quarantine but never block: block holds only if the
+    # other signals alone would block. A cap on the signal's score was the
+    # rejected alternative; it would distort the scores ablation reads.
+    quarantine_only: frozenset[str] = frozenset()
 
     def decide(self, score: Score, store: str) -> Verdict:
         for result in score.results:
@@ -45,7 +50,15 @@ class GatePolicy:
         # Only this comparison gets it — an epsilon slip at the quarantine
         # floor errs toward quarantine, which is releasable.
         if score.trust < limits.block_below - _FLOAT_TOLERANCE:
-            return Verdict(action=Action.BLOCK, score=score, reason=f"trust {score.trust:.2f} below block floor")
+            others = aggregate([r for r in score.results if r.signal not in self.quarantine_only])
+            if others.trust < limits.block_below - _FLOAT_TOLERANCE:
+                return Verdict(action=Action.BLOCK, score=score, reason=f"trust {score.trust:.2f} below block floor")
+            capped = sorted({r.signal for r in score.results if r.signal in self.quarantine_only})
+            return Verdict(
+                action=Action.QUARANTINE,
+                score=score,
+                reason=f"trust {score.trust:.2f} below block floor only through quarantine-only {', '.join(capped)}",
+            )
         if score.trust < limits.quarantine_below:
             return Verdict(action=Action.QUARANTINE, score=score, reason=f"trust {score.trust:.2f} below quarantine floor")
         return Verdict(action=Action.ADMIT, score=score, reason=f"trust {score.trust:.2f} clears thresholds")
@@ -114,6 +127,10 @@ DEFAULT_POLICY = GatePolicy(
     # the attack corpus's calibration split. 0.90 sits above any plausible
     # "unsure" judge output, so only a confident judgement hard-blocks.
     #
-    # corroborate's 0.90 is a placeholder, not calibrated; Task 45 replaces it.
-    hard_thresholds={"structural": 0.93, "judge": 0.90, "corroborate": 0.90},
+    # corroborate has no hard threshold and is quarantine-only. Task 44
+    # measured 3 / 16 false positives on clean content (2% budget), one of them a
+    # misjudged contradiction at 1.0 that the old 0.90 placeholder hard-blocked.
+    # A signal that far over budget may hold content back, never block it.
+    hard_thresholds={"structural": 0.93, "judge": 0.90},
+    quarantine_only=frozenset({"corroborate"}),
 )

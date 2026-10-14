@@ -261,6 +261,10 @@ off for itself.
   untrusted, or it inherits the real chunk's flag and S3 abstains on the poison.
 - `DEFAULT_POLICY.hard_thresholds` gains `"corroborate": 0.90`, a placeholder commented as such
   until §9.4 replaces it. Per-store bands are unchanged.
+  *Superseded 2026-10-14, after Task 44 (3 / 16 false positives, one a 1.0 misjudgment that
+  hard-blocked):* `corroborate` has no hard threshold and is in `DEFAULT_POLICY.quarantine_only`,
+  so S3 can quarantine but never block; a block stands only if the other signals alone would
+  block. §9.4 step 1 now proposes a hard threshold for `judge` only.
 - `gate/cache.py::cache_key` is unchanged. S3 contributes `corroborate@<fingerprint>` through the
   existing `fingerprint(store)` seam.
 - Adding S3 changes the read-time signal set, so every read verdict cached during Phase 3 (the
@@ -406,6 +410,8 @@ operating point, and the band is shared with write time.
    `corroborate`: 2) received from it, such that no clean item scored at or above it. A score of
    zero is never proposed. If no such score exists, or there are no clean scores to compare
    against, the `0.90` placeholder stays and the result is recorded as not separable.
+   *Since 2026-10-14 `corroborate` is quarantine-only: its scores are still reported, but no hard
+   threshold is proposed for it.*
 2. For each store: the clean non-admit rate under the current band is reported against the 2%
    budget, with the calibration-split catch rate beside it.
 3. A band is not moved by this tool. If a band fails its budget, the tool reports the largest
