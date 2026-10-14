@@ -461,7 +461,8 @@ fake `chat`, injected gate, temporary directories.
 **Measurement — each open until the owner starts its run.**
 - [ ] Freeze recorded and tagged after Task 45 (Task 55)
 - [ ] Three probe sessions run, none voided (Tasks 56–58)
-- [ ] Adaptive detection per class beside the blind test split, models named (Task 59)
+- [x] Adaptive detection per class beside the blind test split, models named (Task 59;
+  `gemini-flash-lite-latest`; adaptive 1/16, 3/16, 0/16 against blind 28/28, 34/75, 15/21)
 - [ ] Adaptive class-2 attack success at both levels beside Task 47 (Task 60)
 - [ ] Results and probe history recorded (Task 61)
 
