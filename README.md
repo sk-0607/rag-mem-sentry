@@ -71,6 +71,15 @@ python -m eval.run_eval          # produce the eval scorecard (EVAL_N=10 for a q
 pytest                           # run the test suite
 ```
 
+**Trust panel.** Two `.env` flags, both off by default, turn on the gated demo in the UI:
+`UI_READ_GATE=1` screens every retrieved passage and memory with the read gate before the model
+sees it, and `UI_EXPERIENCE_STORE=1` attaches experience memory. Only the exact value `1` turns a
+flag on. The read gate uses `data/` (or `GATE_DIR`) and the cache `eval.prewarm` fills there; a
+query on an uncached passage spends LLM calls. The panel under the chat shows, for each candidate
+the gate screened on that query, its action, trust, top signal with reason, and the text with the
+evidence span marked. It reads the gate's audit log, so it is single-user: two queries at once
+mix their rows.
+
 **Changing the corpus.** `ingest/papers.json` lists the sources. An entry is either an arXiv paper,
 `{"arxiv_id": "2005.11401", "title": "...", "trusted": true}`, downloaded from arxiv.org, or a
 local file, `{"path": "docs/handbook.pdf", "title": "...", "id": "handbook", "trusted": true}`,

@@ -24,6 +24,11 @@ EXPERIENCE_COLLECTION = "experiences"
 EXPERIENCES_PATH = os.getenv("EXPERIENCES_PATH", "data/experiences.jsonl")
 EXPERIENCE_K = 3      # past experiences injected per run
 
+# UI wiring, not gate knobs: the freeze does not record them. Only the exact
+# string "1" is on; a truthiness test would read "0" or "false" as on.
+UI_READ_GATE = os.getenv("UI_READ_GATE") == "1"
+UI_EXPERIENCE_STORE = os.getenv("UI_EXPERIENCE_STORE") == "1"
+
 DENSE_N = 20      # dense candidates pulled from Chroma
 SPARSE_N = 20     # BM25 candidates
 FUSE_M = 10       # kept after RRF, sent to reranker
