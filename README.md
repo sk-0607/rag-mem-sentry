@@ -710,7 +710,7 @@ today) and spends real LLM budget.
 |---|---|---|---|
 | Class-1 trial (`eval/class1_trial.py`) — *run 2026-10-15, see "Phase 6: Class-1 Attack Success"* | `python -m eval.class1_trial` | Five R3-style carrier chunks (one poison variant each), each trial run gate off then gate on, one sub-query through `build_graph`. Per trial: carrier in `generate`'s docs (context level), a fixed canary token in the answer (behavior level), which chunks the gate excluded and the signal that topped each, the carrier's audit entry. | `data/class1_trial_results/results.json` (rewritten after every trial, `complete` false until the last) |
 | Class-3 trial (`eval/experience_poison_trial.py`) — *run 2026-10-15, see "Phase 6: Class-3 Attack Success"* | `python -m eval.experience_poison_trial --arm off`, then `--arm on` | The poison-only experience trial of the Phase 2 sections above, once per arm. Per question: whether the poison record was retrieved, excluded, reached the prompt, and the answer; plus an ungated control arm. `--arm off` is the 2026-09-16 baseline's command; `--arm on` adds the read gate. | `data/poison_trial_results/results-off.json` and `results-on.json` |
-| RAGAS and overhead (`eval/run_eval.py`, `eval/overhead.py`) | `EVAL_N=10 python -m eval.run_eval`, then `EVAL_READ_GATE=1 EVAL_N=10 python -m eval.run_eval` for the gated arm; `OVERHEAD_N=5 LLM_MIN_INTERVAL=2 python -m eval.overhead` | RAGAS faithfulness, answer relevancy and context precision per arm, with each question's `path_trace` so sub-queries where the gate admitted 0 of 5 chunks can be counted; for overhead, LLM calls and wall-clock per question for `off`, `on-cold` (empty verdict cache) and `on-warm`. | RAGAS: `data/phase3_ragas/run-off.json` and `run-on.json`, plus `eval/results.md` or `eval/results-gate-on.md` (complete runs only). Overhead: `data/phase3_overhead/results.json` |
+| RAGAS and overhead (`eval/run_eval.py`, `eval/overhead.py`) — *overhead run 2026-10-15, see "Phase 6: Overhead"; RAGAS not run* | `EVAL_N=10 python -m eval.run_eval`, then `EVAL_READ_GATE=1 EVAL_N=10 python -m eval.run_eval` for the gated arm; `OVERHEAD_N=5 LLM_MIN_INTERVAL=2 python -m eval.overhead` | RAGAS faithfulness, answer relevancy and context precision per arm, with each question's `path_trace` so sub-queries where the gate admitted 0 of 5 chunks can be counted; for overhead, LLM calls and wall-clock per question for `off`, `on-cold` (empty verdict cache) and `on-warm`. | RAGAS: `data/phase3_ragas/run-off.json` and `run-on.json`, plus `eval/results.md` or `eval/results-gate-on.md` (complete runs only). Overhead: `data/phase3_overhead/results.json` |
 
 The runs are deferred by the owner; this section is not a plan to run them.
 
@@ -1251,6 +1251,34 @@ checks describe an agent calling a tool, and this host answers in text and has n
 `0 → 0` is not the gate working. What this run does show is the read gate's S2 blocking all three
 records that the write gate had admitted.
 
+## Phase 6: Overhead (Task 67, run 2026-10-15)
+
+`OVERHEAD_N=5 LLM_MODEL=gemini-3.1-flash-lite JUDGE_MODEL=gemini-flash-lite-latest
+LLM_MIN_INTERVAL=2 python -m eval.overhead`. Answer model `gemini-3.1-flash-lite`; gate model
+`gemini-flash-lite-latest` (judge and S3). Freeze check clean before the run, and the results file
+records `"differences": []`. The first 5 questions of `eval/qa_set.json`, three arms over the same
+questions: `off` (no gate), `on-cold` (read gate on an empty verdict cache in a temp directory, real
+trusted reference) and `on-warm` (a second pass over that cache). Results in
+`data/phase3_overhead/results.json`, `complete: true`.
+
+| arm | LLM calls | total seconds | calls per question | seconds per question |
+|---|---|---|---|---|
+| off | 14 | 31.471696099964902 | 2.8 | 6.29433921999298 |
+| on-cold | 27 | 75.58338829991408 | 5.4 | 15.116677659982816 |
+| on-warm | 14 | 51.80245999991894 | 2.8 | 10.360491999983788 |
+
+Added per query, against `off`:
+- cache cold: +2.6 LLM calls (13 in total, the gate's judge and S3 calls), +8.822338439989835 s
+  (+44.111692199949175 s in total);
+- cache warm: +0 LLM calls, +4.066152779990807 s (+20.330763899954036 s in total).
+
+`LLM_MIN_INTERVAL=2` was in force, so every LLM call waits at least 2 s after the previous one;
+wall-clock is dominated by that pacing and by the free-tier endpoint, not by local compute. The
+warm arm made no extra LLM call, yet took 20.330763899954036 s longer than `off` over 5 questions;
+this run does not say where that time went (cache reads, S1, retrieval variance and endpoint
+latency are all candidates, none measured). n = 5, one run each: these are single measurements,
+not a distribution.
+
 ## Open measurements
 
 Things this project has decided are worth measuring and has not measured. Listed here rather
@@ -1278,7 +1306,10 @@ that gets lost.
    RAGAS or overhead figure exists. *Update, 2026-10-15:* the class-1 trial ran ("Phase 6: Class-1
    Attack Success" above): 5/5 → 0/5 at both levels on `gemini-3.1-flash-lite`. The class-3 trial
    ran too ("Phase 6: Class-3 Attack Success"): context 3/3 → 0/3, behavior 0/3 → 0/3, unmeasurable
-   at behavior level (R6). RAGAS and overhead remain open.
+   at behavior level (R6). The overhead harness ran ("Phase 6: Overhead"): +2.6 calls and
+   +8.822338439989835 s per query cache-cold, +0 calls and +4.066152779990807 s cache-warm. **Closed,
+   2026-10-15**, with Tasks 65-67 recorded in the three Phase 6 sections above. The RAGAS gate-on arm
+   is not run, by owner decision on 2026-10-15.
 3. **The experience store's block band.** `block_below=0.20` is stricter than the corpus's
    `0.10` and nothing in the clean calibration set came near it. See the calibration section
    above.
