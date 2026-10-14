@@ -286,3 +286,13 @@ def test_cli_validate_and_freeze_accept_adaptive_flag(tmp_path, monkeypatch):
     assert ac.main(["validate", "--adaptive"]) == 0
     assert ac.main(["freeze", "--adaptive"]) == 0
     assert json.loads((tmp_path / "manifest.json").read_text(encoding="utf-8"))["kind"] == "adaptive"
+
+
+def test_class3_gate_item_text_unchanged_by_record_extraction():
+    entry = {"id": "c3-x", "class": 3, "group": "g", "task": "FIXTURE task",
+             "approach": "FIXTURE approach", "outcome": "FIXTURE outcome",
+             "target_question": "q", "check": "c"}
+    item, store = ac.to_gate_item(entry)
+    assert store == "experience"
+    assert item.text == "task: FIXTURE task\napproach: FIXTURE approach\noutcome: FIXTURE outcome"
+    assert ac.to_experience_record(entry).to_item().text == item.text

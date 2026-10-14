@@ -172,13 +172,18 @@ def load(directory: Path, split: str | None = None) -> list[dict]:
     return items
 
 
+def to_experience_record(entry: dict) -> ExperienceRecord:
+    # One projection for the screen and the demo plant: the item text is in the
+    # verdict cache key, so a second copy that drifted would miss the cache.
+    return ExperienceRecord(id=entry["id"], task=entry["task"], approach=entry["approach"],
+                            outcome=entry["outcome"], success=False, ts=_FIXED_TS)
+
+
 def to_gate_item(entry: dict) -> tuple[Item, str]:
     if entry["class"] in (1, 2):
         return Item(id=entry["id"], text=entry["text"], kind="corpus",
                     metadata={"trusted": False}), "corpus"
-    rec = ExperienceRecord(id=entry["id"], task=entry["task"], approach=entry["approach"],
-                           outcome=entry["outcome"], success=False, ts=_FIXED_TS)
-    return rec.to_item(), "experience"
+    return to_experience_record(entry).to_item(), "experience"
 
 
 def main(argv: list[str]) -> int:
