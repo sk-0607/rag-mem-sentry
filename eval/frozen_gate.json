@@ -1,0 +1,47 @@
+{
+  "commit": "01e29bc3a59f656ec279b2dcff0d79624a929bb4",
+  "frozen": "2026-10-14",
+  "gate_files": {
+    "gate/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "gate/audit.py": "ace98560492ef5bb38e066b84c085d07944b795868abb4292a730a32fea4b96f",
+    "gate/cache.py": "08fec005a3caec430dbf84e30898251bd6ec019e442f712694ab361e776f9ce1",
+    "gate/policy.py": "29f27b93945856f6d0c127d2e793c9be654dd619d9de41c0164ce6b73a7e43cc",
+    "gate/quarantine.py": "3d1e2eebeb4f6202da76188f343b4711fe92229e10a8ebb309e6247e597cc52b",
+    "gate/read.py": "50c495c16df6bcdeeb603ee95f42084fb50d433e30029f5b5a7d8c95242045c2",
+    "gate/reference.py": "d43e6ab114fa8ab736d74c6f48df361400739ed6bb9b88e434bc69bafc7b7ae1",
+    "gate/score.py": "c2e24b85d8919c858bbd34cda3af2037fdd364d8ec5ccb89fc1a54fc11000900",
+    "gate/screen.py": "32ecf15fbcfeaa1c73faa876d7bed48812d870d5625dc1d16cfe7c090d2440de",
+    "gate/signals/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "gate/signals/base.py": "78a84e01dc3ee690a6719a10fb4ca8031b8188271c9b1cd3866c483328f3cf35",
+    "gate/signals/corroborate.py": "c6860ec9c5adfeb9d246e0547b85ad5d421b11dde875c0d7e47130e87ad26d55",
+    "gate/signals/judge.py": "c44ef2b8d4a6d1ca3ed1590987faaf56fbd43f15503d3d3208cf5947cba2b01c",
+    "gate/signals/structural.py": "b273f9631aa26e1eede068bcc83d98e0c80496f18ac774711adb3bb9c8f9e76e",
+    "gate/types.py": "4ea370515fc1ccfbf2857cd6538c2e08f7b2f552252b60d43c509e9aeebe753d"
+  },
+  "judge_model": "gemini-flash-lite-latest",
+  "knobs": {
+    "JUDGE_BATCH_MAX": 5,
+    "S3_MAX_CLAIMS": 5,
+    "S3_REF_K": 3
+  },
+  "policy": {
+    "hard_thresholds": {
+      "judge": 0.8,
+      "structural": 0.93
+    },
+    "quarantine_only": [
+      "corroborate"
+    ],
+    "thresholds": {
+      "corpus": {
+        "block_below": 0.1,
+        "quarantine_below": 0.6
+      },
+      "experience": {
+        "block_below": 0.2,
+        "quarantine_below": 0.7
+      }
+    }
+  },
+  "reference_fingerprint": "c54d8d88e29f7c731973c3838160fec7cf9c2109c5c1b7103ee854b8e155d4b0"
+}
