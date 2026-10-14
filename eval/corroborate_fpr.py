@@ -83,7 +83,16 @@ def main(argv: list[str], chunks_path=None, out_dir=OUT_DIR, seed: int = 0) -> i
         return 1
     n_sources = int(os.getenv("HOLDOUT_SOURCES", "4"))
     n_chunks = int(os.getenv("HOLDOUT_CHUNKS", "40"))
-    reference, held, picked = holdout_split(chunks, n_sources, n_chunks, seed)
+    holdout_file = os.getenv("HOLDOUT_FILE")
+    if holdout_file:
+        # Clean text from outside the index, screened against every trusted chunk:
+        # on NQ, held-out sources share no claims, so S3 had nothing to check.
+        pool = load_chunks(Path(holdout_file))
+        held = pool if len(pool) <= n_chunks else random.Random(seed).sample(pool, n_chunks)
+        reference = [c for c in chunks if c.get("trusted") is True]
+        picked = sorted({c["paper_id"] for c in held})
+    else:
+        reference, held, picked = holdout_split(chunks, n_sources, n_chunks, seed)
 
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -95,7 +104,7 @@ def main(argv: list[str], chunks_path=None, out_dir=OUT_DIR, seed: int = 0) -> i
              "paper_id": c["paper_id"]} for c, v in zip(held, verdicts)]
     path = out_dir / "results.json"
     path.write_text(json.dumps({"model": config.JUDGE_MODEL, "seed": seed,
-                                "held_out_sources": picked, "rows": rows,
+                                "held_out_sources": picked, "holdout_file": holdout_file, "rows": rows,
                                 "summary": summarize(rows)}, indent=2), encoding="utf-8")
     print(path)
     return 0

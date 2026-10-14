@@ -140,3 +140,31 @@ def test_cli_gate_uses_the_reduced_reference(tmp_path, monkeypatch):
     out = json.loads((tmp_path / "out" / "results.json").read_text())
     assert len(out["rows"]) == 4 and out["rows"][0]["paper_id"] in out["held_out_sources"]
     assert out["summary"]["total"] == 4
+
+
+def test_cli_holdout_file_screens_its_rows_against_every_trusted_chunk(tmp_path, monkeypatch):
+    path = tmp_path / "chunks.jsonl"
+    path.write_text("\n".join(json.dumps(c) for c in make_chunks()))
+    held = tmp_path / "held.jsonl"
+    held.write_text("\n".join(json.dumps({"id": f"h{i}", "text": f"clean {i}", "paper_id": "art"})
+                              for i in range(6)))
+    seen = {}
+
+    class Gate:
+        def screen_batch(self, items, store):
+            seen["items"] = items
+            v = DEFAULT_POLICY.decide(aggregate([SignalResult("structural", 0.0, "r")]), store)
+            return ReadResult([v for _ in items], False)
+
+    def fake_default_read_gate(data_dir, chat=None, reference=None):
+        seen["ref_len"] = len(reference)
+        return Gate()
+
+    monkeypatch.setattr(corroborate_fpr, "default_read_gate", fake_default_read_gate)
+    monkeypatch.setenv("HOLDOUT_FILE", str(held))
+    monkeypatch.setenv("HOLDOUT_CHUNKS", "4")
+    assert corroborate_fpr.main([], chunks_path=path, out_dir=tmp_path / "out") == 0
+    assert seen["ref_len"] == 25
+    assert len(seen["items"]) == 4 and all(i.metadata == {"trusted": False} for i in seen["items"])
+    out = json.loads((tmp_path / "out" / "results.json").read_text())
+    assert out["held_out_sources"] == ["art"] and out["holdout_file"] == str(held)

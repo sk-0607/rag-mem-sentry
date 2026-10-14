@@ -6,6 +6,8 @@ class-2 poison targets facts the trusted set actually holds.
     python -m ingest.build_nq <corpus-src>   # reads <src>/beir-nq/nq and <src>/PoisonedRAG;
                                              # writes data/nq_docs/, data/nq_selection.jsonl,
                                              # ingest/papers.json. No LLM, no network.
+    python -m ingest.build_nq <corpus-src> holdout   # data/nq_holdout.jsonl: clean sibling
+                                                     # passages of gold articles, for S3's FPR
 """
 import csv
 import json
@@ -57,6 +59,37 @@ def assign_trust(docs: list[dict], untrusted_frac: float, seed: int) -> list[dic
              "title": d["title"], "trusted": i not in held} for i, d in enumerate(docs)]
 
 
+def siblings(corpus_path: Path, gold_ids: set, indexed_texts: set, min_words: int) -> list[dict]:
+    # Clean held-out text the trusted set covers: other passages of a gold
+    # article. A random distractor is almost never covered, so S3 checked 0 / 40
+    # of those (README, "Final corpus: BEIR NQ"). Two passes: titles, then rows.
+    titles = set()
+    with open(corpus_path, encoding="utf-8") as f:
+        for line in f:
+            doc = json.loads(line)
+            if doc["_id"] in gold_ids:
+                titles.add(doc["title"])
+    out = []
+    with open(corpus_path, encoding="utf-8") as f:
+        for line in f:
+            doc = json.loads(line)
+            if (doc["title"] in titles and doc["_id"] not in gold_ids
+                    and doc["text"] not in indexed_texts and len(doc["text"].split()) >= min_words):
+                out.append({"id": f"nqh-{doc['_id']}", "text": doc["text"], "paper_id": doc["title"]})
+    return out
+
+
+def write_holdout(src: Path) -> int:
+    gold = {c for line in Path("data/nq_selection.jsonl").read_text(encoding="utf-8").splitlines()
+            for c in json.loads(line)["gold"]}
+    indexed = {p for f in DOCS_DIR.glob("*.txt") for p in f.read_text(encoding="utf-8").split("\n\n")}
+    rows = siblings(src / "beir-nq/nq/corpus.jsonl", gold, indexed, MIN_WORDS)
+    Path("data/nq_holdout.jsonl").write_text("".join(json.dumps(r) + "\n" for r in rows),
+                                             encoding="utf-8")
+    print(f"{len(rows)} held-out sibling passages from {len({r['paper_id'] for r in rows})} gold articles")
+    return 0
+
+
 def stage(src: Path) -> tuple[list[dict], list[dict]]:
     prag = json.load(open(src / "PoisonedRAG/results/adv_targeted_results/nq.json", encoding="utf-8"))
     qrels: dict[str, list[str]] = {}
@@ -84,6 +117,8 @@ def stage(src: Path) -> tuple[list[dict], list[dict]]:
 
 
 def main(argv: list[str]) -> int:
+    if len(argv) == 2 and argv[1] == "holdout":
+        return write_holdout(Path(argv[0]))
     if len(argv) != 1:
         print(__doc__, file=sys.stderr)
         return 2

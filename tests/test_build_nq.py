@@ -1,4 +1,19 @@
-from ingest.build_nq import assign_trust, group_docs, pick_questions
+import json
+
+from ingest.build_nq import assign_trust, group_docs, pick_questions, siblings
+
+
+def test_siblings_are_other_passages_of_gold_titles_not_already_indexed(tmp_path):
+    long = " ".join(["w"] * 25)
+    rows = [{"_id": "g", "title": "A", "text": long + " gold"},
+            {"_id": "s1", "title": "A", "text": long + " sib"},
+            {"_id": "s2", "title": "A", "text": long + " indexed"},
+            {"_id": "s3", "title": "A", "text": "short"},
+            {"_id": "x", "title": "B", "text": long + " other"}]
+    corpus = tmp_path / "corpus.jsonl"
+    corpus.write_text("\n".join(json.dumps(r) for r in rows), encoding="utf-8")
+    out = siblings(corpus, gold_ids={"g"}, indexed_texts={long + " indexed"}, min_words=20)
+    assert out == [{"id": "nqh-s1", "text": long + " sib", "paper_id": "A"}]
 
 
 def test_pick_questions_skips_answer_in_question_and_missing_gold():

@@ -1,5 +1,8 @@
 # Prompt: build the blind attack corpus
 
+> Superseded on 2026-10-14 by `attack-corpus-mapping-agent.md`: the corpus is NQ and the attack
+> items are mapped from public datasets. Kept as a record of the original contract.
+
 You are building a test set of poisoned content for evaluating defenses in a retrieval-augmented
 generation (RAG) system. This is defensive security research for a university capstone project.
 Your output is the ground truth that defenses are measured against, so its quality and honesty
