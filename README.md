@@ -798,7 +798,12 @@ step did not at the time of this run. It does now, and the rate above has not be
 with it; the two unparseable verdicts are still in this run's cache. The third is a real misjudgment, and at score 1.0 it cleared the `corroborate`
 hard threshold, then the `0.90` placeholder, so it blocked rather than quarantined. At read time a
 block drops the chunk from this query's context and nothing else; no store is changed. After this
-run S3 was made quarantine-only, so the same score now quarantines. The
+run S3 was made quarantine-only, so the same score now quarantines. The owner then also overrode
+the "prompts are not reworded" rule: the agreement prompt now says a passage contradicts a claim
+only when it is about the same subject, and a passage about a different subject is
+`not_covered`. That wording was written after reading `1712.05526::38`, so re-running this same
+sample would test the prompt on the case it was fitted to. A re-measurement needs a different
+seed or different held-out sources. Its effect on the rate is not measured. The
 sample is 40 chunks from four sources, one seed, one model; it is a small first measurement,
 not a stable rate.
 

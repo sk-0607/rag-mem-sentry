@@ -367,6 +367,15 @@ def test_agreement_system_prompt_marks_content_as_untrusted():
     assert all(label in system for label in AGREEMENT_LABELS)
 
 
+def test_agreement_prompt_reserves_contradicted_for_the_same_subject():
+    # Task 44: two papers' filters on different datasets were judged a contradiction.
+    fake = FakeChat(reply([claim("c0")]), agree(verdict("k0", "supported")))
+    s3(fake).score_batch(items(1), CTX)
+    system = fake.calls[1][0][0]["content"]
+    assert "same subject" in system
+    assert "different subject" in system and "never contradicts" in system
+
+
 def assert_unparseable(agreement):
     # The same bad reply twice: the re-ask is spent before it scores unparseable.
     fake = FakeChat(reply([claim("c0")]), agreement, agreement)
