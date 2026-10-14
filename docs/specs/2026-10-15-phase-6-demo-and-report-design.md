@@ -187,6 +187,14 @@ has no module constants or call arguments:
   decoded-payload hits, for example), the span is shown beside the text instead.
 - **Gate off.** No read entries are appended, and the panel says the read gate is off. It never
   shows an empty table that looks like "nothing was screened".
+- **Escaping.** Candidate text, reasons and evidence spans are HTML-escaped before any panel
+  markup is added. Class-1 poison uses hidden CSS and HTML comments. Rendered unescaped in the
+  owner's browser, it would hide or style itself in the one place built to expose it.
+- **Offset past the end.** If the audit file is shorter than the recorded offset (`data/` was
+  wiped between the two reads), the panel reads from the start rather than showing nothing. A
+  half-written trailing line is skipped, not raised.
+- **Flag values.** Only the exact string `1` turns a flag on. `0`, `false` and an empty value are
+  off.
 
 ### 6.3 Boundaries
 
@@ -221,6 +229,7 @@ or question; the owner supplies the id.
   - On admit it writes `data/demo_plant.json` with the attack item id, the record id, the plant
     timestamp and the target question.
 - **`purge`** is destructive and free.
+  - With no `data/demo_plant.json`, it exits 1 with "nothing planted" and changes nothing.
   - It reads `data/demo_plant.json`. It lists the planted record id plus every record in the
     store's mirror with `ts` at or after the plant timestamp. Those are the demo's own runs,
     because `run_agentic` writes one gated record per run when a store is attached.
