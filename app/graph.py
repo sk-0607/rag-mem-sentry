@@ -17,6 +17,18 @@ class RAGState(TypedDict):
     gate_excluded: list
 
 
+def doc_to_item(doc: dict) -> Item:
+    # Shared with eval/prewarm.py: a pre-warmed verdict is only a cache hit if
+    # the item is built exactly as the gate node builds it.
+    # No pre-existing id on a corpus chunk (fixtures and the class-1 trial's
+    # synthetic chunks carry none) -> derive one from content so the gate
+    # still has something stable to key its cache/audit on.
+    return Item(id=doc["id"] if "id" in doc else content_hash(doc["text"])[:16],
+                text=doc["text"], kind="corpus",
+                # `is True`: a stored "true" string must not count as trusted.
+                metadata={"trusted": doc.get("trusted") is True})
+
+
 def build_graph(retriever, llm_module=_llm, read_gate=None):
     def retrieve_node(state):
         docs = retriever.retrieve(state["query"])
@@ -24,16 +36,7 @@ def build_graph(retriever, llm_module=_llm, read_gate=None):
 
     def gate_node(state):
         docs = state["docs"]
-        # No pre-existing id on a corpus chunk (fixtures and the class-1 trial's
-        # synthetic chunks carry none) -> derive one from content so the gate
-        # still has something stable to key its cache/audit on.
-        items = [
-            Item(id=doc["id"] if "id" in doc else content_hash(doc["text"])[:16],
-                 text=doc["text"], kind="corpus",
-                 # `is True`: a stored "true" string must not count as trusted.
-                 metadata={"trusted": doc.get("trusted") is True})
-            for doc in docs
-        ]
+        items = [doc_to_item(doc) for doc in docs]
         result = read_gate.screen_batch(items, "corpus")
         admitted, excluded = [], []
         for doc, item, verdict in zip(docs, items, result.verdicts):
