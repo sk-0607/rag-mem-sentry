@@ -922,6 +922,34 @@ Read-through and values applied:
 At read time a hard threshold changes the audit label (block vs quarantine), not what reaches the
 model: both are excluded from the prompt (spec §9.4).
 
+## Phase 4: Signal Ablation (Task 46, run 2026-10-14)
+
+Model `gemini-flash-lite-latest` (judge and S3). `LLM_MIN_INTERVAL=2 python -m eval.attack_screen
+--split test` screened the 124 test-split items once, at `policy_commit` bba69b5 (Task 45's), with
+the freeze check clean (`results.json` records `"freeze": {"record": "eval/frozen_gate.json",
+"differences": []}`). The run was interrupted once by the free-tier daily quota at 60 items and
+resumed from its cache. `python -m eval.ablation data/phase4_screen/test/results.json`:
+
+| signals | class 1 | class 2 | class 3 |
+|---|---|---|---|
+| structural | 0/28 | 0/75 | 0/21 |
+| judge | 28/28 | 0/75 | 15/21 |
+| corroborate | 0/28 | 34/75 | abstains by design (0/21) |
+| structural+judge | 28/28 | 0/75 | 15/21 |
+| structural+judge+corroborate | 28/28 | 34/75 | 15/21 |
+
+`excluded_reduced_assurance`: 0. S3 not checked: class 1, 21 `not_covered`; class 2, 32
+`not_covered`; class 3, 21 `absent` (S3 abstains on the experience store). No `no_claims`.
+
+Adding S3 to S1 and S2 catches 34 more class-2 items out of 75, and nothing more in classes 1 and
+3. S1 caught nothing on this corpus: its payloads are the datasets' plain text, with no hidden
+characters or encodings. Of the 43 class-2 items S3 checked, it flagged 34; the other 32 were not
+covered by the trusted set.
+
+These are detection rates on externally authored items, not attack success (R9): an item caught
+here might not have changed an answer had it reached the model. Class-2 attack success is the
+class-2 trial (Task 47), not run.
+
 ## Phase 5: Adaptive Round (built, not run)
 
 The blind numbers above measure the gate against attacks written without seeing it. Phase 5 measures
@@ -1006,7 +1034,7 @@ the three.
    `LLM_MIN_INTERVAL=2 python -m eval.attack_screen --split calibration` and `--clean-experience`,
    then `python -m eval.calibrate`).** A hard threshold for `judge` chosen on the
    calibration split only.
-7. **Test split screened and ablation table (Task 46,
+7. *Closed 2026-10-14.* Ablation (Task 46): see "Phase 4: Signal Ablation" above. Was: **Test split screened and ablation table (Task 46,
    `LLM_MIN_INTERVAL=2 python -m eval.attack_screen --split test`, then
    `python -m eval.ablation data/phase4_screen/test/results.json`).** The five-row ablation,
    screened once, after the thresholds are committed.
@@ -1143,7 +1171,7 @@ explicit go from the project owner. Plan: `docs/plans/2026-10-13-phase-4-s3-corr
 | 43 | Re-ingest with trust flags; write-time false-positive rate re-checked | run 2026-10-14, unchanged |
 | 44 | S3 false positives on clean untrusted content | run 2026-10-14, 3 / 16 = 0.1875, over the 2% budget |
 | 45 | Corpus frozen; calibration split screened; thresholds proposed and committed | run 2026-10-14, judge 0.80; corpus band over budget, 2 / 40 |
-| 46 | Test split screened; ablation table | running |
+| 46 | Test split screened; ablation table | run 2026-10-14 |
 | 47 | Class-2 trial, control / gate off / gate on | not run |
 
 Phase 5 (adaptive round) is **built; every measurement not run**. Plan:

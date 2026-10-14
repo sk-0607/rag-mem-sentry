@@ -573,7 +573,7 @@ Stated so they are read here rather than found later.
       3 / 16 = 0.1875, over the 2% budget; recorded, prompts not reworded (README).
 - [x] Thresholds calibrated on the calibration split only and committed (Task 45; judge 0.80,
   `gemini-flash-lite-latest`; corpus band over budget at 2 / 40, recorded, not moved)
-- [ ] Ablation table filled from the test split, model named (Task 46)
+- [x] Ablation table filled from the test split, model named (Task 46; `gemini-flash-lite-latest`)
 - [ ] Class-2 attack success reported at both levels, control / gate off / gate on, whatever the
       numbers are (Task 47)
 
