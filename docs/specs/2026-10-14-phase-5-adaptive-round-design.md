@@ -148,8 +148,9 @@ Task 47 and Tasks 56–58 do not depend on each other and may interleave, one LL
 Tasks 48–54 (build and docs) make no LLM call and can be done before Task 45.
 
 **If Task 46 or 47 ran before the freeze**, its result is not the blind baseline for Phase 5. It
-is re-run at the frozen state. Its output already records the commit hash of `gate/policy.py`;
-from Phase 5 it also records the freeze check's result (§10.1).
+is re-run at the frozen state. Task 46's output records the commit hash of `gate/policy.py`;
+Task 47's records only the two model names. From Phase 5 both outputs also record the freeze
+check's result (§10.2, §10.4), so the order can be checked afterwards.
 
 ## 6. Probe endpoint — `eval/probe_server.py`
 
@@ -195,9 +196,12 @@ Response `200`:
   invariant). The server refuses to start on an empty trusted set.
 - Before building the gate, the server runs the freeze check (§5.2) and refuses to start on any
   difference.
-- **A probe is uncached** when the probe gate's cache holds no verdict under the item's cache key
-  (`gate/cache.py::cache_key`, the one builder) before the screen. Only uncached probes count. A
-  resubmitted item costs nothing and returns its cached verdict.
+- **A probe is uncached** when the gate makes at least one LLM call for it. The server passes
+  `default_read_gate` a `chat` that wraps `app.llm.chat` and counts calls per probe. Every cache
+  miss calls S2 in both stores, so "at least one call" is "no cached verdict", without the server
+  reaching into the gate's cache or rebuilding its key; and the count is each probe's real cost
+  for the log. Only uncached probes count against the cap. A resubmitted item costs nothing and
+  returns its cached verdict.
 - `LLM_MIN_INTERVAL=2` applies as in every other run.
 
 ### 6.3 Sessions and cap
@@ -243,7 +247,8 @@ made before the failure. These are design counts, not measurements. One LLM run 
 | `item_hash` | sha256 of the gate item's text |
 | `fields` | the submitted text, or task / approach / outcome |
 | `status` | 200, 429 or 503 |
-| `cached` | verdict came from the probe cache |
+| `cached` | verdict came from the probe cache (zero LLM calls) |
+| `calls` | LLM calls this probe made, including any made before a 503 |
 | `counted` | counted against the cap |
 | `admitted` | the bit returned, or `null` on 429 and 503 |
 | `action` | the gate's action, server-side only, for the owner's report |
@@ -295,7 +300,11 @@ the gate model and, where used, the answer model named.
   are unchanged.
 - **Loader:** `load(dir, "adaptive")` is valid only on an adaptive manifest; `calibration` and
   `test` are valid only on a blind one. A mismatch raises.
-- **`eval/calibrate.py` refuses an adaptive corpus.** Thresholds never touch adaptive data.
+- **`eval/calibrate.py` refuses any screen output whose `split` is not `calibration`.** It reads
+  screen results, not the corpus, so the guard sits on the `split` field those results carry.
+  Neither the test split nor an adaptive screen can reach a threshold.
+- **A blind manifest frozen before Phase 5 has no `kind` key** and is read as `blind`. Its hash and
+  splits are unchanged, so Task 45's freeze stays valid.
 - `ATTACK_CORPUS_DIR` points at the adaptive directory for Tasks 59 and 60. The blind corpus is not
   moved.
 
@@ -342,7 +351,7 @@ gate within 60 probes on this model; it does not say the gate is robust to adapt
 | `eval/freeze_gate.py` | new | `gate_state`, `diff`, `record`, `check` |
 | `eval/frozen_gate.json` | new (run output, committed) | the freeze record |
 | `eval/attack_corpus.py` | modified | `freeze --adaptive`, `kind`, adaptive minimums, split `adaptive` |
-| `eval/calibrate.py` | modified | refuse an adaptive corpus |
+| `eval/calibrate.py` | modified | refuse screen output whose split is not `calibration` |
 | `eval/attack_screen.py` | modified | `--split adaptive`, `data/phase5_screen/`, freeze check recorded / enforced |
 | `eval/class2_trial.py` | modified | `--split adaptive`, Phase 5 output and gate dirs, freeze check |
 | `eval/probe_server.py` | new | FastAPI app factory, session cap, probe log, freeze check at start |
@@ -366,7 +375,7 @@ phase: a change there after Task 55 breaks the freeze, and before it there is no
 | Reduced assurance on a probe | 503, uncounted, not cached, logged |
 | Body malformed, mismatched, carries `trusted`, or oversize | 400, not logged |
 | Adaptive corpus off-contract | `validate` lists violations; `freeze --adaptive` writes nothing |
-| `calibrate` pointed at an adaptive corpus | refuse |
+| `calibrate` given screen output whose split is not `calibration` | refuse |
 | Split name does not match the manifest kind | loader raises |
 
 ## 13. Limitations
@@ -429,7 +438,8 @@ fake `chat`, injected gate, temporary directories.
   empty trusted set; nothing is written outside the probe directory; the real reference is the one
   passed in.
 - Adaptive corpus: adaptive minimums apply only to the adaptive kind; split / kind mismatch raises;
-  `calibrate` refuses adaptive.
+  a blind manifest with no `kind` key loads as blind; `calibrate` refuses screen output whose
+  split is not `calibration`.
 - Screen and trial: `--split adaptive` writes to the Phase 5 directories and refuses on a freeze
   difference; the freeze result is in every screen's output.
 - Probe summary: counts per session and per class from a fixture log.
@@ -441,7 +451,7 @@ fake `chat`, injected gate, temporary directories.
 - [ ] Nothing under `gate/` or `app/` changed in this phase
 - [ ] Freeze check detects a change in each frozen element
 - [ ] Probe server returns one bit, enforces the cap, writes only under its own directory
-- [ ] Calibration cannot load an adaptive corpus
+- [ ] Calibration cannot use test-split or adaptive screen output
 - [ ] Attacker brief committed
 - [ ] Roadmap, README and parent spec reconciled (Task 54)
 
