@@ -67,6 +67,9 @@ class _FakeClient:
     def get_or_create_collection(self, name):
         return self.col
 
+    def delete_collection(self, name):
+        pass
+
 
 class _FakeEmbedder:
     def encode(self, texts):
@@ -130,3 +133,56 @@ def test_index_metadata_carries_trusted(two_sources):
     assert col.metadatas
     for m in col.metadatas:
         assert {m["trusted"]} == by_paper[m["paper_id"]]
+
+
+class _ResettableClient(_FakeClient):
+    def __init__(self, col):
+        super().__init__(col)
+        self.events = []
+
+    def get_or_create_collection(self, name):
+        self.events.append(("get", name))
+        return self.col
+
+    def delete_collection(self, name):
+        self.events.append(("delete", name))
+
+
+@pytest.fixture
+def local_docs(monkeypatch, tmp_path):
+    from ingest import run_ingest
+    from app import config
+    (tmp_path / "ingest").mkdir()
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / "handbook.md").write_text(CLEAN, encoding="utf-8")
+    (tmp_path / "docs" / "crawled.txt").write_text(CLEAN + " Crawled.", encoding="utf-8")
+    (tmp_path / "ingest" / "papers.json").write_text(json.dumps([
+        {"path": "docs/handbook.md", "title": "Handbook", "trusted": True},
+        {"path": "docs/crawled.txt", "title": "Crawled", "id": "crawl-001"},
+    ]), encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(run_ingest, "SentenceTransformer", lambda *a, **k: _FakeEmbedder())
+    client = _ResettableClient(_FakeCol())
+    monkeypatch.setattr(run_ingest.chromadb, "PersistentClient", lambda **k: client)
+    monkeypatch.setattr(config, "CHUNKS_PATH", str(tmp_path / "chunks.jsonl"))
+    monkeypatch.setattr(config, "CHROMA_DIR", str(tmp_path / "chroma"))
+    return tmp_path, client
+
+
+def test_local_file_entries_are_ingested_with_manifest_trust(local_docs):
+    from ingest.run_ingest import main
+    main()
+    rows = _rows(local_docs[0])
+    by_id = {r["paper_id"]: r for r in rows}
+    assert by_id["handbook"]["trusted"] is True and by_id["handbook"]["title"] == "Handbook"
+    assert by_id["crawl-001"]["trusted"] is False
+    assert "Crawled." in by_id["crawl-001"]["text"]
+
+
+def test_full_ingest_clears_the_old_collection_before_indexing(local_docs):
+    from app import config
+    from ingest.run_ingest import main
+    main()
+    events = local_docs[1].events
+    assert events[0][0] == "get" and events[1] == ("delete", config.COLLECTION)
+    assert all(name == config.COLLECTION for _, name in events)

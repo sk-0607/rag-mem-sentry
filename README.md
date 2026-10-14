@@ -70,6 +70,16 @@ python -m eval.run_eval          # produce the eval scorecard (EVAL_N=10 for a q
 pytest                           # run the test suite
 ```
 
+**Changing the corpus.** `ingest/papers.json` lists the sources. An entry is either an arXiv paper,
+`{"arxiv_id": "2005.11401", "title": "...", "trusted": true}`, downloaded from arxiv.org, or a
+local file, `{"path": "docs/handbook.pdf", "title": "...", "id": "handbook", "trusted": true}`,
+read from disk. Local files may be `.pdf`, `.docx`, `.txt` or `.md`; a legacy binary `.doc` is
+skipped with a warning (save it as `.docx`). `id` is optional and defaults to the file name
+without its extension; it prefixes every chunk id, so keep it unique. Every ingest is a full
+rebuild: it clears the `papers` index first (experience memory, a separate collection, is not
+touched), so a source removed from the manifest leaves nothing behind. To swap the trusted
+reference set, edit the manifest and re-run ingest; S3's cache misses on the new set by itself.
+
 ## Evaluation
 
 RAGAS metrics (Gemini as judge, local MiniLM embeddings) over the Q&A set in

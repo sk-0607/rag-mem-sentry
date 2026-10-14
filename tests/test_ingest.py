@@ -41,3 +41,33 @@ import pytest
 ])
 def test_source_trusted_only_for_boolean_true(entry, expected):
     assert ing.source_trusted(entry) is expected
+
+
+def _docx(path, *paragraphs):
+    import zipfile
+    body = "".join(f"<w:p><w:r><w:t>{p}</w:t></w:r></w:p>" for p in paragraphs)
+    xml = ('<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
+           f"<w:body>{body}</w:body></w:document>")
+    with zipfile.ZipFile(path, "w") as z:
+        z.writestr("word/document.xml", xml)
+
+
+@pytest.mark.parametrize("suffix", [".txt", ".md"])
+def test_read_file_text_plain(tmp_path, suffix):
+    p = tmp_path / f"doc{suffix}"
+    p.write_text("# Title\nSome text.", encoding="utf-8")
+    assert ing.read_file_text(p) == "# Title\nSome text."
+
+
+def test_read_file_text_docx_keeps_paragraphs(tmp_path):
+    p = tmp_path / "doc.docx"
+    _docx(p, "First paragraph.", "Second paragraph.")
+    assert ing.read_file_text(p) == "First paragraph.\nSecond paragraph."
+
+
+@pytest.mark.parametrize("name", ["old.doc", "sheet.xlsx", "noext"])
+def test_read_file_text_rejects_unsupported_types(tmp_path, name):
+    p = tmp_path / name
+    p.write_bytes(b"x")
+    with pytest.raises(ValueError, match="unsupported"):
+        ing.read_file_text(p)
