@@ -1,6 +1,7 @@
 # RAG Mem Sentry
 
-Agentic RAG over a corpus of AI-security papers, with hybrid retrieval +
+Agentic RAG over a BEIR NQ Wikipedia corpus (the AI-security papers most figures below were
+measured on were a placeholder; see "Final corpus: BEIR NQ"), with hybrid retrieval +
 reranking, cited answers, and a RAGAS evaluation scorecard — plus a
 content trust gate that screens documents and agent memory records for
 poisoned content, write-time and read-time, before an LLM trusts and uses
@@ -829,6 +830,38 @@ sample would test the prompt on the case it was fitted to. A re-measurement need
 seed or different held-out sources. Its effect on the rate is not measured. The
 sample is 40 chunks from four sources, one seed, one model; it is a small first measurement,
 not a stable rate.
+
+### Final corpus: BEIR NQ (2026-10-14)
+
+The 22 AI-security papers were a placeholder. Every figure above this section was measured on
+them. The owner chose a BEIR NQ Wikipedia subset as the final corpus, because the class-2 attack
+data (PoisonedRAG, arXiv 2402.07867) targets NQ questions, and S3 can only contradict a false fact
+the trusted set holds.
+
+**Build.** `python -m ingest.build_nq D:/corpus-src` (no LLM, no network) takes the first 50
+PoisonedRAG NQ questions whose false answer does not occur in the question, all 60 of their gold
+passages, and 2000 distractor passages reservoir-sampled from the 2.68M-passage corpus with seed 0.
+Distractors under 20 words are dropped, and passages are joined into one document per Wikipedia
+title: 1726 documents, 50 of them gold. 10% of the distractor documents (168) are untrusted;
+gold documents are always trusted. It writes `data/nq_docs/`, `data/nq_selection.jsonl` and
+`ingest/papers.json`. `eval/qa_set.json` and `eval/demo_questions.txt` now hold NQ questions.
+NQ passages are short (median 68 words), so most chunks are one passage, not 220 words.
+
+**Write-time false positives.** After `python -m ingest.run_ingest`: 1784 chunks, 1611 trusted,
+173 untrusted. `python -m eval.fpr data/gate_audit.jsonl` reports total 1789, admit 1784,
+quarantine 5, block 0, `fpr` 0.002794857462269424 (0.279%, budget 2%). All five were read by hand:
+each is a zero-width character in Wikipedia markup (U+FEFF around coordinates in `nq-0156::0`,
+`nq-0656::0`, `nq-0712::0`; U+200B in a subway line list in `nq-0196::0` and in an IPA
+transcription in `nq-1641::0`). No gold document is among them. The papers-era audit log and
+index are kept as `data/*.pre-nq*`.
+
+**S3 on clean untrusted content, NQ.** `HOLDOUT_SOURCES=40 HOLDOUT_CHUNKS=40 python -m
+eval.corroborate_fpr`, model `gemini-3.1-flash-lite`, seed 0. One NQ source is usually one chunk,
+so 40 sources were held out instead of the default 4. Result: total 40, non-admit 0,
+`s3_checked` 0, `not_covered` 40, reduced assurance 0, `s3_fpr` null. **This does not measure S3's
+false-positive rate.** Randomly sampled Wikipedia articles almost never cover each other's claims,
+so S3 checked nothing. The number shows only that S3 stays silent on uncovered clean text. A
+false-positive rate on NQ needs held-out clean text whose claims the trusted set does cover.
 
 ## Open measurements
 

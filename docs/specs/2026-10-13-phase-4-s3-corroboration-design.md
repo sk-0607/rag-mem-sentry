@@ -39,6 +39,17 @@ rather than discover it.
 6. **The blind attack corpus is written outside this repository**, by an agent working in another
    repo the owner will name. This phase fixes the contract the corpus must meet and builds the
    tooling that loads, freezes and splits it (§8). It writes no attack content.
+7. **The final corpus is a BEIR NQ subset (owner decision 2026-10-14).** It replaces the 22
+   papers, as §1 anticipated. `ingest/build_nq.py` takes the first 50 PoisonedRAG NQ questions
+   that pass §8's answer-in-question rule, their gold passages, and 2000 seeded distractors, one
+   document per Wikipedia title; 10% of the distractor documents are untrusted, and gold documents
+   are always trusted so S3 holds every target question's true fact. Figures in this spec and
+   README measured before that date are on the papers.
+8. **The attack corpus comes from public datasets, not from an outside agent (2026-10-14).** The
+   agent of decision 6 did not deliver. The corpus is mapped from BIPIA (arXiv 2312.14197),
+   InjecAgent (arXiv 2403.02691), PoisonedRAG (arXiv 2402.07867) and ASB (arXiv 2410.02644), all
+   MIT. Class 2 uses PoisonedRAG's released NQ poison for the 50 questions, so it targets facts the
+   NQ corpus holds. The §8 contract and validator are unchanged.
 
 What these do not change: no number is asserted that was not measured. If the class-2 gate-off
 run, when it happens, shows zero behavior-level hits, S3's harm reduction is reported as
