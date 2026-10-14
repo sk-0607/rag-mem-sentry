@@ -58,6 +58,26 @@ def test_chat_retries_a_503_overload_then_succeeds(monkeypatch):
     assert len(calls) == 3 and len(sleeps) == 2
 
 
+def test_chat_retries_a_dropped_connection_then_succeeds(monkeypatch):
+    from openai import APIConnectionError
+    calls, sleeps = [], []
+
+    class Flaky:
+        class chat:
+            class completions:
+                @staticmethod
+                def create(**kw):
+                    calls.append(1)
+                    if len(calls) < 2:
+                        raise APIConnectionError(request=httpx.Request("POST", "http://x"))
+                    return _OkClient.chat.completions.create(**kw)
+
+    monkeypatch.setattr(llm.time, "sleep", lambda s: sleeps.append(s))
+    monkeypatch.setattr(config, "LLM_MIN_INTERVAL", 0)
+    assert llm.chat([{"role": "user", "content": "x"}], client=Flaky) == "ok"
+    assert len(calls) == 2 and len(sleeps) == 1
+
+
 def test_chat_honours_retry_after_header(monkeypatch):
     sleeps = []
     monkeypatch.setattr(llm.time, "sleep", lambda s: sleeps.append(s))
