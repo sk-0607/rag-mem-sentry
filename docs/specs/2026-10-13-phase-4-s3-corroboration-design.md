@@ -551,8 +551,9 @@ Stated so they are read here rather than found later.
       what was built (Task 42)
 
 **Measurement — each open until the owner starts its run.**
-- [ ] Write-time false-positive rate re-checked after re-ingest (Task 43)
-- [ ] S3 false-positive rate on clean untrusted content measured, every flag hand-read (Task 44)
+- [x] Write-time false-positive rate re-checked after re-ingest (Task 43)
+- [x] S3 false-positive rate on clean untrusted content measured, every flag hand-read (Task 44)
+      3 / 16 = 0.1875, over the 2% budget; recorded, prompts not reworded (README).
 - [ ] Thresholds calibrated on the calibration split only and committed (Task 45)
 - [ ] Ablation table filled from the test split, model named (Task 46)
 - [ ] Class-2 attack success reported at both levels, control / gate off / gate on, whatever the
