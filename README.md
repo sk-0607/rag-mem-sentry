@@ -863,6 +863,18 @@ false-positive rate.** Randomly sampled Wikipedia articles almost never cover ea
 so S3 checked nothing. The number shows only that S3 stays silent on uncovered clean text. A
 false-positive rate on NQ needs held-out clean text whose claims the trusted set does cover.
 
+**S3 on covered clean text, NQ.** `python -m ingest.build_nq D:/corpus-src holdout` writes
+`data/nq_holdout.jsonl`: 1298 clean passages from 49 of the 50 gold articles that are not in the
+index. `HOLDOUT_FILE=data/nq_holdout.jsonl HOLDOUT_CHUNKS=40 python -m eval.corroborate_fpr`,
+model `gemini-3.1-flash-lite`, seed 0, screened 40 of them (from 24 articles) against every
+trusted chunk. Result: total 40, non-admit 0, `s3_checked` 5 (all `supported`), `not_covered` 34,
+`no_claims` 1, reduced assurance 0, `s3_fpr` 0.0. That is 0 false positives out of 5 checked: too
+few to state a rate. Most sibling passages cover other parts of their article than the gold
+passage does.
+
+**Demo warm-up, NQ.** `python -m eval.prewarm eval/demo_questions.txt` (5 NQ questions) screened
+49 chunks, all 49 admitted, no reduced assurance.
+
 ## Open measurements
 
 Things this project has decided are worth measuring and has not measured. Listed here rather
