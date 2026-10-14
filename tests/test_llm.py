@@ -37,6 +37,27 @@ def test_chat_backoff_grows_exponentially(monkeypatch):
     assert sleeps[-1] > sleeps[0]          # not a flat delay
     assert sum(sleeps) > 60                # outlasts a per-minute window
 
+def test_chat_retries_a_503_overload_then_succeeds(monkeypatch):
+    from openai import InternalServerError
+    resp = httpx.Response(503, request=httpx.Request("POST", "http://x"))
+    calls, sleeps = [], []
+
+    class Flaky:
+        class chat:
+            class completions:
+                @staticmethod
+                def create(**kw):
+                    calls.append(1)
+                    if len(calls) < 3:
+                        raise InternalServerError("high demand", response=resp, body=None)
+                    return _OkClient.chat.completions.create(**kw)
+
+    monkeypatch.setattr(llm.time, "sleep", lambda s: sleeps.append(s))
+    monkeypatch.setattr(config, "LLM_MIN_INTERVAL", 0)
+    assert llm.chat([{"role": "user", "content": "x"}], client=Flaky) == "ok"
+    assert len(calls) == 3 and len(sleeps) == 2
+
+
 def test_chat_honours_retry_after_header(monkeypatch):
     sleeps = []
     monkeypatch.setattr(llm.time, "sleep", lambda s: sleeps.append(s))

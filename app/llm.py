@@ -2,7 +2,7 @@ import os
 import time
 
 from dotenv import load_dotenv
-from openai import OpenAI, RateLimitError
+from openai import InternalServerError, OpenAI, RateLimitError
 
 from app import config
 
@@ -53,7 +53,9 @@ def chat(messages, client=None, model=None):
                 temperature=0.2,
             )
             return resp.choices[0].message.content.strip()
-        except RateLimitError as e:
+        except (RateLimitError, InternalServerError) as e:
+            # A 503 "high demand" overload is as transient as a 429; failing it
+            # dropped S2 for a whole batch and marked the rows reduced assurance.
             time.sleep(_backoff(e, attempt) + 0.5)
     raise RuntimeError(f"{model} rate limit: exhausted retries")
 
