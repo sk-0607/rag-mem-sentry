@@ -11,8 +11,9 @@ but not counted.
 
 `build_graph` is called directly with one sub-query, as in the class-1 trial.
 
-    python -m eval.class2_trial     # 3 generate calls per group + judge calls; spends real LLM budget
+    python -m eval.class2_trial [--split test|adaptive]   # 3 generate calls per group + judge calls; spends real LLM budget
 """
+import argparse
 import json
 import os
 import shutil
@@ -23,6 +24,7 @@ from pathlib import Path
 from app import config
 from app.graph import build_graph
 from eval.attack_corpus import corpus_dir, load
+from eval.freeze_gate import FROZEN_GATE, FreezeError, check, require_frozen
 from eval.judge_fpr import read_verdict, top_signal
 from gate.read import default_read_gate
 from gate.reference import default_reference
@@ -34,6 +36,9 @@ TRIAL_DIR = Path("data/class2_trial")
 # Sibling, not a child, of TRIAL_DIR: results inside the wiped directory would be
 # deleted by the next run.
 RESULTS_DIR = Path("data/class2_trial_results")
+# The adaptive round's pair, same sibling layout; never mixed with the test-split run.
+PHASE5_GATE_DIR = Path("data/phase5_class2_gate")
+PHASE5_RESULTS_DIR = Path("data/phase5_class2")
 
 
 def normalize(text: str) -> str:
@@ -128,15 +133,31 @@ def run_all(groups, retriever, llm_module, trial_dir, chat=None, on_group=None,
     return results
 
 
-def save(groups, complete) -> dict:
+def save(groups, complete, results_dir=None, freeze=None) -> dict:
+    results_dir = results_dir if results_dir is not None else RESULTS_DIR
     results = {"answer_model": config.LLM_MODEL, "gate_model": config.JUDGE_MODEL,
                "complete": complete, "groups": groups}
-    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    (RESULTS_DIR / "results.json").write_text(json.dumps(results, indent=2), encoding="utf-8")
+    if freeze is not None:
+        results["freeze"] = freeze
+    results_dir.mkdir(parents=True, exist_ok=True)
+    (results_dir / "results.json").write_text(json.dumps(results, indent=2), encoding="utf-8")
     return results
 
 
-def main() -> int:
+def main(argv=()) -> int:
+    ap = argparse.ArgumentParser(prog="eval.class2_trial")
+    ap.add_argument("--split", choices=("test", "adaptive"), default="test")
+    split = ap.parse_args(list(argv)).split
+    if split == "adaptive":
+        try:
+            require_frozen()
+        except FreezeError as e:
+            print(e, file=sys.stderr)
+            return 1
+        trial_dir, results_dir = PHASE5_GATE_DIR, PHASE5_RESULTS_DIR
+    else:
+        trial_dir, results_dir = TRIAL_DIR, RESULTS_DIR
+
     # Before any retrieval, wipe or LLM call: with no trusted set S3 abstains on
     # everything and the trial would spend its budget measuring a gate without S3.
     reference = default_reference(Path(config.CHUNKS_PATH).parent)
@@ -154,18 +175,20 @@ def main() -> int:
 
     config.LLM_MIN_INTERVAL = float(os.getenv("LLM_MIN_INTERVAL", "2"))
     n = int(os.getenv("CLASS2_N", "5"))
-    # Test split only: the calibration split tuned the gate and is never trialled.
-    groups = targets(load(corpus_dir(), split="test"), n)
+    # Never the calibration split: it tuned the gate and is never trialled.
+    groups = targets(load(corpus_dir(), split=split), n)
+    freeze = {"record": FROZEN_GATE.as_posix() if FROZEN_GATE.exists() else None,
+              "differences": check(FROZEN_GATE, Path(config.CHUNKS_PATH).parent)}
 
     # Written after every group, `complete` false until the last, so a quota error
     # leaves finished groups on disk and a partial file is never mistaken for a run.
-    done = run_all(groups, Retriever(), llm, TRIAL_DIR, on_group=lambda g: save(g, False),
-                   reference=reference)
-    results = save(done, True)
+    done = run_all(groups, Retriever(), llm, trial_dir,
+                   on_group=lambda g: save(g, False, results_dir, freeze), reference=reference)
+    results = save(done, True, results_dir, freeze)
     # Default ensure_ascii: a cp1252 console raises on other characters.
     print(json.dumps(results, indent=2))
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(main(sys.argv[1:]))

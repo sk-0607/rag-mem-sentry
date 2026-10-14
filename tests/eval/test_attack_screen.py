@@ -173,3 +173,79 @@ def test_rerun_reuses_cached_verdicts(tmp_path):
     assert n > 0
     assert [r["action"] for r in screen(es, gate)] == first
     assert sig.calls == n
+
+
+class OneRef:
+    def __len__(self):
+        return 1
+
+
+def run_main(tmp_path, monkeypatch, split, seen=None, differences=()):
+    monkeypatch.setattr(attack_screen, "ADAPTIVE_DIR", tmp_path / "phase5_screen")
+    monkeypatch.setattr(attack_screen, "corpus_dir", lambda: tmp_path)
+    monkeypatch.setattr(attack_screen, "policy_commit", lambda: "c")
+    monkeypatch.setattr(attack_screen, "check", lambda path, data_dir: list(differences))
+
+    def fake_load(d, split):
+        if seen is not None:
+            seen["split"] = split
+        return []
+
+    monkeypatch.setattr(attack_screen, "load", fake_load)
+    monkeypatch.setattr(attack_screen, "clean_experience_entries", lambda p: [])
+    argv = ["--clean-experience"] if split == "clean_experience" else ["--split", split]
+    return attack_screen.main(argv, reference=OneRef(), gate_builder=lambda *a: FakeGate(),
+                              data_dir=tmp_path, out_root=tmp_path / "out")
+
+
+def test_adaptive_split_writes_to_phase5_screen(tmp_path, monkeypatch):
+    monkeypatch.setattr(attack_screen, "require_frozen", lambda: None)
+    assert run_main(tmp_path, monkeypatch, "adaptive") == 0
+    assert (tmp_path / "phase5_screen" / "results.json").exists()
+    assert not (tmp_path / "out" / "adaptive").exists()
+
+
+def test_adaptive_split_refuses_on_freeze_difference_before_building_gate(tmp_path, monkeypatch, capsys):
+    def boom():
+        raise attack_screen.FreezeError("gate differs")
+
+    built = []
+    monkeypatch.setattr(attack_screen, "require_frozen", boom)
+    monkeypatch.setattr(attack_screen, "screen", lambda e, g: built.append(1) or [])
+    assert run_main(tmp_path, monkeypatch, "adaptive") != 0
+    assert built == [] and "gate differs" in capsys.readouterr().err
+    assert not (tmp_path / "phase5_screen" / "results.json").exists()
+
+
+def test_adaptive_split_loads_the_adaptive_split(tmp_path, monkeypatch):
+    seen = {}
+    monkeypatch.setattr(attack_screen, "require_frozen", lambda: None)
+    run_main(tmp_path, monkeypatch, "adaptive", seen)
+    assert seen["split"] == "adaptive"
+
+
+import pytest
+
+
+@pytest.mark.parametrize("split", ["calibration", "test", "adaptive", "clean_experience"])
+def test_results_record_freeze_check(tmp_path, monkeypatch, split):
+    monkeypatch.setattr(attack_screen, "require_frozen", lambda: None)
+    monkeypatch.setattr(attack_screen, "FROZEN_GATE", tmp_path / "frozen.json")
+    (tmp_path / "frozen.json").write_text("{}", encoding="utf-8")
+    run_main(tmp_path, monkeypatch, split, differences=["knob X: 1 -> 2"])
+    where = tmp_path / "phase5_screen" if split == "adaptive" else tmp_path / "out" / split
+    out = json.loads((where / "results.json").read_text(encoding="utf-8"))
+    assert out["freeze"] == {"record": (tmp_path / "frozen.json").as_posix(),
+                             "differences": ["knob X: 1 -> 2"]}
+
+
+def test_test_split_runs_without_freeze_record_and_records_it(tmp_path, monkeypatch):
+    def boom():
+        raise AssertionError("test split must not require a freeze")
+
+    monkeypatch.setattr(attack_screen, "require_frozen", boom)
+    monkeypatch.setattr(attack_screen, "FROZEN_GATE", tmp_path / "missing.json")
+    missing = [f"no freeze record at {tmp_path / 'missing.json'}"]
+    assert run_main(tmp_path, monkeypatch, "test", differences=missing) == 0
+    out = json.loads((tmp_path / "out" / "test" / "results.json").read_text(encoding="utf-8"))
+    assert out["freeze"] == {"record": None, "differences": missing}

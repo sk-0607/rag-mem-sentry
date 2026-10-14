@@ -266,3 +266,73 @@ def test_empty_reference_stops_main_before_any_spend(tmp_path, monkeypatch, caps
     monkeypatch.setattr(mod.shutil, "rmtree", boom)
     assert mod.main() == 1
     assert "Task 43" in capsys.readouterr().err
+
+
+def patch_freeze(monkeypatch, tmp_path, differences=()):
+    monkeypatch.setattr(mod, "PHASE5_GATE_DIR", tmp_path / "phase5_gate")
+    monkeypatch.setattr(mod, "PHASE5_RESULTS_DIR", tmp_path / "phase5_results")
+    monkeypatch.setattr(mod, "check", lambda path, data_dir: list(differences))
+    monkeypatch.setattr(mod, "require_frozen", lambda: None)
+    monkeypatch.setenv("CLASS2_N", "1")
+
+
+def test_cli_default_split_is_test(tmp_path, monkeypatch):
+    seen = {}
+    patch_main(monkeypatch, tmp_path, seen)
+    patch_freeze(monkeypatch, tmp_path)
+    assert mod.main([]) == 0
+    assert seen["split"] == "test" and (tmp_path / "results" / "results.json").exists()
+
+
+def test_cli_adaptive_loads_adaptive_split_and_phase5_dirs(tmp_path, monkeypatch):
+    seen, dirs = {}, {}
+    patch_main(monkeypatch, tmp_path, seen)
+    patch_freeze(monkeypatch, tmp_path)
+    real_run_all = mod.run_all
+
+    def spy(groups, retriever, llm_module, trial_dir, **kw):
+        dirs["trial"] = trial_dir
+        return real_run_all(groups, retriever, llm_module, trial_dir, **kw)
+
+    monkeypatch.setattr(mod, "run_all", spy)
+    assert mod.main(["--split", "adaptive"]) == 0
+    assert seen["split"] == "adaptive" and dirs["trial"] == tmp_path / "phase5_gate"
+    assert (tmp_path / "phase5_results" / "results.json").exists()
+    assert not (tmp_path / "results").exists()
+
+
+def test_cli_adaptive_refuses_on_freeze_difference_before_any_spend(tmp_path, monkeypatch, capsys):
+    patch_main(monkeypatch, tmp_path)
+    patch_freeze(monkeypatch, tmp_path)
+
+    def differs():
+        raise mod.FreezeError("gate differs")
+
+    def boom(*a, **k):
+        raise AssertionError("spent before the freeze check")
+
+    monkeypatch.setattr(mod, "require_frozen", differs)
+    monkeypatch.setattr(mod, "run_all", boom)
+    assert mod.main(["--split", "adaptive"]) != 0
+    assert "gate differs" in capsys.readouterr().err
+
+
+def test_cli_adaptive_wipes_only_the_phase5_gate_dir(tmp_path, monkeypatch):
+    patch_main(monkeypatch, tmp_path)
+    patch_freeze(monkeypatch, tmp_path)
+    for d in ("phase5_gate", "trial"):
+        (tmp_path / d).mkdir()
+        (tmp_path / d / "stale.txt").write_text("old", encoding="utf-8")
+    mod.main(["--split", "adaptive"])
+    assert not (tmp_path / "phase5_gate" / "stale.txt").exists()
+    assert (tmp_path / "trial" / "stale.txt").exists()
+
+
+@pytest.mark.parametrize("split,where", [("test", "results"), ("adaptive", "phase5_results")])
+def test_output_records_freeze_check(tmp_path, monkeypatch, split, where):
+    patch_main(monkeypatch, tmp_path)
+    patch_freeze(monkeypatch, tmp_path, differences=["reference fingerprint changed"])
+    monkeypatch.setattr(mod, "FROZEN_GATE", tmp_path / "frozen.json")
+    mod.main(["--split", split])
+    out = json.loads((tmp_path / where / "results.json").read_text(encoding="utf-8"))
+    assert out["freeze"] == {"record": None, "differences": ["reference fingerprint changed"]}
