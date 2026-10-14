@@ -186,3 +186,13 @@ def test_full_ingest_clears_the_old_collection_before_indexing(local_docs):
     events = local_docs[1].events
     assert events[0][0] == "get" and events[1] == ("delete", config.COLLECTION)
     assert all(name == config.COLLECTION for _, name in events)
+
+
+def test_bad_manifest_fails_before_the_index_is_cleared(local_docs):
+    from ingest.run_ingest import main
+    (local_docs[0] / "ingest" / "papers.json").write_text(json.dumps([
+        {"path": "docs/handbook.md", "title": "A"}, {"path": "other/handbook.txt", "title": "B"},
+    ]), encoding="utf-8")
+    with pytest.raises(ValueError, match="duplicate"):
+        main()
+    assert not any(kind == "delete" for kind, _ in local_docs[1].events)

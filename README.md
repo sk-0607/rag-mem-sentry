@@ -79,6 +79,9 @@ without its extension; it prefixes every chunk id, so keep it unique. Every inge
 rebuild: it clears the `papers` index first (experience memory, a separate collection, is not
 touched), so a source removed from the manifest leaves nothing behind. To swap the trusted
 reference set, edit the manifest and re-run ingest; S3's cache misses on the new set by itself.
+Ingest refuses a manifest with a duplicate source id, or an entry with neither `arxiv_id` nor
+`path`, before it clears the index. Restart a running app after a re-ingest: it holds a handle to
+the index that was cleared.
 
 ## Evaluation
 
@@ -726,7 +729,7 @@ from `ATTACK_CORPUS_DIR` (default `data/attack_corpus`).
 | Ablation (`eval/ablation.py`) | `python -m eval.ablation data/phase4_screen/test/results.json` | Items caught out of items scored, per class, for five signal subsets (S1, S2, S3, S1 + S2, S1 + S2 + S3), recomputed offline from the screen's stored scores. Rows with reduced assurance are excluded and counted. Per class, how many items S3 did not check and why. Report-only: S3 ships whatever it shows. No LLM call. | stdout |
 | S3 false positives (`eval/corroborate_fpr.py`) | `LLM_MIN_INTERVAL=2 python -m eval.corroborate_fpr` | Holds out some trusted sources, marks their chunks untrusted and screens them against the remaining trusted sources. Every non-admit is a false positive by construction. Summary: items checked, items not checked (and why), non-admits, and the S3 false-positive rate. `HOLDOUT_SOURCES` and `HOLDOUT_CHUNKS` set the sample size. | `data/phase4_s3_fpr/results.json` |
 | Calibration (`eval/calibrate.py`) | `python -m eval.calibrate` | A proposed hard threshold for `judge` from the calibration split only (`corroborate` is quarantine-only: its scores are reported, no threshold proposed), and a band report per store against the 2% budget. Prints the proposal and writes nothing; a person applies it to `gate/policy.py`. No LLM call. | stdout |
-| Demo pre-warm (`eval/prewarm.py`) | `LLM_MIN_INTERVAL=2 python -m eval.prewarm <questions.txt>` | Retrieves the top `FUSE_M` (10) chunks for each demo question and screens them once through the read gate, so a live query that retrieves them makes no gate LLM call (an offline test asserts zero calls on a warm cache). Spends S2 one call per 5 uncached chunks and S3 up to 2 per uncached untrusted chunk; a rerun pays only for what is not cached. Sub-questions can retrieve chunks outside the question's top 10; list them in the file too. `GATE_DIR` (default `data`) must match the demo's read gate. | `$GATE_DIR/gate_cache.jsonl` |
+| Demo pre-warm (`eval/prewarm.py`) | `LLM_MIN_INTERVAL=2 python -m eval.prewarm <questions.txt>` | Retrieves the top `FUSE_M` (10) chunks for each demo question and screens them once through the read gate, so a live query that retrieves them makes no gate LLM call (an offline test asserts zero calls on a warm cache). Spends S2 one call per 5 uncached chunks and S3 2 per uncached untrusted chunk (up to 4 if both replies need a re-ask); a rerun pays only for what is not cached. Sub-questions can retrieve chunks outside the question's top 10; list them in the file too. `GATE_DIR` (default `data`) must match the demo's read gate. | `$GATE_DIR/gate_cache.jsonl` |
 | Class-2 trial (`eval/class2_trial.py`) | `LLM_MIN_INTERVAL=2 python -m eval.class2_trial` | False-fact passages planted in the top-5 for each target, run as `control` (no poison), `off` (poison, no gate) and `on` (poison, read gate). Per target: poison in the context, the group's target answer in the answer (a mechanical text check, no hand judgement), and the signal that excluded each passage. A target whose control answer already holds the target answer is void and not counted. | `data/class2_trial_results/results.json` |
 
 All of it is covered by offline tests with fakes; none of those tests spends budget.
@@ -739,6 +742,15 @@ them are trusted. The write-time false-positive figure is unchanged:
 `python -m eval.fpr data/gate_audit.jsonl` reports total 2025, admit 2017, quarantine 8, block 0,
 `fpr` 0.003950617283950617, identical to the run before it. The corpus did not drift, so the
 S3 reference is the same 22 sources the earlier write-time numbers were measured on.
+
+### Demo trust marking (2026-10-14)
+
+For the demo, `ingest/papers.json` marks four sources untrusted: `1511.07528`, `1712.05526`,
+`2306.05499` and `2306.11698`, so S3 has content to check. After re-ingest: 2017 chunks, 1478
+trusted, 539 untrusted; the write-time figure is unchanged (total 2025, quarantine 8, `fpr`
+0.003950617283950617). These are the same four sources Task 44 held out, including
+`1712.05526::38`, the chunk the same-subject prompt wording was written after reading, so any S3
+behaviour seen on them in the demo is not an independent measurement.
 
 ### Phase 4: S3 on Clean Untrusted Content (Task 44, run 2026-10-14)
 

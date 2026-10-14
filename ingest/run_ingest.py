@@ -42,7 +42,9 @@ def read_file_text(path):
         root = ElementTree.fromstring(zipfile.ZipFile(path).read("word/document.xml"))
         return "\n".join("".join(t.text or "" for t in p.iter(f"{_W}t")) for p in root.iter(f"{_W}p"))
     if suffix in (".txt", ".md"):
-        return path.read_text(encoding="utf-8")
+        # utf-8-sig: a BOM left on the first word is a zero-width character to
+        # S1, which would quarantine the first chunk of every such file.
+        return path.read_text(encoding="utf-8-sig")
     raise ValueError(f"unsupported file type {suffix or '(none)'!r} for {path}: use .pdf, .docx, .txt or .md")
 
 
@@ -58,6 +60,20 @@ def source_id(entry):
     if "path" in entry:
         return entry.get("id") or Path(entry["path"]).stem
     return entry["arxiv_id"]
+
+
+def check_source_ids(entries):
+    # Before the index is cleared: a bad manifest must not leave an empty index.
+    # A duplicate id gives duplicate `<id>::<n>` chunk ids, and the index keeps
+    # only the last, so one source would silently vanish from retrieval.
+    seen = set()
+    for n, entry in enumerate(entries):
+        if "path" not in entry and "arxiv_id" not in entry:
+            raise ValueError(f"manifest entry {n} has neither 'arxiv_id' nor 'path'")
+        sid = source_id(entry)
+        if sid in seen:
+            raise ValueError(f"duplicate source id {sid!r} in the manifest: give each entry a unique 'id'")
+        seen.add(sid)
 
 
 def source_trusted(entry):
@@ -88,6 +104,7 @@ def write_chunks_jsonl(chunks, path):
 
 def main():
     papers = json.load(open("ingest/papers.json", encoding="utf-8"))
+    check_source_ids(papers)
     embedder = SentenceTransformer(config.EMBED_MODEL)
     client = chromadb.PersistentClient(path=config.CHROMA_DIR)
     # Derived from config.CHUNKS_PATH at call time (not import time) so tests

@@ -71,3 +71,22 @@ def test_read_file_text_rejects_unsupported_types(tmp_path, name):
     p.write_bytes(b"x")
     with pytest.raises(ValueError, match="unsupported"):
         ing.read_file_text(p)
+
+
+def test_read_file_text_strips_a_utf8_bom(tmp_path):
+    # A BOM left on the first word trips S1's zero-width rule and quarantines chunk 0.
+    p = tmp_path / "doc.txt"
+    p.write_bytes("\ufeffHello.".encode("utf-8"))
+    assert ing.read_file_text(p) == "Hello."
+
+
+def test_check_source_ids_rejects_duplicates():
+    with pytest.raises(ValueError, match="duplicate source id '2306.11698'"):
+        ing.check_source_ids([{"arxiv_id": "2306.11698"}, {"path": "docs/x.md", "id": "2306.11698"}])
+    with pytest.raises(ValueError, match="duplicate source id 'notes'"):
+        ing.check_source_ids([{"path": "a/notes.md"}, {"path": "b/notes.txt"}])
+
+
+def test_check_source_ids_rejects_an_entry_with_no_source():
+    with pytest.raises(ValueError, match="neither 'arxiv_id' nor 'path'"):
+        ing.check_source_ids([{"title": "orphan"}])

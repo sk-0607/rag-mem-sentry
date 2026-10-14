@@ -57,7 +57,7 @@ def test_warm_cache_makes_zero_gate_llm_calls(tmp_path):
     chat = CountingChat()
     gate = default_read_gate(tmp_path, chat=chat, reference=ReferenceIndex([TRUSTED]))
 
-    assert prewarm(["demo question"], retriever, gate, k=10) == 10
+    assert prewarm(["demo question"], retriever, gate, k=10) == (10, False)
     assert chat.calls > 0
 
     # A live query retrieves the top 5 of what was pre-warmed: all cache hits.
@@ -65,3 +65,11 @@ def test_warm_cache_makes_zero_gate_llm_calls(tmp_path):
     live = default_read_gate(tmp_path, chat=chat, reference=ReferenceIndex([TRUSTED]))
     live.screen_batch([doc_to_item(d) for d in retriever.retrieve("demo question", k=5)], "corpus")
     assert chat.calls == before
+
+
+def test_prewarm_reports_reduced_assurance_on_an_outage(tmp_path):
+    def down(messages, model=None, **kw):
+        raise RuntimeError("rate limited")
+
+    gate = default_read_gate(tmp_path, chat=down, reference=ReferenceIndex([TRUSTED]))
+    assert prewarm(["q"], FakeRetriever({"q": [doc(0)]}), gate) == (1, True)

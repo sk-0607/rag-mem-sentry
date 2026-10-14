@@ -2,7 +2,7 @@
 
 The gate's verdicts are content-keyed, so a chunk screened here is a cache hit
 when a live query retrieves it: the demo then spends no gate LLM call on it.
-Spends LLM budget once (S2 one call per 5 uncached chunks, S3 up to 2 per
+Spends LLM budget once (S2 one call per 5 uncached chunks, S3 2, up to 4 with re-asks, per
 uncached untrusted chunk); a rerun only pays for what is not cached yet.
 
 Usage: python -m eval.prewarm <questions.txt>   (one question per line)
@@ -30,10 +30,11 @@ def chunks_for(questions: list[str], retriever, k: int) -> list[dict]:
     return list(seen.values())
 
 
-def prewarm(questions: list[str], retriever, gate, k: int = PREWARM_K) -> int:
+def prewarm(questions: list[str], retriever, gate, k: int = PREWARM_K) -> tuple[int, bool]:
     chunks = chunks_for(questions, retriever, k)
-    gate.screen_batch([doc_to_item(c) for c in chunks], "corpus")
-    return len(chunks)
+    result = gate.screen_batch([doc_to_item(c) for c in chunks], "corpus")
+    # A degraded run is not cached, so those chunks will still cost calls live.
+    return len(chunks), result.reduced_assurance
 
 
 def main(argv: list[str]) -> int:
@@ -45,8 +46,11 @@ def main(argv: list[str]) -> int:
 
     # The demo's read gate must use this same directory, or every lookup misses.
     data_dir = Path(os.getenv("GATE_DIR", "data"))
-    n = prewarm(questions, Retriever(), default_read_gate(data_dir))
+    n, reduced = prewarm(questions, Retriever(), default_read_gate(data_dir))
     print(f"{n} chunks screened for {len(questions)} questions into {data_dir / 'gate_cache.jsonl'}")
+    if reduced:
+        print("a signal was unavailable for some chunks; they were not cached: rerun", file=sys.stderr)
+        return 1
     return 0
 
 
