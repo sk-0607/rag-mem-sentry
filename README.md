@@ -945,6 +945,24 @@ no bit, because a verdict from the surviving signals alone would tell the attack
 signals admit. Every run on the frozen gate (Task 46, 47 and Phase 5's) records the freeze check in
 its `results.json`.
 
+### Gate freeze (Task 55, run 2026-10-14)
+
+`python -m eval.freeze_gate record` then `check` printed `freeze check: clean`. Record
+`eval/frozen_gate.json`, committed in 3dcce90, local tag `gate-frozen-1` (not pushed), recorded
+against commit 01e29bc. Judge model `gemini-flash-lite-latest` (pinned with `JUDGE_MODEL` in
+`.env`). Knobs: `JUDGE_BATCH_MAX` 5, `S3_MAX_CLAIMS` 5, `S3_REF_K` 3. Policy: corpus
+`block_below` 0.1 / `quarantine_below` 0.6, experience 0.2 / 0.7, hard thresholds `structural`
+0.93 and `judge` 0.8, `corroborate` quarantine-only. Reference fingerprint
+`c54d8d88e29f7c731973c3838160fec7cf9c2109c5c1b7103ee854b8e155d4b0`.
+
+Calibrated: `judge` (0.8, Task 45). Kept as before: `structural` 0.93 (derived from S1's weights,
+Phase 1), the corpus band (measured on write-time FPR in Phase 1; over budget on the Task 45
+read-time clean set, recorded, not moved), and the experience band (placeholder, Phase 2).
+
+The Task 46 test-split screen started before this record was written, at the same state: no file
+under `gate/` or `app/`, no knob, model or trusted chunk changed between bba69b5 and the record.
+Its `results.json` predates the `freeze` field and does not carry it.
+
 ## Open measurements
 
 Things this project has decided are worth measuring and has not measured. Listed here rather
@@ -1000,8 +1018,7 @@ the three.
 Phase 5 adds seven run tasks, all built and none run. Each needs an explicit go from the project
 owner. No figure exists for any of them.
 
-9. **Freeze the gate (Task 55, `python -m eval.freeze_gate record`, then
-   `python -m eval.freeze_gate check`).** Records the post-calibration gate state.
+9. *Closed 2026-10-14.* Gate freeze (Task 55): see "Gate freeze" above.
 10. **Probe session 1 (Task 56, `PROBE_SESSION=1 LLM_MIN_INTERVAL=2 python -m eval.probe_server`,
     then `python -m eval.probe_summary`).**
 11. **Probe session 2 (Task 57, `PROBE_SESSION=2 ...`, same commands).**
@@ -1141,7 +1158,7 @@ Phase 5 (adaptive round) is **built; every measurement not run**. Plan:
 | 52 | Probe summary | built, offline tests |
 | 53 | Attacker brief | docs |
 | 54 | Docs reconciled with what was built | docs |
-| 55 | Freeze the gate | not run |
+| 55 | Freeze the gate | run 2026-10-14, tag `gate-frozen-1` |
 | 56–58 | Probe sessions 1–3 | not run |
 | 59 | Adaptive set frozen and screened | not run |
 | 60 | Adaptive class-2 trial | not run |
