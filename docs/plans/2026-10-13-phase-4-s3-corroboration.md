@@ -1079,6 +1079,8 @@ Record this commit's hash. Task 46 checks against it.
 
 ### Task 46: Screen the test split and build the ablation table — RUN, owner go required
 
+*2026-10-14, from Phase 5:* run `python -m eval.freeze_gate check` first; it must print `freeze check: clean`, or the run is not the blind baseline (Phase 5 spec §5.3).
+
 Spends budget: at most 45 calls at the minimum corpus size. The test split is screened **once**.
 
 - [ ] **Step 1: STOP.** Ask the owner for an explicit go for this task. Requires Task 45's commit.
@@ -1114,6 +1116,8 @@ git commit -m "docs: record the signal ablation on the frozen test split" -- REA
 ---
 
 ### Task 47: Class-2 trial — RUN, LAST, owner go required
+
+*2026-10-14, from Phase 5:* run `python -m eval.freeze_gate check` first; it must print `freeze check: clean`, or the run is not the blind baseline (Phase 5 spec §5.3).
 
 Spends budget: at most 40 calls for 5 targets. This is the gate-off measurement the owner put last.
 

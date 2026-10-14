@@ -1792,19 +1792,28 @@ Tasks 43–47 each wait for an explicit go from the project owner; 45 also waits
 
 ### Phase 5 — Adaptive round (week 10)
 
-The task numbers below are stale: Phase 4 now uses Tasks 32–47. They will be renumbered when this phase is planned.
+Planned in `docs/plans/2026-10-14-phase-5-adaptive-round.md` (Tasks 48–61).
 
-| Task | Deliverable |
-|---|---|
-| 28 | Gate frozen; tag the commit; black-box query endpoint for the teammate |
-| 29 | Adaptive attack round — teammate authors against the live gate, thresholds hidden |
-| 30 | Adaptive ASR measured and recorded alongside the blind number |
+| Task | Deliverable | Status |
+|---|---|---|
+| 48 | Freeze record and check (`eval/freeze_gate.py`) | built, offline tests |
+| 49 | Adaptive attack-corpus kind | built, offline tests |
+| 50 | One-bit probe endpoint (`eval/probe_server.py`) | built, offline tests |
+| 51 | Adaptive split in the screen and the class-2 trial | built, offline tests |
+| 52 | Probe summary (`eval/probe_summary.py`) | built, offline tests |
+| 53 | Attacker brief | docs |
+| 54 | Docs reconciled | docs |
+| 55 | Freeze the gate | not run |
+| 56–58 | Probe sessions 1–3 | not run |
+| 59 | Freeze and screen the adaptive set | not run |
+| 60 | Adaptive class-2 trial | not run |
+| 61 | Record the round's results | not run |
 
 No gate changes during week 10. A defense patched mid-round produces a number that means nothing.
 
 ### Phase 6 — Demo and report (weeks 11–12)
 
-The task numbers below are stale for the same reason. They will be renumbered when this phase is planned.
+Phase 6 starts at Task 62 and is renumbered when it is planned.
 
 | Task | Deliverable |
 |---|---|

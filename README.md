@@ -922,6 +922,29 @@ Read-through and values applied:
 At read time a hard threshold changes the audit label (block vs quarantine), not what reaches the
 model: both are excluded from the prompt (spec §9.4).
 
+## Phase 5: Adaptive Round (built, not run)
+
+The blind numbers above measure the gate against attacks written without seeing it. Phase 5 measures
+it against an attacker that probes the frozen gate and adapts. The attacker is an external agent
+with black-box access only, briefed by `docs/prompts/adaptive-attacker-agent.md`. Spec:
+`docs/specs/2026-10-14-phase-5-adaptive-round-design.md`; plan:
+`docs/plans/2026-10-14-phase-5-adaptive-round.md`. Nothing has been run; no figure exists.
+
+| Piece | Command | Reports | Writes |
+|---|---|---|---|
+| Freeze record | `python -m eval.freeze_gate record` / `check` | every difference between the gate now and its record: gate files, knobs, judge model, policy values, trusted-set fingerprint | `eval/frozen_gate.json` |
+| Probe endpoint | `PROBE_SESSION=<1-3> python -m eval.probe_server` | one bit per item to the attacker; 20 counted probes per session | `data/phase5_probe/` only |
+| Adaptive split | `python -m eval.attack_screen --split adaptive`, `python -m eval.class2_trial --split adaptive` | detection per class and class-2 attack success on the adaptive set; refuses unless the freeze check is clean | `data/phase5_screen/`, `data/phase5_class2/` |
+| Probe summary | `python -m eval.probe_summary [--final <screen results.json>]` | per session: counted, cached, 429s, 503s, admitted rate per class; verdict flips between probe and final screen | stdout |
+
+**Why one bit.** The endpoint returns only `admitted` true or false. The action, trust, signal
+scores and reasons stay on the server: a returned score would let the attacker climb it, and a
+returned reason would name the signal to evade. A probe counts against the cap only when the gate
+made an LLM call for it, so resubmitting a known item is free. A degraded screen returns 503 with
+no bit, because a verdict from the surviving signals alone would tell the attacker what those
+signals admit. Every run on the frozen gate (Task 46, 47 and Phase 5's) records the freeze check in
+its `results.json`.
+
 ## Open measurements
 
 Things this project has decided are worth measuring and has not measured. Listed here rather
@@ -960,7 +983,7 @@ the three.
 4. *Closed 2026-10-14.* Trust-flagged re-ingest (Task 43): see "Trust-flagged re-ingest" above.
 5. *Closed 2026-10-14.* S3 false positives on clean untrusted content (Task 44): see
    "Phase 4: S3 on Clean Untrusted Content" above. Over budget, 3 / 16.
-6. **Corpus frozen, calibration split screened, thresholds proposed (Task 45,
+6. *Closed 2026-10-14.* Calibration (Task 45): see "Phase 4: Calibration" above. Was: **Corpus frozen, calibration split screened, thresholds proposed (Task 45,
    `python -m eval.attack_corpus validate` and `freeze`, then
    `LLM_MIN_INTERVAL=2 python -m eval.attack_screen --split calibration` and `--clean-experience`,
    then `python -m eval.calibrate`).** A hard threshold for `judge` chosen on the
@@ -973,6 +996,23 @@ the three.
    `LLM_MIN_INTERVAL=2 python -m eval.class2_trial`).** Run last, on a smaller answer model the
    owner names, with `JUDGE_MODEL` kept on `gemini-3.1-flash-lite`. It is also the first time
    class 2 is attacked in fact on the ungated host.
+
+Phase 5 adds seven run tasks, all built and none run. Each needs an explicit go from the project
+owner. No figure exists for any of them.
+
+9. **Freeze the gate (Task 55, `python -m eval.freeze_gate record`, then
+   `python -m eval.freeze_gate check`).** Records the post-calibration gate state.
+10. **Probe session 1 (Task 56, `PROBE_SESSION=1 LLM_MIN_INTERVAL=2 python -m eval.probe_server`,
+    then `python -m eval.probe_summary`).**
+11. **Probe session 2 (Task 57, `PROBE_SESSION=2 ...`, same commands).**
+12. **Probe session 3 (Task 58, `PROBE_SESSION=3 ...`, same commands).**
+13. **Adaptive set frozen and screened (Task 59,
+    `ATTACK_CORPUS_DIR=data/phase5_adaptive_corpus python -m eval.attack_corpus freeze --adaptive`,
+    then `ATTACK_CORPUS_DIR=data/phase5_adaptive_corpus LLM_MIN_INTERVAL=2 python -m eval.attack_screen --split adaptive`).**
+    Adaptive detection per class, beside the blind test split.
+14. **Adaptive class-2 trial (Task 60,
+    `ATTACK_CORPUS_DIR=data/phase5_adaptive_corpus python -m eval.class2_trial --split adaptive`).**
+15. **Round results recorded (Task 61, `python -m eval.probe_summary --final data/phase5_screen/results.json`).**
 
 ## Known Phase 3+ concerns (named, not addressed)
 
@@ -1042,6 +1082,12 @@ the three.
 - **Trust is asserted by the owner, not verified.** S3 never checks trusted content, so a
   poisoned source the owner marks trusted poisons the reference. S1 still screens it at write
   time and S2 at read time. The flag is a manifest entry, not signing or lineage.
+- **The adaptive round's black box is a process boundary, not enforcement.** The attacker agent
+  runs on the owner's machine and could in principle read this repository. Its brief forbids it
+  and the owner checks its tool log after each session; a breach voids the round.
+- **Probe timing leaks.** An uncached probe takes longer when S3 reaches its agreement step than
+  when it stops early, and a cached probe is fast. An attacker that times requests learns which
+  path ran. Not mitigated.
 
 ## Roadmap
 
@@ -1079,8 +1125,26 @@ explicit go from the project owner. Plan: `docs/plans/2026-10-13-phase-4-s3-corr
 | 42 | Docs reconciled with what was built | docs |
 | 43 | Re-ingest with trust flags; write-time false-positive rate re-checked | run 2026-10-14, unchanged |
 | 44 | S3 false positives on clean untrusted content | run 2026-10-14, 3 / 16 = 0.1875, over the 2% budget |
-| 45 | Corpus frozen; calibration split screened; thresholds proposed and committed | not run |
-| 46 | Test split screened; ablation table | not run |
+| 45 | Corpus frozen; calibration split screened; thresholds proposed and committed | run 2026-10-14, judge 0.80; corpus band over budget, 2 / 40 |
+| 46 | Test split screened; ablation table | running |
 | 47 | Class-2 trial, control / gate off / gate on | not run |
+
+Phase 5 (adaptive round) is **built; every measurement not run**. Plan:
+`docs/plans/2026-10-14-phase-5-adaptive-round.md`.
+
+| Task | Deliverable | Status |
+|---|---|---|
+| 48 | Freeze record and check | built, offline tests |
+| 49 | Adaptive attack-corpus kind | built, offline tests |
+| 50 | One-bit probe endpoint | built, offline tests |
+| 51 | Adaptive split in the screen and the class-2 trial | built, offline tests |
+| 52 | Probe summary | built, offline tests |
+| 53 | Attacker brief | docs |
+| 54 | Docs reconciled with what was built | docs |
+| 55 | Freeze the gate | not run |
+| 56–58 | Probe sessions 1–3 | not run |
+| 59 | Adaptive set frozen and screened | not run |
+| 60 | Adaptive class-2 trial | not run |
+| 61 | Round results recorded | not run |
 
 Later: multi-turn memory, tracing panel, larger corpus + eval set.

@@ -447,13 +447,16 @@ fake `chat`, injected gate, temporary directories.
 ## 16. Exit criteria
 
 **Build — closable without spending budget.**
-- [ ] `pytest -q` green; `pytest tests/gate tests/memory` makes zero network calls
-- [ ] Nothing under `gate/` or `app/` changed in this phase
-- [ ] Freeze check detects a change in each frozen element
-- [ ] Probe server returns one bit, enforces the cap, writes only under its own directory
-- [ ] Calibration cannot use test-split or adaptive screen output
-- [ ] Attacker brief committed
-- [ ] Roadmap, README and parent spec reconciled (Task 54)
+- [x] `pytest -q` green; `pytest tests/gate tests/memory` makes zero network calls
+- [ ] Nothing under `gate/` or `app/` changed in this phase. Not met as written (2026-10-14):
+  `gate/policy.py` and `gate/signals/judge.py` changed in Phase 4 Task 45 (judge hard threshold
+  0.80), and `app/llm.py` gained retries on 503 and dropped connections, all committed before the
+  freeze record; no Phase 5 task changed either directory.
+- [x] Freeze check detects a change in each frozen element
+- [x] Probe server returns one bit, enforces the cap, writes only under its own directory
+- [x] Calibration cannot use test-split or adaptive screen output
+- [x] Attacker brief committed
+- [x] Roadmap, README and parent spec reconciled (Task 54)
 
 **Measurement — each open until the owner starts its run.**
 - [ ] Freeze recorded and tagged after Task 45 (Task 55)

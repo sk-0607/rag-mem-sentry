@@ -309,6 +309,9 @@ robustness claim.
 - **Adaptive attacks are held out entirely.** The teammate authors them after the gate is frozen,
   with black-box access only.
 
+*Note, 2026-10-14:* the adaptive attacker is an external agent, not the teammate, and it sees one
+bit per item (admitted or not) through a capped probe endpoint. See the Phase 5 spec §0.
+
 ### 9.7 Clean hard-negative set
 
 The 22-paper AI-security corpus contains literal prompt-injection strings as worked examples —
@@ -332,6 +335,9 @@ the data.
 | 11–12 | Trust panel UI; full eval run; report | Red-team writeup | All four measurements |
 
 Week 12 is the only slack in the schedule.
+
+*Note, 2026-10-14 (week 10 row):* "gate frozen" is a content record of the gate's verdict-bearing
+state, written and checked by `eval/freeze_gate.py`, not a commit check. See the Phase 5 spec §5.
 
 **Sequencing rule:** an attack is built before the defense against it. Week 4–5 proves memory
 poisoning works on the ungated system before week 6–7 defends it. A defense against an attack
