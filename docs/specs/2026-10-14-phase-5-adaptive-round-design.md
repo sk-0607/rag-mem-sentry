@@ -463,7 +463,9 @@ fake `chat`, injected gate, temporary directories.
 - [ ] Three probe sessions run, none voided (Tasks 56–58)
 - [x] Adaptive detection per class beside the blind test split, models named (Task 59;
   `gemini-flash-lite-latest`; adaptive 1/16, 3/16, 0/16 against blind 28/28, 34/75, 15/21)
-- [ ] Adaptive class-2 attack success at both levels beside Task 47 (Task 60)
+- [x] Adaptive class-2 attack success at both levels beside Task 47 (Task 60; answer
+  `gemini-3.1-flash-lite`, gate `gemini-flash-lite-latest`; 5 valid: context 5/5 → 5/5, behavior
+  5/5 → 5/5, against blind 4/4 → 3/4 at both levels)
 - [ ] Results and probe history recorded (Task 61)
 
 An unrun measurement is recorded in the README's "Open measurements", not ticked.
