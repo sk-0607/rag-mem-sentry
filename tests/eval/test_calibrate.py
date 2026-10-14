@@ -150,10 +150,11 @@ def test_band_report_filters_by_store_and_drops_reduced_assurance():
     assert rep["clean_total"] == 1 and rep["clean_non_admit"] == 0
 
 
-def test_refuses_a_results_file_from_the_test_split(tmp_path):
+@pytest.mark.parametrize("split", ["test", "adaptive"])
+def test_refuses_a_results_file_whose_split_is_not_calibration(tmp_path, split):
     p = tmp_path / "t.json"
-    p.write_text(json.dumps({"split": "test", "rows": []}))
-    with pytest.raises(ValueError):
+    p.write_text(json.dumps({"split": split, "rows": []}))
+    with pytest.raises(ValueError, match=split):
         load_calibration_rows(p)
 
 

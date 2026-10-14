@@ -15,7 +15,12 @@ from memory.types import ExperienceRecord
 
 MIN_PER_CLASS = 30
 MIN_CLASS2_GROUPS = 10
+# Adaptive sets are smaller: 60 probes of one bit buy fewer finished items than
+# a blind author writes (Phase 5 spec §10.1).
+ADAPTIVE_MIN_PER_CLASS = 15
+ADAPTIVE_MIN_CLASS2_GROUPS = 5
 SPLITS = ("calibration", "test")
+ADAPTIVE = "adaptive"
 ITEMS_FILE = "items.jsonl"
 MANIFEST_FILE = "manifest.json"
 REQUIRED = {
@@ -56,7 +61,7 @@ def _nonempty(v) -> bool:
     return isinstance(v, str) and v != ""
 
 
-def validate(items: list[dict]) -> None:
+def validate(items: list[dict], adaptive: bool = False) -> None:
     errors = []
     seen = set()
     group_classes: dict[str, set] = {}
@@ -92,11 +97,13 @@ def validate(items: list[dict]) -> None:
     for group, classes in sorted(group_classes.items()):
         if len(classes) > 1:
             errors.append(f"group {group}: spans classes {sorted(classes)}")
+    min_items = ADAPTIVE_MIN_PER_CLASS if adaptive else MIN_PER_CLASS
+    min_groups = ADAPTIVE_MIN_CLASS2_GROUPS if adaptive else MIN_CLASS2_GROUPS
     for cls, n in per_class.items():
-        if n < MIN_PER_CLASS:
-            errors.append(f"class {cls}: {n} items, need at least {MIN_PER_CLASS}")
-    if len(class2_groups) < MIN_CLASS2_GROUPS:
-        errors.append(f"class 2: {len(class2_groups)} groups, need at least {MIN_CLASS2_GROUPS}")
+        if n < min_items:
+            errors.append(f"class {cls}: {n} items, need at least {min_items}")
+    if len(class2_groups) < min_groups:
+        errors.append(f"class 2: {len(class2_groups)} groups, need at least {min_groups}")
     if errors:
         raise AttackCorpusError("\n".join(errors))
 
@@ -118,26 +125,42 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def freeze(directory: Path, today: str) -> dict:
+def manifest_kind(manifest: dict) -> str:
+    # A manifest frozen before Phase 5 has no kind key; it is blind.
+    return manifest.get("kind", "blind")
+
+
+def freeze(directory: Path, today: str, adaptive: bool = False) -> dict:
     path = directory / ITEMS_FILE
     items = read_items(path)
-    validate(items)
-    groups = assign_splits(items)
-    counts = {str(c): {s: 0 for s in SPLITS} for c in REQUIRED}
+    validate(items, adaptive=adaptive)
+    if adaptive:
+        groups = {it["group"]: ADAPTIVE for it in items}
+        splits = (ADAPTIVE,)
+    else:
+        groups, splits = assign_splits(items), SPLITS
+    counts = {str(c): {s: 0 for s in splits} for c in REQUIRED}
     for it in items:
         counts[str(it["class"])][groups[it["group"]]] += 1
-    manifest = {"sha256": _sha256(path), "frozen": today, "counts": counts, "groups": groups}
+    manifest = {"sha256": _sha256(path), "frozen": today, "counts": counts, "groups": groups,
+                "kind": ADAPTIVE if adaptive else "blind"}
     (directory / MANIFEST_FILE).write_text(json.dumps(manifest, indent=2), encoding="utf-8")
     return manifest
 
 
 def load(directory: Path, split: str | None = None) -> list[dict]:
-    if split is not None and split not in SPLITS:
-        raise AttackCorpusError(f"unknown split {split!r}; use 'calibration', 'test' or None")
+    if split is not None and split not in SPLITS + (ADAPTIVE,):
+        raise AttackCorpusError(f"unknown split {split!r}; use 'calibration', 'test', 'adaptive' or None")
     manifest_path = directory / MANIFEST_FILE
     if not manifest_path.exists():
         raise AttackCorpusError(f"corpus not frozen: no {MANIFEST_FILE} in {directory}")
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    kind = manifest_kind(manifest)
+    allowed = (ADAPTIVE,) if kind == ADAPTIVE else SPLITS
+    if split is not None and split not in allowed:
+        # A blind split read from an adaptive set (or the reverse) would score one
+        # attacker setting as the other.
+        raise AttackCorpusError(f"split {split!r} is not valid on a {kind} corpus")
     path = directory / ITEMS_FILE
     if _sha256(path) != manifest["sha256"]:
         raise AttackCorpusError(f"{ITEMS_FILE} changed since freeze")
@@ -159,16 +182,17 @@ def to_gate_item(entry: dict) -> tuple[Item, str]:
 
 
 def main(argv: list[str]) -> int:
-    if len(argv) != 1 or argv[0] not in ("validate", "freeze"):
-        print("usage: python -m eval.attack_corpus validate|freeze", file=sys.stderr)
+    adaptive = argv[1:] == ["--adaptive"]
+    if not argv or argv[0] not in ("validate", "freeze") or (len(argv) > 1 and not adaptive):
+        print("usage: python -m eval.attack_corpus validate|freeze [--adaptive]", file=sys.stderr)
         return 2
     directory = corpus_dir()
     try:
         if argv[0] == "validate":
-            validate(read_items(directory / ITEMS_FILE))
+            validate(read_items(directory / ITEMS_FILE), adaptive=adaptive)
             print(f"{directory}: valid")
         else:
-            freeze(directory, date.today().isoformat())
+            freeze(directory, date.today().isoformat(), adaptive=adaptive)
             print(f"{directory}: frozen")
     except AttackCorpusError as e:
         print(e, file=sys.stderr)

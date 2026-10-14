@@ -149,7 +149,7 @@ def test_freeze_writes_manifest(tmp_path):
     items = make_items()
     m = _frozen(tmp_path, items)
     assert json.loads((tmp_path / "manifest.json").read_text(encoding="utf-8")) == m
-    assert set(m) == {"sha256", "frozen", "counts", "groups"}
+    assert set(m) == {"sha256", "frozen", "counts", "groups", "kind"}
     assert m["frozen"] == "2026-01-01"
     assert sum(n for c in m["counts"].values() for n in c.values()) == len(items)
 
@@ -214,3 +214,75 @@ def test_projection_is_deterministic():
     e = make_items()[60]
     a, b = ac.to_gate_item(e)[0], ac.to_gate_item(e)[0]
     assert a.text == b.text and a.metadata == b.metadata
+
+
+# adaptive kind (Phase 5)
+def test_adaptive_minimums_accept_fifteen_per_class_and_five_groups():
+    ac.validate(make_items(15, 5), adaptive=True)
+
+
+@pytest.mark.parametrize("per_class,groups", [(14, 5), (15, 4)])
+def test_adaptive_below_minimum_rejected(per_class, groups):
+    with pytest.raises(AttackCorpusError):
+        ac.validate(make_items(per_class, groups), adaptive=True)
+
+
+def test_blind_minimums_unchanged():
+    with pytest.raises(AttackCorpusError):
+        ac.validate(make_items(15, 5))
+
+
+@pytest.mark.parametrize("adaptive,kind", [(False, "blind"), (True, "adaptive")])
+def test_freeze_records_kind(tmp_path, adaptive, kind):
+    write_corpus(tmp_path, make_items(15, 5) if adaptive else make_items())
+    assert ac.freeze(tmp_path, "2026-01-01", adaptive=adaptive)["kind"] == kind
+
+
+def _adaptive(tmp_path):
+    write_corpus(tmp_path, make_items(15, 5))
+    return ac.freeze(tmp_path, "2026-01-01", adaptive=True)
+
+
+def test_freeze_adaptive_puts_every_group_in_adaptive(tmp_path):
+    assert set(_adaptive(tmp_path)["groups"].values()) == {"adaptive"}
+
+
+def test_freeze_adaptive_counts_shape(tmp_path):
+    assert _adaptive(tmp_path)["counts"] == {"1": {"adaptive": 15}, "2": {"adaptive": 15},
+                                             "3": {"adaptive": 15}}
+
+
+def test_manifest_without_kind_loads_as_blind(tmp_path):
+    m = _frozen(tmp_path)
+    del m["kind"]
+    (tmp_path / "manifest.json").write_text(json.dumps(m), encoding="utf-8")
+    test = ac.load(tmp_path, "test")
+    assert test and all(i["split"] == m["groups"][i["group"]] == "test" for i in test)
+
+
+def test_load_adaptive_split_on_blind_manifest_raises(tmp_path):
+    _frozen(tmp_path)
+    with pytest.raises(AttackCorpusError, match="blind"):
+        ac.load(tmp_path, "adaptive")
+
+
+@pytest.mark.parametrize("split", ["calibration", "test"])
+def test_load_blind_split_on_adaptive_manifest_raises(tmp_path, split):
+    _adaptive(tmp_path)
+    with pytest.raises(AttackCorpusError, match="adaptive"):
+        ac.load(tmp_path, split)
+
+
+def test_adaptive_load_none_returns_every_item_with_split_adaptive(tmp_path):
+    _adaptive(tmp_path)
+    items = ac.load(tmp_path)
+    assert len(items) == 45 and {i["split"] for i in items} == {"adaptive"}
+
+
+def test_cli_validate_and_freeze_accept_adaptive_flag(tmp_path, monkeypatch):
+    write_corpus(tmp_path, make_items(15, 5))
+    monkeypatch.setenv("ATTACK_CORPUS_DIR", str(tmp_path))
+    assert ac.main(["validate"]) == 1
+    assert ac.main(["validate", "--adaptive"]) == 0
+    assert ac.main(["freeze", "--adaptive"]) == 0
+    assert json.loads((tmp_path / "manifest.json").read_text(encoding="utf-8"))["kind"] == "adaptive"
