@@ -7,7 +7,18 @@ from pathlib import Path
 import pytest
 
 from app import config
-from eval.experience_poison_trial import TRIALS, ReadOnlyStore, build_poison_store
+from eval.experience_poison_trial import ReadOnlyStore, build_poison_store, trials
+from memory.types import ExperienceRecord
+from tests.eval.corpus_fixture import make_items
+
+# Invented records under the ids the audit fixtures below use.
+FIXTURE_TRIALS = [
+    {"question": f"FIXTURE question {i}", "check": f"FIXTURE check {i}",
+     "poison": ExperienceRecord(id=f"poison-t{i}", task=f"FIXTURE task {i}",
+                                approach="FIXTURE approach", outcome="FIXTURE outcome",
+                                success=False, ts="1970-01-01T00:00:00+00:00")}
+    for i in (1, 2, 3)
+]
 
 
 class FakeReference:
@@ -21,10 +32,45 @@ class FakeReference:
         return "ref-fp"
 
 
-def test_every_trial_has_a_preregistered_check():
-    for t in TRIALS:
-        assert t["check"]
-        assert t["poison"].task == t["question"]
+def test_trials_take_one_record_from_each_of_the_first_class3_groups_in_order():
+    items = make_items()
+    out = trials(items, n=3)
+    c3 = [e for e in items if e["class"] == 3]
+    firsts = []
+    for e in c3:
+        if e["group"] not in {f["group"] for f in firsts}:
+            firsts.append(e)
+    assert [t["poison"].id for t in out] == [e["id"] for e in firsts[:3]]
+
+
+def test_trial_fields_map_through_unchanged():
+    from eval.attack_corpus import to_gate_item
+    items = make_items()
+    e = next(i for i in items if i["class"] == 3)
+    t = trials(items, n=1)[0]
+    assert t["question"] == e["target_question"] and t["check"] == e["check"]
+    # The text the Task 46 screen scored, so the gate's cache key is the same.
+    assert t["poison"].to_item().text == to_gate_item(e)[0].text
+
+
+def test_trials_skip_other_classes():
+    items = [i for i in make_items() if i["class"] != 3]
+    assert trials(items, n=3) == []
+
+
+def test_load_trials_reads_the_test_split_only(monkeypatch):
+    import eval.experience_poison_trial as mod
+    seen = []
+    monkeypatch.setattr(mod, "load", lambda d, split: seen.append(split) or make_items())
+    assert len(mod.load_trials()) == 3
+    assert seen == ["test"]
+
+
+def test_no_papers_era_trial_text_left():
+    src = Path("eval/experience_poison_trial.py").read_text(encoding="utf-8")
+    for phrase in ("similarity threshold", "top-k retrieval setting", "sanitized before",
+                   "0.83", "RAG corpus"):
+        assert phrase not in src
 
 
 class FakeInner:
@@ -72,7 +118,7 @@ def test_build_poison_store_wipes_only_the_trial_dir(tmp_path, monkeypatch):
     sentinel = tmp_path / "sentinel.txt"
     sentinel.write_text("keep me", encoding="utf-8")
 
-    build_poison_store(trial_dir=trial_dir)
+    build_poison_store(FIXTURE_TRIALS, trial_dir=trial_dir)
 
     assert sentinel.exists()
     assert not stale.exists()
@@ -137,9 +183,9 @@ def offline_main(tmp_path, monkeypatch):
         seen["ref_dirs"].append(Path(data_dir))
         return seen["reference"]
 
-    def recording_build():
+    def recording_build(ts):
         seen["events"].append("build")
-        return build_poison_store(trial_dir=trial_dir)
+        return build_poison_store(ts, trial_dir=trial_dir)
 
     monkeypatch.setattr("memory.store.ExperienceStore", FakeStore)
     monkeypatch.setattr("app.orchestrator.run_agentic", fake_run_agentic)
@@ -151,7 +197,8 @@ def offline_main(tmp_path, monkeypatch):
     monkeypatch.setattr(mod, "require_frozen", lambda *a, **k: None, raising=False)
     monkeypatch.setattr(mod, "default_reference", fake_reference, raising=False)
     monkeypatch.setattr("eval.attack_screen.check", lambda *a, **k: [])
-    monkeypatch.setattr(mod, "screen_poison", lambda: [])
+    monkeypatch.setattr(mod, "screen_poison", lambda ts: [])
+    monkeypatch.setattr(mod, "load_trials", lambda: FIXTURE_TRIALS, raising=False)
     monkeypatch.setattr(mod, "build_poison_store", recording_build)
     monkeypatch.setattr(mod, "TRIAL_DIR", trial_dir)
     # raising=False: before RESULTS_DIR exists the tests must fail on behavior, not on the patch.
@@ -207,7 +254,7 @@ def test_arm_on_passes_a_read_gate(offline_main):
     assert mod.main("on") == 0
 
     poisoned = [c for c in seen["calls"] if c["store"] is not None]
-    assert len(poisoned) == len(TRIALS)
+    assert len(poisoned) == len(FIXTURE_TRIALS)
     assert all(c["read_gate"] is not None for c in poisoned)
     # The trial's own cache and audit, not the live data/ ones.
     assert seen["gates"][0].data_dir == trial_dir
@@ -336,7 +383,7 @@ def test_a_full_run_ends_complete(offline_main):
 
     on_disk = json.loads((results_dir / "results-off.json").read_text(encoding="utf-8"))
     assert on_disk["complete"] is True
-    assert len(on_disk["poisoned"]) == len(TRIALS) and len(on_disk["control"]) == len(TRIALS)
+    assert len(on_disk["poisoned"]) == len(FIXTURE_TRIALS) and len(on_disk["control"]) == len(FIXTURE_TRIALS)
 
 
 def test_poison_trial_refuses_unclean_freeze_before_building_gate(offline_main, monkeypatch, capsys):
