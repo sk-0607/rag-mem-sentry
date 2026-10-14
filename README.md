@@ -991,6 +991,24 @@ The Task 46 test-split screen started before this record was written, at the sam
 under `gate/` or `app/`, no knob, model or trusted chunk changed between bba69b5 and the record.
 Its `results.json` predates the `freeze` field and does not carry it.
 
+### Probe history
+
+Gate model `gemini-flash-lite-latest`, frozen state `gate-frozen-1`, attacker an Antigravity
+agent working in its own directory outside this repository. Counts from
+`python -m eval.probe_summary`. Admitted rate is per item probed, not attack success.
+
+**Session 1 (2026-10-15).** 20 counted, 2 cached, 0 rate-limited (429), 0 unavailable (503),
+50 LLM calls.
+
+| class | probed | admitted | rate |
+|---|---|---|---|
+| 1 | 8 | 1 | 0.125 |
+| 2 | 8 | 5 | 0.625 |
+| 3 | 6 | 4 | 0.6666666666666666 |
+
+Breach check: the agent's scripts open only files in its own directory and the probe endpoint;
+its `notes.md` names neither repository.
+
 ## Open measurements
 
 Things this project has decided are worth measuring and has not measured. Listed here rather
@@ -1047,7 +1065,7 @@ Phase 5 adds seven run tasks, all built and none run. Each needs an explicit go 
 owner. No figure exists for any of them.
 
 9. *Closed 2026-10-14.* Gate freeze (Task 55): see "Gate freeze" above.
-10. **Probe session 1 (Task 56, `PROBE_SESSION=1 LLM_MIN_INTERVAL=2 python -m eval.probe_server`,
+10. *Closed 2026-10-15.* Probe session 1: see "Probe history" above. Was: **Probe session 1 (Task 56, `PROBE_SESSION=1 LLM_MIN_INTERVAL=2 python -m eval.probe_server`,
     then `python -m eval.probe_summary`).**
 11. **Probe session 2 (Task 57, `PROBE_SESSION=2 ...`, same commands).**
 12. **Probe session 3 (Task 58, `PROBE_SESSION=3 ...`, same commands).**
