@@ -574,8 +574,9 @@ Stated so they are read here rather than found later.
 - [x] Thresholds calibrated on the calibration split only and committed (Task 45; judge 0.80,
   `gemini-flash-lite-latest`; corpus band over budget at 2 / 40, recorded, not moved)
 - [x] Ablation table filled from the test split, model named (Task 46; `gemini-flash-lite-latest`)
-- [ ] Class-2 attack success reported at both levels, control / gate off / gate on, whatever the
-      numbers are (Task 47)
+- [x] Class-2 attack success reported at both levels, control / gate off / gate on, whatever the
+      numbers are (Task 47; answer `gemini-3.1-flash-lite`, gate `gemini-flash-lite-latest`; 1 void,
+      4 valid: context 4/4 → 3/4, behavior 4/4 → 3/4)
 
 An unrun measurement is recorded in the README's "Open measurements", not ticked.
 
