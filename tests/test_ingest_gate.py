@@ -14,9 +14,14 @@ def fake_paper(monkeypatch, tmp_path):
     # merges a paper's whole (short) text into a single chunk, so mixing CLEAN
     # and POISON inside one string would have quarantined a chunk that also
     # carried the clean sentence, making it impossible to assert either
-    # passage's fate independently. Routing by call order (main() processes
-    # ingest/papers.json's 22 entries sequentially) keeps each verdict isolated
-    # to its own chunk instead.
+    # passage's fate independently. Routing by call order (main() processes the
+    # manifest's entries sequentially) keeps each verdict isolated to its own
+    # chunk instead. Own manifest: the real one lists local NQ files, which
+    # download_pdf_text never sees.
+    (tmp_path / "ingest").mkdir()
+    (tmp_path / "ingest" / "papers.json").write_text(json.dumps([
+        {"arxiv_id": f"src-{n}", "title": f"P{n}"} for n in range(3)]), encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
     texts = iter([CLEAN, POISON])
     monkeypatch.setattr(run_ingest, "download_pdf_text",
                         lambda *a, **k: next(texts, CLEAN))
