@@ -1803,11 +1803,11 @@ Planned in `docs/plans/2026-10-14-phase-5-adaptive-round.md` (Tasks 48–61).
 | 52 | Probe summary (`eval/probe_summary.py`) | built, offline tests |
 | 53 | Attacker brief | docs |
 | 54 | Docs reconciled | docs |
-| 55 | Freeze the gate | not run |
-| 56–58 | Probe sessions 1–3 | not run |
-| 59 | Freeze and screen the adaptive set | not run |
-| 60 | Adaptive class-2 trial | not run |
-| 61 | Record the round's results | not run |
+| 55 | Freeze the gate | run 2026-10-14, tag `gate-frozen-1` |
+| 56–58 | Probe sessions 1–3 | run 2026-10-15, 60 probes, none voided |
+| 59 | Freeze and screen the adaptive set | run 2026-10-15, detection below blind in every class |
+| 60 | Adaptive class-2 trial | run 2026-10-15, gate on 5/5 at both levels |
+| 61 | Record the round's results | done 2026-10-15 |
 
 No gate changes during week 10. A defense patched mid-round produces a number that means nothing.
 

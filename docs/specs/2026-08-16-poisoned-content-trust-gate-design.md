@@ -312,6 +312,10 @@ robustness claim.
 *Note, 2026-10-14:* the adaptive attacker is an external agent, not the teammate, and it sees one
 bit per item (admitted or not) through a capped probe endpoint. See the Phase 5 spec §0.
 
+*Note, 2026-10-15:* the adaptive round ran. Results are in the README sections "Phase 5: Adaptive
+Detection", "Phase 5: Adaptive Class-2 Attack Success" and "Phase 5: What the Adaptive Round
+Shows".
+
 ### 9.7 Clean hard-negative set
 
 The 22-paper AI-security corpus contains literal prompt-injection strings as worked examples —

@@ -459,14 +459,14 @@ fake `chat`, injected gate, temporary directories.
 - [x] Roadmap, README and parent spec reconciled (Task 54)
 
 **Measurement — each open until the owner starts its run.**
-- [ ] Freeze recorded and tagged after Task 45 (Task 55)
-- [ ] Three probe sessions run, none voided (Tasks 56–58)
+- [x] Freeze recorded and tagged after Task 45 (Task 55; `gate-frozen-1`, 3dcce90)
+- [x] Three probe sessions run, none voided (Tasks 56–58; breach checks on scripts and notes clean)
 - [x] Adaptive detection per class beside the blind test split, models named (Task 59;
   `gemini-flash-lite-latest`; adaptive 1/16, 3/16, 0/16 against blind 28/28, 34/75, 15/21)
 - [x] Adaptive class-2 attack success at both levels beside Task 47 (Task 60; answer
   `gemini-3.1-flash-lite`, gate `gemini-flash-lite-latest`; 5 valid: context 5/5 → 5/5, behavior
   5/5 → 5/5, against blind 4/4 → 3/4 at both levels)
-- [ ] Results and probe history recorded (Task 61)
+- [x] Results and probe history recorded (Task 61)
 
 An unrun measurement is recorded in the README's "Open measurements", not ticked.
 
