@@ -164,17 +164,20 @@ say where that time went. n = 5, one run each.
 
 ## 8. False positives
 
-| measurement | corpus | result | source |
-|---|---|---|---|
-| write-time FPR (S1) | NQ | 5 / 1789 = 0.002794857462269424, budget 2%; all five hand-read, each a zero-width character in Wikipedia markup | "Final corpus: BEIR NQ (2026-10-14)" |
-| S2 on quoted-attack hard negatives (R5) | papers | 0 S2-topped false positives of 104 scored items; fallback not triggered | "Phase 3: R5 — Does the Judge Separate Quoting from Instructing?" |
-| S3 on clean untrusted content (Task 44) | papers | 3 / 16 = 0.1875, over budget; 2 of 3 are unparseable agreement replies, 1 a misjudged contradiction; 24 / 40 `not_covered` | "Phase 4: S3 on Clean Untrusted Content (Task 44, run 2026-10-14)" |
-| S3 on covered clean text | NQ | 0 false positives out of 5 checked, too few to state a rate | "Final corpus: BEIR NQ (2026-10-14)" |
-| read-time corpus band (Task 45) | NQ | 2 / 40 clean rows quarantined, 0.05 against 0.02; both S3 parse failures; recorded, not moved (owner decision) | "Phase 4: Calibration (Task 45, run 2026-10-14)" |
-| read-time experience band (Task 45) | clean experience records | 0 / 20 non-admits | "Phase 4: Calibration (Task 45, run 2026-10-14)" |
+| measurement | corpus | model | result | source |
+|---|---|---|---|---|
+| write-time FPR (S1) | NQ | none (S1 only) | 5 / 1789 = 0.002794857462269424, budget 2%; all five hand-read, each a zero-width character in Wikipedia markup | "Final corpus: BEIR NQ (2026-10-14)" |
+| S2 on quoted-attack hard negatives (R5) | papers | `gemini-3.1-flash-lite` | 0 S2-topped false positives of 104 scored items; fallback not triggered | "Phase 3: R5 — Does the Judge Separate Quoting from Instructing?" |
+| S3 on clean untrusted content (Task 44) | papers | `gemini-3.1-flash-lite` | 3 / 16 = 0.1875, over budget; 2 of 3 are unparseable agreement replies, 1 a misjudged contradiction; 24 / 40 `not_covered` | "Phase 4: S3 on Clean Untrusted Content (Task 44, run 2026-10-14)" |
+| S3 on covered clean text | NQ | `gemini-3.1-flash-lite` | 0 false positives out of 5 checked, too few to state a rate | "Final corpus: BEIR NQ (2026-10-14)" |
+| read-time corpus band (Task 45) | NQ | `gemini-flash-lite-latest` | 2 / 40 clean rows quarantined, 0.05 against 0.02; both S3 parse failures; recorded, not moved (owner decision) | "Phase 4: Calibration (Task 45, run 2026-10-14)" |
+| read-time experience band (Task 45) | clean experience records | `gemini-flash-lite-latest` | 0 / 20 non-admits | "Phase 4: Calibration (Task 45, run 2026-10-14)" |
 
-Since Task 44, S3's agreement step re-asks once on an unparseable reply and its prompt requires a
-contradiction to be about the same subject. Neither change has been re-measured on a fresh sample.
+After Task 44, S3's agreement step was changed to re-ask once on an unparseable reply, and its
+prompt now requires a contradiction to be about the same subject. The NQ S3 rows and Task 45 ran
+with both changes. The NQ run checked 5 items, too few for a rate, and both Task 45 corpus
+quarantines are still S3 parse failures. So S3's false-positive rate after the changes is not
+established.
 
 ## 9. The adaptive round
 
