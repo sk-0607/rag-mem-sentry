@@ -41,10 +41,15 @@ def dedupe_by_item_id(audit_entries: list[dict]) -> list[dict]:
     generated fresh per record, so no experience record is ever re-screened
     under an id it already has. Corpus chunk ids are content-derived and
     stable across re-ingests, which is what makes deduping necessary here.
+
+    Keyed on store and stage too, not item_id alone: both stages share one
+    log, and a later read-time verdict for a chunk is a different measurement,
+    not a re-ingest, so it must not replace that chunk's write-time verdict.
     """
-    last_by_id: dict[str, dict] = {}
+    last_by_id: dict[tuple, dict] = {}
     for entry in audit_entries:
-        last_by_id[entry["item_id"]] = entry
+        key = (entry.get("store"), entry.get("stage", "write"), entry["item_id"])
+        last_by_id[key] = entry
     return list(last_by_id.values())
 
 

@@ -80,3 +80,15 @@ def test_entry_without_stage_counts_as_write():
     # Entries written before this change have no "stage" key at all.
     log = [{"action": "admit", "store": "corpus"}]
     assert false_positive_rate(log)["total"] == 1
+
+
+def test_dedupe_does_not_let_a_read_verdict_replace_a_write_verdict():
+    # One audit log holds both stages: a later read-time verdict for a chunk is
+    # a different measurement, not a re-ingest, so the write verdict must stay.
+    log = [
+        {"item_id": "a", "action": "quarantine", "store": "corpus", "stage": "write"},
+        {"item_id": "a", "action": "admit", "store": "corpus", "stage": "read"},
+    ]
+    deduped = dedupe_by_item_id(log)
+    assert false_positive_rate(deduped)["quarantine"] == 1
+    assert false_positive_rate(deduped, stage="read")["admit"] == 1
