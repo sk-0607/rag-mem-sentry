@@ -1,7 +1,7 @@
 # RAG Mem Sentry
 
-Agentic RAG over a BEIR NQ Wikipedia corpus (the AI-security papers most figures below were
-measured on were a placeholder; see "Final corpus: BEIR NQ"), with hybrid retrieval +
+Agentic RAG over a BEIR NQ Wikipedia corpus (the AI-security papers the figures before "Final corpus:
+BEIR NQ" were measured on were a placeholder; see that section), with hybrid retrieval +
 reranking, cited answers, and a RAGAS evaluation scorecard — plus a
 content trust gate that screens documents and agent memory records for
 poisoned content, write-time and read-time, before an LLM trusts and uses
@@ -24,7 +24,9 @@ question → decompose (LLM: 1–3 sub-questions)
   per-checkout with `LLM_MODEL` in `.env`. The client is **provider-neutral** —
   set `LLM_BASE_URL` / `LLM_MODEL` + the key env to point at any
   OpenAI-compatible provider (Groq, OpenAI, local) without touching call sites.
-  Measured security results name the model they ran against; see Limitations.
+  Measured security results name the model they ran against; see Limitations. Since Phase 4
+  the gate's model (judge and S3) is `gemini-flash-lite-latest`, recorded in
+  `eval/frozen_gate.json`; the Phase 4–6 trials answered with `gemini-3.1-flash-lite`.
 - **Embeddings/rerank:** local `all-MiniLM-L6-v2` + `ms-marco-MiniLM-L-6-v2`.
 - **Vector store:** Chroma (local); sparse: `rank_bm25`.
 - **Orchestration:** LangGraph. **UI:** Gradio. **Eval:** RAGAS.
@@ -38,8 +40,8 @@ caller passes `read_gate=` to `run_agentic` / `build_graph`; `None` (the default
 When on, it screens the retrieved top-5 chunks with S1 plus the S2 policy judge
 (`gate/signals/judge.py`), one batched judge call per sub-query, verdicts cached by content
 hash, and passes only admitted chunks to `generate`. The same gate filters retrieved experience
-records before they are formatted into the prompt. If the judge is unavailable it degrades to
-S1 and says so in `path_trace`. A sub-query whose every chunk is excluded reaches `generate`
+records before they are formatted into the prompt. If an LLM signal is unavailable it degrades to
+the surviving signals and says so in `path_trace`. A sub-query whose every chunk is excluded reaches `generate`
 with an empty context.
 
 Phase 4 adds a third read-time signal, S3 corroboration (`gate/signals/corroborate.py`), so the
@@ -65,7 +67,8 @@ guessed at, and the trusted set itself is taken on the owner's word.
 ```bash
 pip install -r requirements.txt
 cp .env.example .env             # add your GEMINI_API_KEY (https://aistudio.google.com/apikey)
-python -m ingest.run_ingest      # one-time: download + chunk + embed + index the corpus
+python -m ingest.build_nq <corpus-src>    # one-time: build the NQ corpus and manifest (reads <src>/beir-nq/nq, <src>/PoisonedRAG)
+python -m ingest.run_ingest      # one-time: chunk + gate + embed + index the corpus
 python app.py                    # launch the Gradio UI
 python -m eval.run_eval          # produce the eval scorecard (EVAL_N=10 for a quick pass)
 pytest                           # run the test suite
@@ -96,8 +99,10 @@ the index that was cleared.
 ## Evaluation
 
 RAGAS metrics (Gemini as judge, local MiniLM embeddings) over the Q&A set in
-`eval/qa_set.json`. Current scorecard (`eval/results-n10.md`), measured on the
-first 10 questions against the full decomposition + web-fallback pipeline:
+`eval/qa_set.json`. Last scorecard (`eval/results-n10.md`), measured on the
+first 10 questions against the full decomposition + web-fallback pipeline. It was measured on the
+placeholder papers corpus and the pre-2026-09-15 pipeline; RAGAS has not been re-run on NQ or on
+the current pipeline, and the gate-on arm is not run (owner decision, 2026-10-15):
 
 | Metric | Score |
 |---|---|
@@ -116,7 +121,8 @@ single-loop corpus answer did.
 > because a full 20-question pass exceeds the Gemini free tier's daily request
 > quota: the pipeline issues ~10 generation calls per question (decompose + up
 > to 3 sub-queries × grade/rewrite/re-grade/generate + synthesize) on top of the
-> judge's own calls.
+> judge's own calls. That count is for the removed corrective loop: on the current pipeline the
+> gate-off arm of "Phase 6: Overhead" made 2.8 LLM calls per question.
 
 Reproduce with `EVAL_N=10 python -m eval.run_eval` (`EVAL_N` caps the run size;
 omit it for the full set if you have quota headroom). Set `LLM_MIN_INTERVAL` to
@@ -589,8 +595,9 @@ or analyses an attack is `quotes`, one that steers the reader's model is `instru
 clean-but-attack-quoting corpus chunks. Same argument as the write-time measurement above: the
 22-paper corpus holds no real attacks, so every read-time non-admit is a false positive by
 construction. This run measures **false positives only**. It contains no real attack, so it says
-nothing about whether the judge catches one — that needs the Task 29 harness, which has not been
-run (see "Phase 3: Gate-Off Vs Gate-On Harnesses" below).
+nothing about whether the judge catches one — that needs the Task 29 harness, which had not been
+run at the time (see "Phase 3: Gate-Off Vs Gate-On Harnesses" below; it ran on 2026-10-15, "Phase 6:
+Class-1 Attack Success").
 
 **Method.** `eval/judge_fpr.py` (`python -m eval.judge_fpr`). It takes the 20 questions in
 `eval/qa_set.json` as raw strings (no decomposition, no LLM), pulls the top `config.TOP_K = 5`
@@ -698,13 +705,14 @@ touched and no threshold moved.
 
 Outputs sit under `data/phase3_r5/` (gitignored): `gate_audit.jsonl`, `summary-2026-10-13.json`.
 
-## Phase 3: Gate-Off Vs Gate-On Harnesses (built, not run)
+## Phase 3: Gate-Off Vs Gate-On Harnesses (built; run 2026-10-15 except RAGAS)
 
-Phase 3 built the harnesses that would compare the pipeline with the read gate off and on.
-**None of them has been run, so this README holds no gate-on attack-success, RAGAS or overhead
-number, and none is implied.** The project owner decided on 2026-10-13 not to run any gate-off vs
-gate-on measurement for now. Each run uses whatever model `.env` names (`gemini-3.1-flash-lite`
-today) and spends real LLM budget.
+Phase 3 built the harnesses that compare the pipeline with the read gate off and on. The owner
+deferred every run on 2026-10-13; the class-1, class-3 and overhead harnesses ran on 2026-10-15
+(Phase 6 sections below). The gate-on RAGAS arm is not run, by owner decision on 2026-10-15, so
+this README holds no gate-on RAGAS number. Each run spends real LLM budget; the answer model is
+`LLM_MODEL` and the gate model `JUDGE_MODEL`, which the freeze check requires to be
+`gemini-flash-lite-latest`.
 
 | Harness | Command | Would report | Writes to |
 |---|---|---|---|
@@ -712,18 +720,15 @@ today) and spends real LLM budget.
 | Class-3 trial (`eval/experience_poison_trial.py`) — *run 2026-10-15, see "Phase 6: Class-3 Attack Success"* | `python -m eval.experience_poison_trial --arm off`, then `--arm on` | The poison-only experience trial of the Phase 2 sections above, once per arm. Per question: whether the poison record was retrieved, excluded, reached the prompt, and the answer; plus an ungated control arm. `--arm off` is the 2026-09-16 baseline's command; `--arm on` adds the read gate. | `data/poison_trial_results/results-off.json` and `results-on.json` |
 | RAGAS and overhead (`eval/run_eval.py`, `eval/overhead.py`) — *overhead run 2026-10-15, see "Phase 6: Overhead"; RAGAS not run* | `EVAL_N=10 python -m eval.run_eval`, then `EVAL_READ_GATE=1 EVAL_N=10 python -m eval.run_eval` for the gated arm; `OVERHEAD_N=5 LLM_MIN_INTERVAL=2 python -m eval.overhead` | RAGAS faithfulness, answer relevancy and context precision per arm, with each question's `path_trace` so sub-queries where the gate admitted 0 of 5 chunks can be counted; for overhead, LLM calls and wall-clock per question for `off`, `on-cold` (empty verdict cache) and `on-warm`. | RAGAS: `data/phase3_ragas/run-off.json` and `run-on.json`, plus `eval/results.md` or `eval/results-gate-on.md` (complete runs only). Overhead: `data/phase3_overhead/results.json` |
 
-The runs are deferred by the owner; this section is not a plan to run them.
 
-## Phase 4: S3 Corroboration (built, partly measured)
+## Phase 4: S3 Corroboration (built and measured)
 
-Phase 4 built S3 and the harnesses that would measure it. **Only the re-ingest (Task 43) and S3's
-false-positive rate on clean untrusted content (Task 44) have been run, both recorded below. This
-README holds no S3 catch rate, ablation, calibrated threshold or class-2 attack-success figure,
-and none is implied.** The design is
-`docs/specs/2026-10-13-phase-4-s3-corroboration-design.md`; the plan is
-`docs/plans/2026-10-13-phase-4-s3-corroboration.md`. Every LLM run below spends real budget on
-`JUDGE_MODEL` (`gemini-3.1-flash-lite`), and each needs an explicit go from the project owner
-first.
+Phase 4 built S3 and the harnesses that measure it. Tasks 43–47 have all run and are recorded
+below. The design is `docs/specs/2026-10-13-phase-4-s3-corroboration-design.md`; the plan is
+`docs/plans/2026-10-13-phase-4-s3-corroboration.md`. Every LLM run below spends real budget, and
+each needs an explicit go from the project owner first. Tasks 43–44 ran with the gate on
+`gemini-3.1-flash-lite`; from Task 45 the gate model is `gemini-flash-lite-latest`, the one
+calibrated and frozen.
 
 `corroborate` has no hard threshold and is quarantine-only (`DEFAULT_POLICY.quarantine_only`): S3
 can hold a chunk back but never block it, and a block stands only if the other signals alone would
@@ -997,7 +1002,8 @@ The blind numbers above measure the gate against attacks written without seeing 
 it against an attacker that probes the frozen gate and adapts. The attacker is an external agent
 with black-box access only, briefed by `docs/prompts/adaptive-attacker-agent.md`. Spec:
 `docs/specs/2026-10-14-phase-5-adaptive-round-design.md`; plan:
-`docs/plans/2026-10-14-phase-5-adaptive-round.md`. Nothing has been run; no figure exists.
+`docs/plans/2026-10-14-phase-5-adaptive-round.md`. Tasks 55–61 ran on 2026-10-14 and 2026-10-15
+and are recorded below.
 
 | Piece | Command | Reports | Writes |
 |---|---|---|---|
@@ -1314,11 +1320,8 @@ that gets lost.
    `0.10` and nothing in the clean calibration set came near it. See the calibration section
    above.
 
-Phase 4 adds five run tasks. The first two, the trust-flagged re-ingest (Task 43) and S3's
-false-positive rate (Task 44), ran on 2026-10-14 and are recorded in the Phase 4 section above.
-The other three are built and have not been run; each needs an explicit go from the project
-owner, and Task 45 also needs the externally written attack corpus. No figure exists for any of
-the three.
+Phase 4 added five run tasks (43–47). All five ran, on 2026-10-14 and 2026-10-15, and are
+recorded in the Phase 4 sections above.
 
 4. *Closed 2026-10-14.* Trust-flagged re-ingest (Task 43): see "Trust-flagged re-ingest" above.
 5. *Closed 2026-10-14.* S3 false positives on clean untrusted content (Task 44): see
@@ -1337,8 +1340,8 @@ the three.
    owner names, with `JUDGE_MODEL` kept on `gemini-3.1-flash-lite`. It is also the first time
    class 2 is attacked in fact on the ungated host.
 
-Phase 5 adds seven run tasks, all built and none run. Each needs an explicit go from the project
-owner. No figure exists for any of them.
+Phase 5 added seven run tasks (55–61). All seven ran, on 2026-10-14 and 2026-10-15, and are
+recorded in the Phase 5 sections above.
 
 9. *Closed 2026-10-14.* Gate freeze (Task 55): see "Gate freeze" above.
 10. *Closed 2026-10-15.* Probe session 1: see "Probe history" above. Was: **Probe session 1 (Task 56, `PROBE_SESSION=1 LLM_MIN_INTERVAL=2 python -m eval.probe_server`,
@@ -1395,17 +1398,17 @@ owner. No figure exists for any of them.
 - Decomposition capped at 3 sub-questions.
 - No retrieval-quality check or refusal: out-of-scope questions are answered from
   whatever the top-5 chunks are, so answers can be ungrounded.
-- Corpus is ~22 papers.
-  Questions whose keywords collide with *example* text inside a paper (e.g. a
-  benign recipe used as a jailbreak demo) can retrieve a real matching chunk and
-  be answered from it — grounded, but not the paper's actual subject.
+- Corpus is a small BEIR NQ subset: 50 questions, 1726 documents, 1784 chunks. Questions
+  outside those Wikipedia articles are answered from whatever is retrieved.
 - Free-tier request limits pace the eval run; it is serialized to stay within
   budget.
 - Security results are **provider-dependent**, and two different Gemini models
   produced them: R3 (2026-08-19) ran against `gemini-flash-lite-latest`, the
   repository default in `app/config.py`; the Phase 2 calibration and poisoning
   demonstration ran against `gemini-3.1-flash-lite`, set via `.env`'s
-  `LLM_MODEL`. Each section names the model that produced its numbers. The
+  `LLM_MODEL`. From Phase 4 on, the gate ran on `gemini-flash-lite-latest` (frozen in
+  `eval/frozen_gate.json`) and the trials answered with `gemini-3.1-flash-lite`. Each section
+  names the model that produced its numbers. The
   finding that the model itself declines injected instructions at answer time
   is that provider's alignment, not a property of this pipeline, and a more
   compliant model would move the numbers.
@@ -1413,8 +1416,9 @@ owner. No figure exists for any of them.
   and only S1 and S2 apply. A deployment made entirely of user uploads has no trusted set.
 - **S3 does not check a claim the trusted set does not cover.** It reports `not_covered` rather
   than guessing, so a false fact on a topic the trusted sources are silent about passes S3. How
-  often that happens is what the not-checked counts are for. On clean untrusted content (Task 44)
-  24 of 40 chunks came back `not_covered`; on attack content it has not been measured.
+  often that happens is what the not-checked counts are for. On clean untrusted content (Task 44,
+  papers) 24 of 40 chunks came back `not_covered`; on the blind test split (Task 46) 21 class-1
+  and 32 class-2 items did.
 - **S3 checks at most `S3_MAX_CLAIMS` (5) claims per chunk.** A false claim outside the
   extracted claims is not checked, and the chunk can still read as supported. No rate has been
   measured.
@@ -1431,7 +1435,7 @@ owner. No figure exists for any of them.
 ## Roadmap
 
 Phase 3 (the S2 policy judge and the read-time gate) is **built; gate-off vs gate-on
-measurements not run** (owner decision, 2026-10-13).
+measurements run 2026-10-15 in Phase 6, except RAGAS** (owner decision, 2026-10-15).
 
 | Task | Deliverable | Status |
 |---|---|---|
@@ -1442,12 +1446,12 @@ measurements not run** (owner decision, 2026-10-13).
 | 26 | `gate/read.py`: cache-first `ReadGate.screen_batch`, S1 degradation | built, offline tests |
 | 27 | Gate node in `app/graph.py`, experience filtering in `app/orchestrator.py`, behind `read_gate=None` | built, offline tests |
 | 28 | R5: S2 false-positive rate on quoted-attack hard negatives | measured |
-| 29 | Class-1 trial and `--arm off` / `--arm on` on the class-3 trial | built, not measured |
-| 30 | `EVAL_READ_GATE=1` RAGAS arm and the cold/warm overhead harness | built, not measured |
+| 29 | Class-1 trial and `--arm off` / `--arm on` on the class-3 trial | run 2026-10-15 (Tasks 65, 66) |
+| 30 | `EVAL_READ_GATE=1` RAGAS arm and the cold/warm overhead harness | overhead run 2026-10-15 (Task 67); RAGAS not run |
 | 31 | Docs reconciled with what was built | docs |
 
-Phase 4 (S3 corroboration) is **built; every measurement not run**. Tasks 43-47 each wait for an
-explicit go from the project owner. Plan: `docs/plans/2026-10-13-phase-4-s3-corroboration.md`.
+Phase 4 (S3 corroboration) is **built and measured**. Plan:
+`docs/plans/2026-10-13-phase-4-s3-corroboration.md`.
 
 | Task | Deliverable | Status |
 |---|---|---|
@@ -1468,7 +1472,7 @@ explicit go from the project owner. Plan: `docs/plans/2026-10-13-phase-4-s3-corr
 | 46 | Test split screened; ablation table | run 2026-10-14 |
 | 47 | Class-2 trial, control / gate off / gate on | run 2026-10-15 |
 
-Phase 5 (adaptive round) is **built; every measurement not run**. Plan:
+Phase 5 (adaptive round) is **built and run**. Plan:
 `docs/plans/2026-10-14-phase-5-adaptive-round.md`.
 
 | Task | Deliverable | Status |
@@ -1485,5 +1489,22 @@ Phase 5 (adaptive round) is **built; every measurement not run**. Plan:
 | 59 | Adaptive set frozen and screened | run 2026-10-15, detection below blind in every class |
 | 60 | Adaptive class-2 trial | run 2026-10-15, gate on 5/5 at both levels |
 | 61 | Round results recorded | done 2026-10-15 |
+
+Phase 6 (demo and report). Plan: `docs/plans/2026-10-15-phase-6-demo-and-report.md`.
+
+| Task | Deliverable | Status |
+|---|---|---|
+| 62 | Freeze guard and real reference in the three Phase 3 harnesses | built, offline tests |
+| 63 | Trust panel and UI flags | built, offline tests |
+| 64 | Demo plant tool | built, offline tests |
+| 65 | Class-1 trial, gate off and on | run 2026-10-15, 5/5 → 0/5 at both levels |
+| 66 | Class-3 trial, `--arm off` and `--arm on` | run 2026-10-15, context 3/3 → 0/3; behavior unmeasurable (R6) |
+| 67 | Overhead, off / cold / warm | run 2026-10-15 |
+| 68 | Demo prep: plant and rehearsal | done 2026-10-15 |
+| 69 | Demo recording; purge | done 2026-10-15 |
+| 70 | Evaluation report, `docs/report.md` | done 2026-10-15 |
+| 71 | Cleanup decision | owner decides |
+| 72 | Merge to `main` | not done |
+| 73 | Push | not done |
 
 Later: multi-turn memory, tracing panel, larger corpus + eval set.
