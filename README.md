@@ -70,6 +70,7 @@ cp .env.example .env             # add your GEMINI_API_KEY (https://aistudio.goo
 python -m ingest.build_nq <corpus-src>    # one-time: build the NQ corpus and manifest (reads <src>/beir-nq/nq, <src>/PoisonedRAG)
 python -m ingest.run_ingest      # one-time: chunk + gate + embed + index the corpus
 python app.py                    # launch the Gradio UI
+python -m app.web                # or the web UI on http://127.0.0.1:7861 (same flags, same trust panel)
 python -m eval.run_eval          # produce the eval scorecard (EVAL_N=10 for a quick pass)
 pytest                           # run the test suite
 ```
@@ -81,7 +82,9 @@ flag on. The read gate uses `data/` (or `GATE_DIR`) and the cache `eval.prewarm`
 query on an uncached passage spends LLM calls. The panel under the chat shows, for each candidate
 the gate screened on that query, its action, trust, top signal with reason, and the text with the
 evidence span marked. It reads the gate's audit log, so it is single-user: two queries at once
-mix their rows.
+mix their rows. The web UI (`app/web.py`, `app/static/index.html`) shows the same panel and runs one
+query at a time, so its rows do not mix. It binds 127.0.0.1 only and is separate from
+`app/api.py`, which does not expose the panel's per-signal scores and reasons.
 
 **Changing the corpus.** `ingest/papers.json` lists the sources. An entry is either an arXiv paper,
 `{"arxiv_id": "2005.11401", "title": "...", "trusted": true}`, downloaded from arxiv.org, or a

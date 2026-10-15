@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RAG Mem Sentry</title>
+<style>
+:root {
+  --bg: #f6f7f9; --surface: #ffffff; --surface-2: #f0f2f5; --text: #18202b; --muted: #5d6878;
+  --border: #dde2e9; --accent: #2f5bea; --accent-text: #ffffff;
+  --admit-bg: #dcfce7; --admit-fg: #166534;
+  --quar-bg: #fef3c7; --quar-fg: #92400e;
+  --block-bg: #fee2e2; --block-fg: #991b1b;
+  --mark: #fde68a; --mark-fg: #1f2937;
+  --shadow: 0 1px 2px rgba(16, 24, 40, .06), 0 1px 3px rgba(16, 24, 40, .08);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1419; --surface: #171d25; --surface-2: #1f2731; --text: #e6eaf0; --muted: #98a3b3;
+    --border: #2b3542; --accent: #6d8dff; --accent-text: #0f1419;
+    --admit-bg: #14361f; --admit-fg: #86efac;
+    --quar-bg: #3d2e0b; --quar-fg: #fcd34d;
+    --block-bg: #421616; --block-fg: #fca5a5;
+    --shadow: none;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+header {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 14px 24px; border-bottom: 1px solid var(--border); background: var(--surface);
+}
+h1 { font-size: 1.1rem; margin: 0; letter-spacing: -.01em; }
+h1 span { color: var(--muted); font-weight: 500; }
+h2 { font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 10px; }
+.flags { display: flex; gap: 8px; flex-wrap: wrap; }
+.flag { font-size: .78rem; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); }
+.flag.on { background: var(--admit-bg); color: var(--admit-fg); border-color: transparent; }
+main {
+  display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 20px;
+  max-width: 1400px; margin: 0 auto; padding: 20px 24px;
+}
+@media (max-width: 900px) { main { grid-template-columns: minmax(0, 1fr); padding: 16px; } header { padding: 12px 16px; } }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; box-shadow: var(--shadow); }
+#chat { display: flex; flex-direction: column; gap: 14px; min-height: 240px; max-height: 62vh; overflow-y: auto; margin-bottom: 14px; }
+.msg { max-width: 92%; padding: 10px 14px; border-radius: 12px; white-space: pre-wrap; word-break: break-word; }
+.msg.user { align-self: flex-end; background: var(--accent); color: var(--accent-text); border-bottom-right-radius: 4px; }
+.msg.bot { align-self: flex-start; background: var(--surface-2); border-bottom-left-radius: 4px; }
+.msg.err { align-self: flex-start; background: var(--block-bg); color: var(--block-fg); }
+.cites { margin-top: 8px; font-size: .8rem; color: var(--muted); }
+.cites code { margin-right: 6px; }
+.empty { color: var(--muted); font-style: italic; margin: auto 0; text-align: center; }
+form { display: flex; gap: 8px; }
+textarea {
+  flex: 1; resize: vertical; min-height: 44px; max-height: 160px; padding: 10px 12px; border-radius: 10px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text); font: inherit;
+}
+textarea:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button {
+  padding: 0 18px; border: 0; border-radius: 10px; background: var(--accent); color: var(--accent-text);
+  font: inherit; font-weight: 600; cursor: pointer;
+}
+button:disabled { opacity: .55; cursor: progress; }
+#busy { font-size: .82rem; color: var(--muted); margin-top: 8px; min-height: 1.2em; }
+.summary { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.note { color: var(--muted); font-style: italic; margin: 0; }
+.warn { background: var(--quar-bg); color: var(--quar-fg); padding: 8px 12px; border-radius: 8px; margin-bottom: 12px; font-size: .85rem; }
+table { width: 100%; border-collapse: collapse; font-size: .86rem; }
+th { text-align: left; font-weight: 600; padding: 6px 8px; border-bottom: 2px solid var(--border); }
+td { vertical-align: top; padding: 9px 8px; border-bottom: 1px solid var(--border); }
+.num { font-variant-numeric: tabular-nums; }
+.badge { display: inline-block; padding: 1px 9px; border-radius: 999px; font-weight: 600; font-size: .75rem; }
+.admit { background: var(--admit-bg); color: var(--admit-fg); }
+.quarantine { background: var(--quar-bg); color: var(--quar-fg); }
+.block { background: var(--block-bg); color: var(--block-fg); }
+.store { font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.reason, .aside { font-size: .8rem; color: var(--muted); margin-top: 2px; }
+.text { margin-top: 4px; max-height: 9rem; overflow-y: auto; white-space: pre-wrap; word-break: break-word; }
+mark { background: var(--mark); color: var(--mark-fg); padding: 0 2px; border-radius: 2px; }
+code { font-size: .8em; }
+.scroll { overflow-x: auto; }
+</style>
+</head>
+<body>
+<header>
+  <h1>RAG Mem Sentry <span>· content trust gate</span></h1>
+  <div class="flags"><span id="flag-gate" class="flag">read gate: …</span><span id="flag-mem" class="flag">memory: …</span></div>
+</header>
+<main>
+  <section class="card" aria-label="Chat">
+    <h2>Ask</h2>
+    <div id="chat" aria-live="polite"><p class="empty">Ask a question. Answers come from the retrieved corpus.</p></div>
+    <form id="form">
+      <textarea id="q" rows="1" placeholder="Ask about the indexed Wikipedia passages" aria-label="Question" required></textarea>
+      <button id="send" type="submit">Ask</button>
+    </form>
+    <div id="busy"></div>
+  </section>
+  <section class="card" aria-label="Trust panel">
+    <h2>Trust panel</h2>
+    <div id="panel"><p class="note">Ask a question to see what the read gate screened.</p></div>
+  </section>
+</main>
+<script>
+// Every candidate string is set with textContent, never innerHTML: class-1 poison hides
+// itself with HTML, CSS and comments, and would do so here if rendered as markup.
+const $ = (id) => document.getElementById(id);
+const el = (tag, cls, text) => {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text != null) n.textContent = text;
+  return n;
+};
+
+let gateOn = false;
+fetch("/status").then((r) => r.json()).then((s) => {
+  gateOn = s.gate_on;
+  $("flag-gate").textContent = "read gate: " + (s.gate_on ? "on" : "off");
+  $("flag-gate").classList.toggle("on", s.gate_on);
+  $("flag-mem").textContent = "memory: " + (s.memory_on ? "on" : "off");
+  $("flag-mem").classList.toggle("on", s.memory_on);
+  if (!s.gate_on) renderPanel({ gate_on: false, rows: [] });
+}).catch(() => {});
+
+function addMsg(cls, text, citations) {
+  const chat = $("chat");
+  const empty = chat.querySelector(".empty");
+  if (empty) empty.remove();
+  const m = el("div", "msg " + cls, text);
+  if (citations && citations.length) {
+    const c = el("div", "cites", "Citations: ");
+    citations.forEach((x) => c.appendChild(el("code", null, x)));
+    m.appendChild(c);
+  }
+  chat.appendChild(m);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function textCell(r) {
+  const td = el("td");
+  td.appendChild(el("span", "store", r.store));
+  td.appendChild(document.createTextNode(" "));
+  td.appendChild(el("code", null, r.item_id));
+  if (r.text == null) return td;
+  const box = el("div", "text");
+  if (r.span_verbatim) {
+    const i = r.text.indexOf(r.evidence_span);
+    box.appendChild(document.createTextNode(r.text.slice(0, i)));
+    box.appendChild(el("mark", null, r.evidence_span));
+    box.appendChild(document.createTextNode(r.text.slice(i + r.evidence_span.length)));
+  } else {
+    box.textContent = r.text;
+  }
+  td.appendChild(box);
+  if (r.evidence_span && !r.span_verbatim) {
+    const a = el("div", "aside", "evidence (not verbatim): ");
+    a.appendChild(el("code", null, r.evidence_span));
+    td.appendChild(a);
+  }
+  return td;
+}
+
+function renderPanel(res) {
+  const panel = $("panel");
+  panel.replaceChildren();
+  if (!res.gate_on) {
+    panel.appendChild(el("p", "note", "Read gate is off (set UI_READ_GATE=1): retrieved passages and memories reach the model unscreened."));
+    return;
+  }
+  if (res.reduced_assurance) {
+    panel.appendChild(el("div", "warn", "Reduced assurance: an LLM signal failed, so this verdict came from the surviving signals."));
+  }
+  if (!res.rows.length) {
+    panel.appendChild(el("p", "note", "Read gate on: nothing was screened for this query."));
+    return;
+  }
+  const counts = { admit: 0, quarantine: 0, block: 0 };
+  res.rows.forEach((r) => { if (r.action in counts) counts[r.action]++; });
+  const sum = el("div", "summary");
+  Object.entries(counts).forEach(([k, v]) => sum.appendChild(el("span", "badge " + k, v + " " + k)));
+  panel.appendChild(sum);
+  const table = el("table");
+  const head = el("tr");
+  ["action", "trust", "top signal", "candidate"].forEach((h) => head.appendChild(el("th", null, h)));
+  table.appendChild(el("thead")).appendChild(head);
+  const body = el("tbody");
+  res.rows.forEach((r) => {
+    const tr = el("tr");
+    const a = el("td");
+    a.appendChild(el("span", "badge " + (["admit", "quarantine", "block"].includes(r.action) ? r.action : ""), r.action));
+    tr.appendChild(a);
+    tr.appendChild(el("td", "num", r.trust == null ? "" : r.trust.toFixed(2)));
+    const s = el("td", null, r.top_signal || "—");
+    if (r.top_reason) s.appendChild(el("div", "reason", r.top_reason));
+    tr.appendChild(s);
+    tr.appendChild(textCell(r));
+    body.appendChild(tr);
+  });
+  table.appendChild(body);
+  const wrap = el("div", "scroll");
+  wrap.appendChild(table);
+  panel.appendChild(wrap);
+}
+
+$("q").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("form").requestSubmit(); }
+});
+
+$("form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const q = $("q").value.trim();
+  if (!q) return;
+  addMsg("user", q);
+  $("q").value = "";
+  $("send").disabled = true;
+  $("panel").replaceChildren(el("p", "note", gateOn ? "Screening and answering…" : "Answering…"));
+  const t0 = Date.now();
+  const tick = () => { $("busy").textContent = "Working… " + Math.round((Date.now() - t0) / 1000) + " s (free-tier model, often 60–100 s)"; };
+  tick();
+  const timer = setInterval(tick, 1000);
+  try {
+    // No client timeout: a query takes 70–100 s on the free tier.
+    const r = await fetch("/ask", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question: q }) });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const res = await r.json();
+    addMsg("bot", res.answer, res.citations);
+    renderPanel(res);
+    $("busy").textContent = "Done in " + Math.round((Date.now() - t0) / 1000) + " s.";
+  } catch (err) {
+    addMsg("err", "Request failed: " + err.message + ". Check the server terminal.");
+    $("panel").replaceChildren(el("p", "note", "No result."));
+    $("busy").textContent = "";
+  } finally {
+    clearInterval(timer);
+    $("send").disabled = false;
+    $("q").focus();
+  }
+});
+</script>
+</body>
+</html>
