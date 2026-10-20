@@ -1,0 +1,1 @@
+The first iteration of Apple's WIMP interface was a floppy disk where files could be spatially moved around. After months of usability testing, Apple designed the Lisa interface of windows and icons.

@@ -1,0 +1,1 @@
+An equilateral triangle is the most symmetrical triangle, having 3 lines of reflection and rotational symmetry of order 3 about its center. Its symmetry group is the dihedral group of order 6 D3.

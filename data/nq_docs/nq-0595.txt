@@ -1,0 +1,1 @@
+This approach is directly comparable to the common way of showing a sign (placing a "+" or "âˆ’" next to the number's magnitude). Some early binary computers (e.g., IBM 7090) use this representation, perhaps because of its natural relation to common usage. Signed magnitude is the most common way of representing the significand in floating point values.

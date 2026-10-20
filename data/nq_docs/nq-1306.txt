@@ -1,0 +1,1 @@
+Settlement is the act of consummating the contract, and can be done in one of two ways, as specified per type of futures contract:

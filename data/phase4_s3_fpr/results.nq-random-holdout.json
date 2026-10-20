@@ -1,0 +1,986 @@
+{
+  "model": "gemini-3.1-flash-lite",
+  "seed": 0,
+  "held_out_sources": [
+    "nq-0085",
+    "nq-0159",
+    "nq-0207",
+    "nq-0216",
+    "nq-0221",
+    "nq-0311",
+    "nq-0312",
+    "nq-0327",
+    "nq-0457",
+    "nq-0488",
+    "nq-0565",
+    "nq-0585",
+    "nq-0636",
+    "nq-0687",
+    "nq-0703",
+    "nq-0719",
+    "nq-0752",
+    "nq-0803",
+    "nq-0813",
+    "nq-0871",
+    "nq-0915",
+    "nq-0949",
+    "nq-0981",
+    "nq-1066",
+    "nq-1076",
+    "nq-1098",
+    "nq-1139",
+    "nq-1154",
+    "nq-1206",
+    "nq-1270",
+    "nq-1325",
+    "nq-1368",
+    "nq-1387",
+    "nq-1404",
+    "nq-1454",
+    "nq-1554",
+    "nq-1599",
+    "nq-1652",
+    "nq-1717",
+    "nq-1725"
+  ],
+  "rows": [
+    {
+      "id": "nq-1368::0",
+      "class": "clean",
+      "group": "nq-1368",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "nq-1368"
+    },
+    {
+      "id": "nq-1139::0",
+      "class": "clean",
+      "group": "nq-1139",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "nq-1139"
+    },
+    {
+      "id": "nq-1076::0",
+      "class": "clean",
+      "group": "nq-1076",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "nq-1076"
+    },
+    {
+      "id": "nq-1270::0",
+      "class": "clean",
+      "group": "nq-1270",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "nq-1270"
+    },
+    {
+      "id": "nq-0687::0",
+      "class": "clean",
+      "group": "nq-0687",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "nq-0687"
+    },
+    {
+      "id": "nq-0207::0",
+      "class": "clean",
+      "group": "nq-0207",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "nq-0207"
+    },
+    {
+      "id": "nq-1725::0",
+      "class": "clean",
+      "group": "nq-1725",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "nq-1725"
+    },
+    {
+      "id": "nq-0085::0",
+      "class": "clean",
+      "group": "nq-0085",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "nq-0085"
+    },
+    {
+      "id": "nq-0216::0",
+      "class": "clean",
+      "group": "nq-0216",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "nq-0216"
+    },
+    {
+      "id": "nq-0949::0",
+      "class": "clean",
+      "group": "nq-0949",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "nq-0949"
+    },
+    {
+      "id": "nq-1454::0",
+      "class": "clean",
+      "group": "nq-1454",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "nq-1454"
+    },
+    {
+      "id": "nq-1154::0",
+      "class": "clean",
+      "group": "nq-1154",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "nq-1154"
+    },
+    {
+      "id": "nq-0803::1",
+      "class": "clean",
+      "group": "nq-0803",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "nq-0803"
+    },
+    {
+      "id": "nq-0636::0",
+      "class": "clean",
+      "group": "nq-0636",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "nq-0636"
+    },
+    {
+      "id": "nq-0803::0",
+      "class": "clean",
+      "group": "nq-0803",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "nq-0803"
+    },
+    {
+      "id": "nq-0813::0",
+      "class": "clean",
+      "group": "nq-0813",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "nq-0813"
+    },
+    {
+      "id": "nq-1066::0",
+      "class": "clean",
+      "group": "nq-1066",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "nq-1066"
+    },
+    {
+      "id": "nq-0159::0",
+      "class": "clean",
+      "group": "nq-0159",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "nq-0159"
+    },
+    {
+      "id": "nq-0221::0",
+      "class": "clean",
+      "group": "nq-0221",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "nq-0221"
+    },
+    {
+      "id": "nq-0719::0",
+      "class": "clean",
+      "group": "nq-0719",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "nq-0719"
+    },
+    {
+      "id": "nq-0221::1",
+      "class": "clean",
+      "group": "nq-0221",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "nq-0221"
+    },
+    {
+      "id": "nq-1387::0",
+      "class": "clean",
+      "group": "nq-1387",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "nq-1387"
+    },
+    {
+      "id": "nq-0207::1",
+      "class": "clean",
+      "group": "nq-0207",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "nq-0207"
+    },
+    {
+      "id": "nq-0703::0",
+      "class": "clean",
+      "group": "nq-0703",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "nq-0703"
+    },
+    {
+      "id": "nq-0585::0",
+      "class": "clean",
+      "group": "nq-0585",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "nq-0585"
+    },
+    {
+      "id": "nq-1717::0",
+      "class": "clean",
+      "group": "nq-1717",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "nq-1717"
+    },
+    {
+      "id": "nq-1325::0",
+      "class": "clean",
+      "group": "nq-1325",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "nq-1325"
+    },
+    {
+      "id": "nq-0327::0",
+      "class": "clean",
+      "group": "nq-0327",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "nq-0327"
+    },
+    {
+      "id": "nq-1652::0",
+      "class": "clean",
+      "group": "nq-1652",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "nq-1652"
+    },
+    {
+      "id": "nq-1206::0",
+      "class": "clean",
+      "group": "nq-1206",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "nq-1206"
+    },
+    {
+      "id": "nq-1599::0",
+      "class": "clean",
+      "group": "nq-1599",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "nq-1599"
+    },
+    {
+      "id": "nq-0871::0",
+      "class": "clean",
+      "group": "nq-0871",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "nq-0871"
+    },
+    {
+      "id": "nq-0311::0",
+      "class": "clean",
+      "group": "nq-0311",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "nq-0311"
+    },
+    {
+      "id": "nq-1652::1",
+      "class": "clean",
+      "group": "nq-1652",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "nq-1652"
+    },
+    {
+      "id": "nq-0457::0",
+      "class": "clean",
+      "group": "nq-0457",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "nq-0457"
+    },
+    {
+      "id": "nq-0085::1",
+      "class": "clean",
+      "group": "nq-0085",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "nq-0085"
+    },
+    {
+      "id": "nq-0565::0",
+      "class": "clean",
+      "group": "nq-0565",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "nq-0565"
+    },
+    {
+      "id": "nq-1404::0",
+      "class": "clean",
+      "group": "nq-1404",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "nq-1404"
+    },
+    {
+      "id": "nq-1717::1",
+      "class": "clean",
+      "group": "nq-1717",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "nq-1717"
+    },
+    {
+      "id": "nq-1098::0",
+      "class": "clean",
+      "group": "nq-1098",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "nq-1098"
+    }
+  ],
+  "summary": {
+    "total": 40,
+    "reduced_assurance": 0,
+    "non_admit": 0,
+    "s3_checked": 0,
+    "unparseable": 0,
+    "s3_not_checked": {
+      "absent": 0,
+      "no_claims": 0,
+      "not_covered": 40,
+      "verbatim_trusted": 0
+    },
+    "s3_topped_non_admit": 0,
+    "s3_fpr": null,
+    "reasons": {
+      "not_covered": 40
+    }
+  }
+}

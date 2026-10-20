@@ -1,0 +1,1 @@
+In general, the efficiency of a given heat transfer process (whether it be a refrigerator, a heat pump or an engine) is defined informally by the ratio of "what you get out" to "what you put in".

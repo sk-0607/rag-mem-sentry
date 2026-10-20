@@ -1,0 +1,1 @@
+PCI Express storage devices can implement both AHCI logical interface for backward compatibility, and NVM Express logical interface for much faster I/O operations provided by utilizing internal parallelism offered by such devices. Enterprise-class SSDs can also implement SCSI over PCI Express.[83]

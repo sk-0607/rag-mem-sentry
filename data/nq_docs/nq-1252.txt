@@ -1,0 +1,1 @@
+where x and ξ are n-dimensional vectors, and x · ξ is the dot product of the vectors. The dot product is sometimes written as ⟨x, ξ⟩.

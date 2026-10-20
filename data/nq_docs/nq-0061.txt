@@ -1,0 +1,80 @@
+The remaining two parameters 
+
+
+
+
+
+
+a
+^
+
+
+
+,
+
+
+
+c
+^
+
+
+
+
+
+{\displaystyle {\hat {a}},{\hat {c}}}
+
+ can be determined using the sample mean and the sample variance using a variety of equations.[1][37] One alternative is to calculate the support interval range 
+
+
+
+(
+
+
+
+c
+^
+
+
+
+−
+
+
+
+a
+^
+
+
+
+)
+
+
+{\displaystyle ({\hat {c}}-{\hat {a}})}
+
+ based on the sample variance and the sample kurtosis. For this purpose one can solve, in terms of the range 
+
+
+
+(
+
+
+
+c
+^
+
+
+
+−
+
+
+
+a
+^
+
+
+
+)
+
+
+{\displaystyle ({\hat {c}}-{\hat {a}})}
+
+, the equation expressing the excess kurtosis in terms of the sample variance, and the sample size ν (see section titled "Kurtosis" and "Alternative parametrizations, four parameters"):

@@ -1,0 +1,1 @@
+Serial numbers are six digits long and should include leading zeros.  The leading zeros padding the number are a more recent addition to the format, so many older works will show less full codes. The hyphen that is often seen separating the year and serial number is optional. More recently, the Library of Congress has instructed publishers not to include a hyphen.

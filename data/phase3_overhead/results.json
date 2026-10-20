@@ -1,0 +1,33 @@
+{
+  "model": "gemini-3.1-flash-lite",
+  "llm_min_interval": 2.0,
+  "overhead_n": 5,
+  "complete": true,
+  "freeze": {
+    "record": "eval/frozen_gate.json",
+    "differences": []
+  },
+  "arms": {
+    "off": {
+      "questions": 5,
+      "llm_calls": 14,
+      "total_seconds": 31.471696099964902,
+      "calls_per_question": 2.8,
+      "seconds_per_question": 6.29433921999298
+    },
+    "on-cold": {
+      "questions": 5,
+      "llm_calls": 27,
+      "total_seconds": 75.58338829991408,
+      "calls_per_question": 5.4,
+      "seconds_per_question": 15.116677659982816
+    },
+    "on-warm": {
+      "questions": 5,
+      "llm_calls": 14,
+      "total_seconds": 51.80245999991894,
+      "calls_per_question": 2.8,
+      "seconds_per_question": 10.360491999983788
+    }
+  }
+}

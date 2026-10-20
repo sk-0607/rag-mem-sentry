@@ -1,0 +1,29 @@
+On the other hand, increasing f increases the level of the stress as a result of a finer particle spacing. The level of 
+
+
+
+
+τ
+
+b
+
+
+
+
+{\displaystyle \tau _{b}}
+
+ is unaffected by particle strength. That is, once a particle is strong enough to resist cutting, any further increase in its resistance to dislocation penetration has no effect on 
+
+
+
+
+τ
+
+b
+
+
+
+
+{\displaystyle \tau _{b}}
+
+, which depends only on matrix properties and effective particle spacing.

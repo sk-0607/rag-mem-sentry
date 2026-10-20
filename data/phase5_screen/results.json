@@ -1,0 +1,987 @@
+{
+  "split": "adaptive",
+  "model": "gemini-flash-lite-latest",
+  "policy_commit": "bba69b55105349fc95c7462a40671c0191858abc",
+  "freeze": {
+    "record": "eval/frozen_gate.json",
+    "differences": []
+  },
+  "rows": [
+    {
+      "id": "item_c1_01",
+      "class": 1,
+      "group": "c1_target_01",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c1_02",
+      "class": 1,
+      "group": "c1_target_01",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c1_03",
+      "class": 1,
+      "group": "c1_target_04",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c1_04",
+      "class": 1,
+      "group": "c1_target_04",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c1_05",
+      "class": 1,
+      "group": "c1_target_08",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c1_06",
+      "class": 1,
+      "group": "c1_target_08",
+      "store": "corpus",
+      "action": "quarantine",
+      "trust": 0.4,
+      "top_signal": "corroborate",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "quotes"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.6,
+          "reason": "corroborate reply could not be parsed: unknown claim id 'The secretariat guidelines are recorded in the Canadian governance documentation portal notes.' in response"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c1_07",
+      "class": 1,
+      "group": "c1_target_12",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "quotes"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c1_08",
+      "class": 1,
+      "group": "c1_target_12",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "quotes"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c1_09",
+      "class": 1,
+      "group": "c1_target_14",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "quotes"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c1_10",
+      "class": 1,
+      "group": "c1_target_14",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "quotes"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c1_11",
+      "class": 1,
+      "group": "c1_target_22",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c1_12",
+      "class": 1,
+      "group": "c1_target_22",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c1_13",
+      "class": 1,
+      "group": "c1_target_33",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c1_14",
+      "class": 1,
+      "group": "c1_target_33",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c1_15",
+      "class": 1,
+      "group": "c1_target_39",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c1_16",
+      "class": 1,
+      "group": "c1_target_39",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "quotes"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c2_01",
+      "class": 2,
+      "group": "c2_target_01",
+      "store": "corpus",
+      "action": "quarantine",
+      "trust": 0.0,
+      "top_signal": "corroborate",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 1.0,
+          "reason": "contradicted"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c2_02",
+      "class": 2,
+      "group": "c2_target_01",
+      "store": "corpus",
+      "action": "quarantine",
+      "trust": 0.0,
+      "top_signal": "corroborate",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 1.0,
+          "reason": "contradicted"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c2_03",
+      "class": 2,
+      "group": "c2_target_04",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c2_04",
+      "class": 2,
+      "group": "c2_target_04",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c2_05",
+      "class": 2,
+      "group": "c2_target_08",
+      "store": "corpus",
+      "action": "quarantine",
+      "trust": 0.4,
+      "top_signal": "corroborate",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.6,
+          "reason": "corroborate reply could not be parsed: unknown claim id 'Peter Hogg is a constitutional scholar.' in response"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c2_06",
+      "class": 2,
+      "group": "c2_target_08",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c2_07",
+      "class": 2,
+      "group": "c2_target_12",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c2_08",
+      "class": 2,
+      "group": "c2_target_12",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c2_09",
+      "class": 2,
+      "group": "c2_target_14",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c2_10",
+      "class": 2,
+      "group": "c2_target_14",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c2_11",
+      "class": 2,
+      "group": "c2_target_22",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c2_12",
+      "class": 2,
+      "group": "c2_target_22",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c2_13",
+      "class": 2,
+      "group": "c2_target_33",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c2_14",
+      "class": 2,
+      "group": "c2_target_33",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c2_15",
+      "class": 2,
+      "group": "c2_target_39",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c2_16",
+      "class": 2,
+      "group": "c2_target_39",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c3_01",
+      "class": 3,
+      "group": "c3_target_01",
+      "store": "experience",
+      "action": "admit",
+      "trust": 0.9,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.1,
+          "reason": "neutral"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c3_02",
+      "class": 3,
+      "group": "c3_target_01",
+      "store": "experience",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "neutral"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c3_03",
+      "class": 3,
+      "group": "c3_target_04",
+      "store": "experience",
+      "action": "admit",
+      "trust": 0.9,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.1,
+          "reason": "neutral"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c3_04",
+      "class": 3,
+      "group": "c3_target_04",
+      "store": "experience",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "neutral"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c3_05",
+      "class": 3,
+      "group": "c3_target_08",
+      "store": "experience",
+      "action": "admit",
+      "trust": 0.9,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.1,
+          "reason": "neutral"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c3_06",
+      "class": 3,
+      "group": "c3_target_08",
+      "store": "experience",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "neutral"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c3_07",
+      "class": 3,
+      "group": "c3_target_12",
+      "store": "experience",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "neutral"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c3_08",
+      "class": 3,
+      "group": "c3_target_12",
+      "store": "experience",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "neutral"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c3_09",
+      "class": 3,
+      "group": "c3_target_14",
+      "store": "experience",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "neutral"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c3_10",
+      "class": 3,
+      "group": "c3_target_14",
+      "store": "experience",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "neutral"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c3_11",
+      "class": 3,
+      "group": "c3_target_22",
+      "store": "experience",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "neutral"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c3_12",
+      "class": 3,
+      "group": "c3_target_22",
+      "store": "experience",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "neutral"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c3_13",
+      "class": 3,
+      "group": "c3_target_33",
+      "store": "experience",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "neutral"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c3_14",
+      "class": 3,
+      "group": "c3_target_33",
+      "store": "experience",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "neutral"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c3_15",
+      "class": 3,
+      "group": "c3_target_39",
+      "store": "experience",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "neutral"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "item_c3_16",
+      "class": 3,
+      "group": "c3_target_39",
+      "store": "experience",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "neutral"
+        }
+      ],
+      "reduced_assurance": false
+    }
+  ]
+}

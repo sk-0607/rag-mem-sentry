@@ -1,0 +1,1 @@
+While the electrical interface and the format of the data transmitted by commonly available mice is currently standardized on USB, in the past it varied between different manufacturers. A bus mouse used a dedicated interface card for connection to an IBM PC or compatible computer.

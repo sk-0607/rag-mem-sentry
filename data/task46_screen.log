@@ -1,0 +1,54 @@
+signal corroborate failed on batch of 5 items
+Traceback (most recent call last):
+  File "D:\SHARAN\Projects\capstone-project\rag\rag-mem-sentry\gate\signals\base.py", line 72, in run_signals_batch
+    results = score_batch(items, ctx)
+              ^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\SHARAN\Projects\capstone-project\rag\rag-mem-sentry\gate\signals\corroborate.py", line 286, in score_batch
+    claims = [self._extract_one(items[i]) for i in todo]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\SHARAN\Projects\capstone-project\rag\rag-mem-sentry\gate\signals\corroborate.py", line 286, in <listcomp>
+    claims = [self._extract_one(items[i]) for i in todo]
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\SHARAN\Projects\capstone-project\rag\rag-mem-sentry\gate\signals\corroborate.py", line 227, in _extract_one
+    return self.extract_claims([item])[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\SHARAN\Projects\capstone-project\rag\rag-mem-sentry\gate\signals\corroborate.py", line 172, in extract_claims
+    return _parse_claims(chat(messages, model=model), items, config.S3_MAX_CLAIMS)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\SHARAN\Projects\capstone-project\rag\rag-mem-sentry\app\llm.py", line 61, in chat
+    raise RuntimeError(f"{model} rate limit: exhausted retries")
+RuntimeError: gemini-flash-lite-latest rate limit: exhausted retries
+signal judge failed on batch of 5 items
+Traceback (most recent call last):
+  File "D:\SHARAN\Projects\capstone-project\rag\rag-mem-sentry\gate\signals\base.py", line 72, in run_signals_batch
+    results = score_batch(items, ctx)
+              ^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\SHARAN\Projects\capstone-project\rag\rag-mem-sentry\gate\signals\judge.py", line 210, in score_batch
+    return self._judge(items, ctx.store, labels)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\SHARAN\Projects\capstone-project\rag\rag-mem-sentry\gate\signals\judge.py", line 198, in _judge
+    raw = chat(messages, model=self._resolve_model())
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\SHARAN\Projects\capstone-project\rag\rag-mem-sentry\app\llm.py", line 61, in chat
+    raise RuntimeError(f"{model} rate limit: exhausted retries")
+RuntimeError: gemini-flash-lite-latest rate limit: exhausted retries
+signal corroborate failed on batch of 5 items
+Traceback (most recent call last):
+  File "D:\SHARAN\Projects\capstone-project\rag\rag-mem-sentry\gate\signals\base.py", line 72, in run_signals_batch
+    results = score_batch(items, ctx)
+              ^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\SHARAN\Projects\capstone-project\rag\rag-mem-sentry\gate\signals\corroborate.py", line 286, in score_batch
+    claims = [self._extract_one(items[i]) for i in todo]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\SHARAN\Projects\capstone-project\rag\rag-mem-sentry\gate\signals\corroborate.py", line 286, in <listcomp>
+    claims = [self._extract_one(items[i]) for i in todo]
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\SHARAN\Projects\capstone-project\rag\rag-mem-sentry\gate\signals\corroborate.py", line 227, in _extract_one
+    return self.extract_claims([item])[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\SHARAN\Projects\capstone-project\rag\rag-mem-sentry\gate\signals\corroborate.py", line 172, in extract_claims
+    return _parse_claims(chat(messages, model=model), items, config.S3_MAX_CLAIMS)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\SHARAN\Projects\capstone-project\rag\rag-mem-sentry\app\llm.py", line 61, in chat
+    raise RuntimeError(f"{model} rate limit: exhausted retries")
+RuntimeError: gemini-flash-lite-latest rate limit: exhausted retries

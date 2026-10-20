@@ -1,0 +1,1 @@
+Consider a cylindrical container filled with liquid rotating in the z direction in cylindrical coordinates, the equations of motion are:

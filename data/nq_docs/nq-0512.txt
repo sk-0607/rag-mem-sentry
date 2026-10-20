@@ -1,0 +1,35 @@
+where R is a rotation operator. As a consequence, 
+
+
+
+[
+H
+,
+R
+]
+=
+0
+
+
+{\displaystyle [H,R]=0}
+
+, and then 
+
+
+
+[
+H
+,
+
+J
+
+]
+=
+
+0
+
+
+
+{\displaystyle [H,\mathbf {J} ]=\mathbf {0} }
+
+ due to the relationship between J and R. By the Ehrenfest theorem, it follows that J is conserved.

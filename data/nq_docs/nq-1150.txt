@@ -1,0 +1,1 @@
+As on prior models, all data is stored in flash memory, 8, 16 or 32Â GB, and not on the SIM. Unlike prior generations, the storage capacity is not printed on the back of the unit.

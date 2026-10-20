@@ -1,0 +1,1 @@
+These are options in the control panel that show devices connected to the computer. They do not actually offer a direct interface to control these devices, but rather offer basic tasks such as removal procedures and links to wizards (Printers & faxes is the exception).

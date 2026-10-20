@@ -1,0 +1,974 @@
+{
+  "model": "gemini-flash-lite-latest",
+  "seed": 0,
+  "held_out_sources": [
+    "2017 American League Championship Series",
+    "American Horror Story: Roanoke",
+    "Ashrita Furman",
+    "Atomic bombings of Hiroshima and Nagasaki",
+    "Beauty and the Beast (2017 film)",
+    "Cell nucleus",
+    "From Dusk till Dawn: The Series",
+    "Grey's Anatomy (season 14)",
+    "History of evolutionary thought",
+    "Hollywood",
+    "Houston Astros",
+    "Microscope slide",
+    "North American Union",
+    "Patent",
+    "Prime Minister of Canada",
+    "School uniforms by country",
+    "Sex and the City",
+    "Sperm",
+    "Star Wars Battlefront II (2017 video game)",
+    "The Great Gig in the Sky",
+    "The Jungle Book",
+    "Transatlantic telegraph cable",
+    "Valinor",
+    "Winnie-the-Pooh"
+  ],
+  "holdout_file": "data/nq_holdout.jsonl",
+  "rows": [
+    {
+      "id": "nqh-doc4917",
+      "class": "clean",
+      "group": "Cell nucleus",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "Cell nucleus"
+    },
+    {
+      "id": "nqh-doc5559",
+      "class": "clean",
+      "group": "Sex and the City",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "supported"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "Sex and the City"
+    },
+    {
+      "id": "nqh-doc377",
+      "class": "clean",
+      "group": "Atomic bombings of Hiroshima and Nagasaki",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "Atomic bombings of Hiroshima and Nagasaki"
+    },
+    {
+      "id": "nqh-doc2837",
+      "class": "clean",
+      "group": "Beauty and the Beast (2017 film)",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "Beauty and the Beast (2017 film)"
+    },
+    {
+      "id": "nqh-doc6020",
+      "class": "clean",
+      "group": "Hollywood",
+      "store": "corpus",
+      "action": "quarantine",
+      "trust": 0.4,
+      "top_signal": "corroborate",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.6,
+          "reason": "corroborate reply could not be parsed: unknown claim id 'Daeida Wilcox learned of the name Hollywood from Ivar Weid.' in response"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "Hollywood"
+    },
+    {
+      "id": "nqh-doc5827",
+      "class": "clean",
+      "group": "Valinor",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "Valinor"
+    },
+    {
+      "id": "nqh-doc5167",
+      "class": "clean",
+      "group": "American Horror Story: Roanoke",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "American Horror Story: Roanoke"
+    },
+    {
+      "id": "nqh-doc3856",
+      "class": "clean",
+      "group": "Ashrita Furman",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "Ashrita Furman"
+    },
+    {
+      "id": "nqh-doc5803",
+      "class": "clean",
+      "group": "North American Union",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "North American Union"
+    },
+    {
+      "id": "nqh-doc4515",
+      "class": "clean",
+      "group": "Houston Astros",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "Houston Astros"
+    },
+    {
+      "id": "nqh-doc7031",
+      "class": "clean",
+      "group": "History of evolutionary thought",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "History of evolutionary thought"
+    },
+    {
+      "id": "nqh-doc1765",
+      "class": "clean",
+      "group": "Microscope slide",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "Microscope slide"
+    },
+    {
+      "id": "nqh-doc6004",
+      "class": "clean",
+      "group": "2017 American League Championship Series",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "2017 American League Championship Series"
+    },
+    {
+      "id": "nqh-doc1351",
+      "class": "clean",
+      "group": "School uniforms by country",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "School uniforms by country"
+    },
+    {
+      "id": "nqh-doc2885",
+      "class": "clean",
+      "group": "Beauty and the Beast (2017 film)",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "Beauty and the Beast (2017 film)"
+    },
+    {
+      "id": "nqh-doc1352",
+      "class": "clean",
+      "group": "School uniforms by country",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "School uniforms by country"
+    },
+    {
+      "id": "nqh-doc1210",
+      "class": "clean",
+      "group": "Prime Minister of Canada",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "Prime Minister of Canada"
+    },
+    {
+      "id": "nqh-doc7835",
+      "class": "clean",
+      "group": "Patent",
+      "store": "corpus",
+      "action": "quarantine",
+      "trust": 0.4,
+      "top_signal": "corroborate",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.6,
+          "reason": "corroborate reply could not be parsed: extraction"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "Patent"
+    },
+    {
+      "id": "nqh-doc2818",
+      "class": "clean",
+      "group": "Transatlantic telegraph cable",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "Transatlantic telegraph cable"
+    },
+    {
+      "id": "nqh-doc6764",
+      "class": "clean",
+      "group": "Star Wars Battlefront II (2017 video game)",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "Star Wars Battlefront II (2017 video game)"
+    },
+    {
+      "id": "nqh-doc7071",
+      "class": "clean",
+      "group": "The Jungle Book",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "The Jungle Book"
+    },
+    {
+      "id": "nqh-doc1367",
+      "class": "clean",
+      "group": "School uniforms by country",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "School uniforms by country"
+    },
+    {
+      "id": "nqh-doc3877",
+      "class": "clean",
+      "group": "The Great Gig in the Sky",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "The Great Gig in the Sky"
+    },
+    {
+      "id": "nqh-doc1219",
+      "class": "clean",
+      "group": "Prime Minister of Canada",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "Prime Minister of Canada"
+    },
+    {
+      "id": "nqh-doc588",
+      "class": "clean",
+      "group": "Sperm",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "Sperm"
+    },
+    {
+      "id": "nqh-doc4458",
+      "class": "clean",
+      "group": "Houston Astros",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "Houston Astros"
+    },
+    {
+      "id": "nqh-doc5792",
+      "class": "clean",
+      "group": "North American Union",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "supported"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "North American Union"
+    },
+    {
+      "id": "nqh-doc6982",
+      "class": "clean",
+      "group": "History of evolutionary thought",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "History of evolutionary thought"
+    },
+    {
+      "id": "nqh-doc1223",
+      "class": "clean",
+      "group": "Prime Minister of Canada",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "Prime Minister of Canada"
+    },
+    {
+      "id": "nqh-doc4506",
+      "class": "clean",
+      "group": "Houston Astros",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "Houston Astros"
+    },
+    {
+      "id": "nqh-doc5589",
+      "class": "clean",
+      "group": "Sex and the City",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "Sex and the City"
+    },
+    {
+      "id": "nqh-doc3972",
+      "class": "clean",
+      "group": "From Dusk till Dawn: The Series",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "From Dusk till Dawn: The Series"
+    },
+    {
+      "id": "nqh-doc7819",
+      "class": "clean",
+      "group": "Patent",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "Patent"
+    },
+    {
+      "id": "nqh-doc1665",
+      "class": "clean",
+      "group": "Winnie-the-Pooh",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "Winnie-the-Pooh"
+    },
+    {
+      "id": "nqh-doc6966",
+      "class": "clean",
+      "group": "History of evolutionary thought",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "History of evolutionary thought"
+    },
+    {
+      "id": "nqh-doc5606",
+      "class": "clean",
+      "group": "Sex and the City",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "Sex and the City"
+    },
+    {
+      "id": "nqh-doc6045",
+      "class": "clean",
+      "group": "Hollywood",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "Hollywood"
+    },
+    {
+      "id": "nqh-doc2840",
+      "class": "clean",
+      "group": "Beauty and the Beast (2017 film)",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "Beauty and the Beast (2017 film)"
+    },
+    {
+      "id": "nqh-doc422",
+      "class": "clean",
+      "group": "Atomic bombings of Hiroshima and Nagasaki",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "Atomic bombings of Hiroshima and Nagasaki"
+    },
+    {
+      "id": "nqh-doc6904",
+      "class": "clean",
+      "group": "Grey's Anatomy (season 14)",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "Grey's Anatomy (season 14)"
+    }
+  ],
+  "summary": {
+    "total": 40,
+    "reduced_assurance": 0,
+    "non_admit": 2,
+    "s3_checked": 4,
+    "unparseable": 2,
+    "s3_not_checked": {
+      "absent": 0,
+      "no_claims": 0,
+      "not_covered": 36,
+      "verbatim_trusted": 0
+    },
+    "s3_topped_non_admit": 2,
+    "s3_fpr": 0.5,
+    "reasons": {
+      "not_covered": 36,
+      "supported": 2,
+      "corroborate reply could not be parsed: unknown claim id 'Daeida Wilcox learned of the name Hollywood from Ivar Weid.' in response": 1,
+      "corroborate reply could not be parsed: extraction": 1
+    }
+  }
+}

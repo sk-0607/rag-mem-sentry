@@ -1,0 +1,1 @@
+By convention, there are exactly four primary partition table entries in the MBR partition table scheme, although some operating systems and system tools extended this to five (Advanced Active Partitions (AAP) with PTS-DOS 6.60[11] and DR-DOS 7.07), eight (AST and NEC MS-DOS 3.x[12][13] as well as Storage Dimensions SpeedStor), or even sixteen entries (with Ontrack Disk Manager).

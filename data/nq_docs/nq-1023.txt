@@ -1,0 +1,1 @@
+Rounding may be needed to create a stem-and-leaf display. Based on the following set of data, the stem plot below would be created:

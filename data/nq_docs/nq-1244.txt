@@ -1,0 +1,1 @@
+where w represents the wage rate of labour, r represents the rental rate of capital, K is the amount of capital used, L is the amount of labour used, and C is the total cost of acquiring those quantities of the two inputs.

@@ -1,0 +1,1 @@
+This agrees with the form of the observed rate equation if it is assumed that kÂ = k2K1. In practice the rate equation is used to suggest possible mechanisms which predict a rate equation in agreement with experiment.

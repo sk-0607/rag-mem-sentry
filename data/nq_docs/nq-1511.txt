@@ -1,0 +1,1 @@
+A special class of these algorithms attempts to detect algorithmic or iceberg orders on the other side (i.e. if you are trying to buy, the algorithm will try to detect orders for the sell side). These algorithms are called sniffing algorithms. A typical example is "Stealth."

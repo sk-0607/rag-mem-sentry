@@ -1,0 +1,1 @@
+It is used as a common mathematical model of mud flow in drilling engineering, and in the handling of slurries. A common example is toothpaste,[2] which will not be extruded until a certain pressure is applied to the tube. It is then pushed out as a solid plug.

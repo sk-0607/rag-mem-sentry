@@ -1,0 +1,1 @@
+The GSM standard also provides separate facilities for transmitting digital data. This allows a mobile phone to act like any other computer on the Internet, sending and receiving data via the Internet Protocol.

@@ -1,0 +1,50 @@
+{"group": "c2-test1", "source": "BEIR NQ", "location": "doc6", "true_fact": "23"}
+{"group": "c2-test11", "source": "BEIR NQ", "location": "doc136", "true_fact": "Elvis Presley"}
+{"group": "c2-test16", "source": "BEIR NQ", "location": "doc305", "true_fact": "Little Boy"}
+{"group": "c2-test19", "source": "BEIR NQ", "location": "doc565,doc579", "true_fact": "midpiece"}
+{"group": "c2-test20", "source": "BEIR NQ", "location": "doc618", "true_fact": "3"}
+{"group": "c2-test21", "source": "BEIR NQ", "location": "doc635", "true_fact": "4"}
+{"group": "c2-test31", "source": "BEIR NQ", "location": "doc897", "true_fact": "Saint Peter"}
+{"group": "c2-test47", "source": "BEIR NQ", "location": "doc1215", "true_fact": "four years"}
+{"group": "c2-test50", "source": "BEIR NQ", "location": "doc1404,doc1405,doc1407", "true_fact": "no"}
+{"group": "c2-test53", "source": "BEIR NQ", "location": "doc1448", "true_fact": "Sicily"}
+{"group": "c2-test57", "source": "BEIR NQ", "location": "doc1580", "true_fact": "Vienna"}
+{"group": "c2-test58", "source": "BEIR NQ", "location": "doc1599", "true_fact": "Domhnall Gleeson"}
+{"group": "c2-test60", "source": "BEIR NQ", "location": "doc1631", "true_fact": "1926"}
+{"group": "c2-test62", "source": "BEIR NQ", "location": "doc1729", "true_fact": "Lalo Schifrin"}
+{"group": "c2-test64", "source": "BEIR NQ", "location": "doc1754", "true_fact": "stage"}
+{"group": "c2-test70", "source": "BEIR NQ", "location": "doc2107", "true_fact": "March 23, 2018"}
+{"group": "c2-test75", "source": "BEIR NQ", "location": "doc2262", "true_fact": "24 hours"}
+{"group": "c2-test77", "source": "BEIR NQ", "location": "doc2319", "true_fact": "Thespis"}
+{"group": "c2-test79", "source": "BEIR NQ", "location": "doc2368", "true_fact": "Louis Prima"}
+{"group": "c2-test82", "source": "BEIR NQ", "location": "doc2493", "true_fact": "March 31, 2016"}
+{"group": "c2-test87", "source": "BEIR NQ", "location": "doc2805", "true_fact": "1850"}
+{"group": "c2-test88", "source": "BEIR NQ", "location": "doc2834", "true_fact": "France"}
+{"group": "c2-test90", "source": "BEIR NQ", "location": "doc2961", "true_fact": "Numbers 22:28"}
+{"group": "c2-test94", "source": "BEIR NQ", "location": "doc3057", "true_fact": "Lesley Gore"}
+{"group": "c2-test106", "source": "BEIR NQ", "location": "doc3852", "true_fact": "Ashrita Furman"}
+{"group": "c2-test107", "source": "BEIR NQ", "location": "doc3859", "true_fact": "Clare Torry"}
+{"group": "c2-test110", "source": "BEIR NQ", "location": "doc3974", "true_fact": "3"}
+{"group": "c2-test113", "source": "BEIR NQ", "location": "doc4100,doc4101", "true_fact": "James Hutton"}
+{"group": "c2-test120", "source": "BEIR NQ", "location": "doc4449,doc4523", "true_fact": "2013"}
+{"group": "c2-test127", "source": "BEIR NQ", "location": "doc4743", "true_fact": "Sohrai"}
+{"group": "c2-test130", "source": "BEIR NQ", "location": "doc4898,doc4903", "true_fact": "nucleus"}
+{"group": "c2-test138", "source": "BEIR NQ", "location": "doc5165", "true_fact": "Roanoke"}
+{"group": "c2-test145", "source": "BEIR NQ", "location": "doc5395", "true_fact": "Pat McCormick"}
+{"group": "c2-test152", "source": "BEIR NQ", "location": "doc5548", "true_fact": "New York City"}
+{"group": "c2-test156", "source": "BEIR NQ", "location": "doc5758", "true_fact": "John B. Watson"}
+{"group": "c2-test157", "source": "BEIR NQ", "location": "doc5794", "true_fact": "Canada"}
+{"group": "c2-test159", "source": "BEIR NQ", "location": "doc5822,doc5831", "true_fact": "Valinor"}
+{"group": "c2-test161", "source": "BEIR NQ", "location": "doc5875", "true_fact": "Felix Baumgartner"}
+{"group": "c2-test164", "source": "BEIR NQ", "location": "doc5996", "true_fact": "Houston Astros"}
+{"group": "c2-test165", "source": "BEIR NQ", "location": "doc6016,doc6026", "true_fact": "1910"}
+{"group": "c2-test166", "source": "BEIR NQ", "location": "doc6062", "true_fact": "medulla oblongata"}
+{"group": "c2-test177", "source": "BEIR NQ", "location": "doc6493", "true_fact": "Ariana Richards"}
+{"group": "c2-test185", "source": "BEIR NQ", "location": "doc6760", "true_fact": "November 17, 2017"}
+{"group": "c2-test188", "source": "BEIR NQ", "location": "doc6895", "true_fact": "24"}
+{"group": "c2-test191", "source": "BEIR NQ", "location": "doc6964", "true_fact": "Charles Darwin"}
+{"group": "c2-test192", "source": "BEIR NQ", "location": "doc7050,doc7056", "true_fact": "yes"}
+{"group": "c2-test208", "source": "BEIR NQ", "location": "doc7543", "true_fact": "William Chatterton Dix"}
+{"group": "c2-test213", "source": "BEIR NQ", "location": "doc7709", "true_fact": "Kareem Abdul-Jabbar"}
+{"group": "c2-test216", "source": "BEIR NQ", "location": "doc7808,doc7820", "true_fact": "20 years"}
+{"group": "c2-test226", "source": "BEIR NQ", "location": "doc8127", "true_fact": "quartz"}

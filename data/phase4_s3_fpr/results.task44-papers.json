@@ -1,0 +1,954 @@
+{
+  "model": "gemini-3.1-flash-lite",
+  "seed": 0,
+  "held_out_sources": [
+    "1511.07528",
+    "1712.05526",
+    "2306.05499",
+    "2306.11698"
+  ],
+  "rows": [
+    {
+      "id": "2306.11698::85",
+      "class": "clean",
+      "group": "2306.11698",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "2306.11698"
+    },
+    {
+      "id": "2306.11698::61",
+      "class": "clean",
+      "group": "2306.11698",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "2306.11698"
+    },
+    {
+      "id": "2306.11698::271",
+      "class": "clean",
+      "group": "2306.11698",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "2306.11698"
+    },
+    {
+      "id": "2306.11698::178",
+      "class": "clean",
+      "group": "2306.11698",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "2306.11698"
+    },
+    {
+      "id": "2306.11698::53",
+      "class": "clean",
+      "group": "2306.11698",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "supported"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "2306.11698"
+    },
+    {
+      "id": "2306.11698::228",
+      "class": "clean",
+      "group": "2306.11698",
+      "store": "corpus",
+      "action": "quarantine",
+      "trust": 0.4,
+      "top_signal": "corroborate",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.6,
+          "reason": "corroborate reply could not be parsed: unknown claim id 'N. Srebro wrote the paper titled Equality of opportunity in supervised learning published in 2016.' in response"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "2306.11698"
+    },
+    {
+      "id": "2306.11698::1",
+      "class": "clean",
+      "group": "2306.11698",
+      "store": "corpus",
+      "action": "quarantine",
+      "trust": 0.4,
+      "top_signal": "corroborate",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.6,
+          "reason": "corroborate reply could not be parsed: unknown claim id 'GPT-4 is usually more trustworthy than GPT-3.5 on standard benchmarks.' in response"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "2306.11698"
+    },
+    {
+      "id": "2306.11698::79",
+      "class": "clean",
+      "group": "2306.11698",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "2306.11698"
+    },
+    {
+      "id": "1712.05526::73",
+      "class": "clean",
+      "group": "1712.05526",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "supported"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "1712.05526"
+    },
+    {
+      "id": "2306.11698::158",
+      "class": "clean",
+      "group": "2306.11698",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "2306.11698"
+    },
+    {
+      "id": "1712.05526::74",
+      "class": "clean",
+      "group": "1712.05526",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "supported"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "1712.05526"
+    },
+    {
+      "id": "1712.05526::32",
+      "class": "clean",
+      "group": "1712.05526",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "1712.05526"
+    },
+    {
+      "id": "2306.11698::129",
+      "class": "clean",
+      "group": "2306.11698",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "2306.11698"
+    },
+    {
+      "id": "1712.05526::80",
+      "class": "clean",
+      "group": "1712.05526",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "supported"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "1712.05526"
+    },
+    {
+      "id": "2306.11698::184",
+      "class": "clean",
+      "group": "2306.11698",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "2306.11698"
+    },
+    {
+      "id": "1712.05526::36",
+      "class": "clean",
+      "group": "1712.05526",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "1712.05526"
+    },
+    {
+      "id": "1712.05526::12",
+      "class": "clean",
+      "group": "1712.05526",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "supported"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "1712.05526"
+    },
+    {
+      "id": "2306.11698::202",
+      "class": "clean",
+      "group": "2306.11698",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "supported"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "2306.11698"
+    },
+    {
+      "id": "2306.11698::49",
+      "class": "clean",
+      "group": "2306.11698",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "supported"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "2306.11698"
+    },
+    {
+      "id": "1712.05526::38",
+      "class": "clean",
+      "group": "1712.05526",
+      "store": "corpus",
+      "action": "block",
+      "trust": 0.0,
+      "top_signal": "corroborate",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 1.0,
+          "reason": "contradicted"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "1712.05526"
+    },
+    {
+      "id": "2306.11698::224",
+      "class": "clean",
+      "group": "2306.11698",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "supported"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "2306.11698"
+    },
+    {
+      "id": "2306.11698::299",
+      "class": "clean",
+      "group": "2306.11698",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "2306.11698"
+    },
+    {
+      "id": "2306.11698::19",
+      "class": "clean",
+      "group": "2306.11698",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "2306.11698"
+    },
+    {
+      "id": "2306.05499::59",
+      "class": "clean",
+      "group": "2306.05499",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "2306.05499"
+    },
+    {
+      "id": "2306.11698::306",
+      "class": "clean",
+      "group": "2306.11698",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "2306.11698"
+    },
+    {
+      "id": "2306.11698::94",
+      "class": "clean",
+      "group": "2306.11698",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "2306.11698"
+    },
+    {
+      "id": "2306.11698::138",
+      "class": "clean",
+      "group": "2306.11698",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "2306.11698"
+    },
+    {
+      "id": "1511.07528::66",
+      "class": "clean",
+      "group": "1511.07528",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "supported"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "1511.07528"
+    },
+    {
+      "id": "1511.07528::21",
+      "class": "clean",
+      "group": "1511.07528",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "1511.07528"
+    },
+    {
+      "id": "1712.05526::30",
+      "class": "clean",
+      "group": "1712.05526",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "1712.05526"
+    },
+    {
+      "id": "2306.11698::266",
+      "class": "clean",
+      "group": "2306.11698",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "2306.11698"
+    },
+    {
+      "id": "1511.07528::1",
+      "class": "clean",
+      "group": "1511.07528",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "supported"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "1511.07528"
+    },
+    {
+      "id": "2306.11698::69",
+      "class": "clean",
+      "group": "2306.11698",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "2306.11698"
+    },
+    {
+      "id": "2306.11698::205",
+      "class": "clean",
+      "group": "2306.11698",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "quotes"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "supported"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "2306.11698"
+    },
+    {
+      "id": "2306.11698::122",
+      "class": "clean",
+      "group": "2306.11698",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "2306.11698"
+    },
+    {
+      "id": "2306.11698::199",
+      "class": "clean",
+      "group": "2306.11698",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "supported"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "2306.11698"
+    },
+    {
+      "id": "1511.07528::67",
+      "class": "clean",
+      "group": "1511.07528",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "supported"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "1511.07528"
+    },
+    {
+      "id": "2306.05499::46",
+      "class": "clean",
+      "group": "2306.05499",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "quotes"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "2306.05499"
+    },
+    {
+      "id": "2306.11698::102",
+      "class": "clean",
+      "group": "2306.11698",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "2306.11698"
+    },
+    {
+      "id": "2306.11698::118",
+      "class": "clean",
+      "group": "2306.11698",
+      "store": "corpus",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "clean"
+        },
+        {
+          "signal": "corroborate",
+          "score": 0.0,
+          "reason": "not_covered"
+        }
+      ],
+      "reduced_assurance": false,
+      "paper_id": "2306.11698"
+    }
+  ],
+  "summary": {
+    "total": 40,
+    "reduced_assurance": 0,
+    "non_admit": 3,
+    "s3_checked": 16,
+    "unparseable": 2,
+    "s3_not_checked": {
+      "absent": 0,
+      "no_claims": 0,
+      "not_covered": 24,
+      "verbatim_trusted": 0
+    },
+    "s3_topped_non_admit": 3,
+    "s3_fpr": 0.1875,
+    "reasons": {
+      "not_covered": 24,
+      "supported": 13,
+      "corroborate reply could not be parsed: unknown claim id 'N. Srebro wrote the paper titled Equality of opportunity in supervised learning published in 2016.' in response": 1,
+      "corroborate reply could not be parsed: unknown claim id 'GPT-4 is usually more trustworthy than GPT-3.5 on standard benchmarks.' in response": 1,
+      "contradicted": 1
+    }
+  }
+}

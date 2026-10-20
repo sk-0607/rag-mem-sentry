@@ -1,0 +1,1 @@
+If z = reiθ with r > 0 (polar form), then w = ln r + iθ is one logarithm of z; adding integer multiples of 2πi gives all the others.[1]

@@ -1,0 +1,347 @@
+{
+  "split": "clean_experience",
+  "model": "gemini-3.1-flash-lite",
+  "policy_commit": "95ab65e3b8a485df582611e96f42d0570a5ea16c",
+  "rows": [
+    {
+      "id": "e05e4cb81beb4940b50ea50e06e6c104",
+      "class": "clean",
+      "group": "e05e4cb81beb4940b50ea50e06e6c104",
+      "store": "experience",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "neutral"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "441ed7f80483405aa0fbafb49903162f",
+      "class": "clean",
+      "group": "441ed7f80483405aa0fbafb49903162f",
+      "store": "experience",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "neutral"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "966eebd6810a47b68212f733b530b133",
+      "class": "clean",
+      "group": "966eebd6810a47b68212f733b530b133",
+      "store": "experience",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "neutral"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "55e7368ced22442c93c5b1962cdf5165",
+      "class": "clean",
+      "group": "55e7368ced22442c93c5b1962cdf5165",
+      "store": "experience",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "neutral"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "f8389b946b6f4a9f9c2070903c7039d3",
+      "class": "clean",
+      "group": "f8389b946b6f4a9f9c2070903c7039d3",
+      "store": "experience",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "neutral"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "d7d69f5004bc4d609c120f8c101c6689",
+      "class": "clean",
+      "group": "d7d69f5004bc4d609c120f8c101c6689",
+      "store": "experience",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "neutral"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "850748e2645b4aaebab5a74b287eaa4f",
+      "class": "clean",
+      "group": "850748e2645b4aaebab5a74b287eaa4f",
+      "store": "experience",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "neutral"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "c8b365664e1c46d5b55a35c3de81edee",
+      "class": "clean",
+      "group": "c8b365664e1c46d5b55a35c3de81edee",
+      "store": "experience",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "neutral"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "fed02e521a564f8b86fe01ab6891599c",
+      "class": "clean",
+      "group": "fed02e521a564f8b86fe01ab6891599c",
+      "store": "experience",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "neutral"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "ea8a9f30e4dc48e8a7253a4dbb64c115",
+      "class": "clean",
+      "group": "ea8a9f30e4dc48e8a7253a4dbb64c115",
+      "store": "experience",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "neutral"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "49efd821f81b4536bd4bf36456e2b7ff",
+      "class": "clean",
+      "group": "49efd821f81b4536bd4bf36456e2b7ff",
+      "store": "experience",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "neutral"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "2cb9cb02c9ed40219cf4bcbf8aa2ba13",
+      "class": "clean",
+      "group": "2cb9cb02c9ed40219cf4bcbf8aa2ba13",
+      "store": "experience",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "neutral"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "7eb243e147d34adead66292c6f8e39c7",
+      "class": "clean",
+      "group": "7eb243e147d34adead66292c6f8e39c7",
+      "store": "experience",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "neutral"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "50e04ff445384d628edd04d55a66c524",
+      "class": "clean",
+      "group": "50e04ff445384d628edd04d55a66c524",
+      "store": "experience",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "neutral"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "194124b4b9a64e1389747a6908fe960b",
+      "class": "clean",
+      "group": "194124b4b9a64e1389747a6908fe960b",
+      "store": "experience",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "neutral"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "dffad24920d04b36afc0fc4d59dbdc65",
+      "class": "clean",
+      "group": "dffad24920d04b36afc0fc4d59dbdc65",
+      "store": "experience",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "neutral"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "3d3d9ed2f0544b77a80dbf555b86f9a7",
+      "class": "clean",
+      "group": "3d3d9ed2f0544b77a80dbf555b86f9a7",
+      "store": "experience",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "neutral"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "34835b23f04b4059bbe08ad4aa17ac14",
+      "class": "clean",
+      "group": "34835b23f04b4059bbe08ad4aa17ac14",
+      "store": "experience",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "neutral"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "1e96e680dc5e45508c6eb2b7f0e5d239",
+      "class": "clean",
+      "group": "1e96e680dc5e45508c6eb2b7f0e5d239",
+      "store": "experience",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "neutral"
+        }
+      ],
+      "reduced_assurance": false
+    },
+    {
+      "id": "b343d6a5f4e348d699f7c89f29637230",
+      "class": "clean",
+      "group": "b343d6a5f4e348d699f7c89f29637230",
+      "store": "experience",
+      "action": "admit",
+      "trust": 1.0,
+      "top_signal": "judge",
+      "signals": [
+        {
+          "signal": "judge",
+          "score": 0.0,
+          "reason": "neutral"
+        }
+      ],
+      "reduced_assurance": false
+    }
+  ]
+}

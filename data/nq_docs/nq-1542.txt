@@ -1,0 +1,1 @@
+This gives the quadratic formula. This way one avoids the technique of completing the square and much more complicated math is not needed. Note this solution is very similar to solving deriving the formula by substitution.

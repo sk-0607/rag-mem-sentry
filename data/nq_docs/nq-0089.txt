@@ -1,0 +1,3 @@
+In some situations, it is advisable to slow down and to use the rear brake more and the front brake less:
+
+The "rod-actuated brake", or simply "rod brake", (roller lever brake in Raleigh terminology) uses a series of rods and pivots, rather than Bowden cables, to transmit force applied to a hand lever to pull friction pads upwards against the inner surface, which faces the hub, of the wheel rim. They were often called "stirrup brakes" due to their shape. Rod brakes are used with a rim profile known as the Westwood rim, which has a slightly concave area on the braking surface and lacks the flat outer surface required by brakes that apply the pads on opposite sides of the rim.

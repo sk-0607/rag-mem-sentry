@@ -1,0 +1,1 @@
+While all graphs with 4 or fewer vertices are planar, there exists a graph with 5 vertices which is not planar: K5, the complete graph with 5 vertices.

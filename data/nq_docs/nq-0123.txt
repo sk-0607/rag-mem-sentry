@@ -1,0 +1,1 @@
+In the ML programming language (including Standard ML and OCaml), "!" is the operator to get the value out of a "reference" data structure.

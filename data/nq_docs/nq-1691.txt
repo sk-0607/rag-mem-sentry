@@ -1,0 +1,1 @@
+Once the mail is bar coded, it is automatically sorted by a Delivery Bar Code Sorter (DBCS) that reads the bar code, identifies the destination of the mailpiece, and sends it to an appropriate tray that corresponds to the next segment of its journey.

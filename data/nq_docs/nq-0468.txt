@@ -1,0 +1,59 @@
+Thus, the decision criterion changes from using floating-point operations to simple integer addition, subtraction, and bit shifting (for the multiply by 2 operations). If 
+
+
+
+2
+(
+R
+E
++
+
+Y
+
+Change
+
+
+)
++
+
+X
+
+Change
+
+
+>
+0
+
+
+{\displaystyle 2(RE+Y_{\text{Change}})+X_{\text{Change}}>0}
+
+, then decrement the X value. If 
+
+
+
+2
+(
+R
+E
++
+
+Y
+
+Change
+
+
+)
++
+
+X
+
+Change
+
+
+≤
+0
+
+
+{\displaystyle 2(RE+Y_{\text{Change}})+X_{\text{Change}}\leq 0}
+
+, then keep the same X value. Again, by reflecting these points in all the octants, a full circle results.

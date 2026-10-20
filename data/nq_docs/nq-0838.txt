@@ -1,0 +1,1 @@
+Once boot options have been selected, GRUB loads the selected kernel into memory and passes control to the kernel. Alternatively, GRUB can pass control of the boot process to another boot loader, using chain loading. This is the method used to load operating systems such as Microsoft Windows, that do not support the Multiboot Specification or are not supported directly by GRUB.

@@ -1,0 +1,1 @@
+To compare returns over time periods of different lengths on an equal basis, it is useful to convert each return into an annualised return. This conversion process is called annualisation, described below.

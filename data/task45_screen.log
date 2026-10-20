@@ -1,0 +1,101 @@
+signal corroborate failed on batch of 5 items
+Traceback (most recent call last):
+  File "C:\Users\shara\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpx\_transports\default.py", line 101, in map_httpcore_exceptions
+    yield
+  File "C:\Users\shara\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpx\_transports\default.py", line 250, in handle_request
+    resp = self._pool.handle_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shara\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpcore\_sync\connection_pool.py", line 256, in handle_request
+    raise exc from None
+  File "C:\Users\shara\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpcore\_sync\connection_pool.py", line 236, in handle_request
+    response = connection.handle_request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shara\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpcore\_sync\connection.py", line 103, in handle_request
+    return self._connection.handle_request(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shara\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpcore\_sync\http11.py", line 136, in handle_request
+    raise exc
+  File "C:\Users\shara\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpcore\_sync\http11.py", line 106, in handle_request
+    ) = self._receive_response_headers(**kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shara\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpcore\_sync\http11.py", line 177, in _receive_response_headers
+    event = self._receive_event(timeout=timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shara\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpcore\_sync\http11.py", line 231, in _receive_event
+    raise RemoteProtocolError(msg)
+httpcore.RemoteProtocolError: Server disconnected without sending a response.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\shara\AppData\Local\Programs\Python\Python311\Lib\site-packages\openai\_base_client.py", line 1037, in request
+    response = self._send_request(
+               ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shara\AppData\Local\Programs\Python\Python311\Lib\site-packages\openai\_client.py", line 478, in _send_request
+    response = self._send_with_auth_retry(request, stream=stream, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shara\AppData\Local\Programs\Python\Python311\Lib\site-packages\openai\_client.py", line 456, in _send_with_auth_retry
+    response = super()._send_request(request, stream=stream, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shara\AppData\Local\Programs\Python\Python311\Lib\site-packages\openai\_base_client.py", line 964, in _send_request
+    return self._client.send(request, stream=stream, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shara\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpx\_client.py", line 914, in send
+    response = self._send_handling_auth(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shara\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpx\_client.py", line 942, in _send_handling_auth
+    response = self._send_handling_redirects(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shara\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpx\_client.py", line 979, in _send_handling_redirects
+    response = self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shara\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpx\_client.py", line 1014, in _send_single_request
+    response = transport.handle_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shara\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpx\_transports\default.py", line 249, in handle_request
+    with map_httpcore_exceptions():
+  File "C:\Users\shara\AppData\Local\Programs\Python\Python311\Lib\contextlib.py", line 158, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "C:\Users\shara\AppData\Local\Programs\Python\Python311\Lib\site-packages\httpx\_transports\default.py", line 118, in map_httpcore_exceptions
+    raise mapped_exc(message) from exc
+httpx.RemoteProtocolError: Server disconnected without sending a response.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\SHARAN\Projects\capstone-project\rag\rag-mem-sentry\gate\signals\base.py", line 72, in run_signals_batch
+    results = score_batch(items, ctx)
+              ^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\SHARAN\Projects\capstone-project\rag\rag-mem-sentry\gate\signals\corroborate.py", line 286, in score_batch
+    claims = [self._extract_one(items[i]) for i in todo]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\SHARAN\Projects\capstone-project\rag\rag-mem-sentry\gate\signals\corroborate.py", line 286, in <listcomp>
+    claims = [self._extract_one(items[i]) for i in todo]
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\SHARAN\Projects\capstone-project\rag\rag-mem-sentry\gate\signals\corroborate.py", line 227, in _extract_one
+    return self.extract_claims([item])[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\SHARAN\Projects\capstone-project\rag\rag-mem-sentry\gate\signals\corroborate.py", line 172, in extract_claims
+    return _parse_claims(chat(messages, model=model), items, config.S3_MAX_CLAIMS)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\SHARAN\Projects\capstone-project\rag\rag-mem-sentry\app\llm.py", line 50, in chat
+    resp = client.chat.completions.create(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shara\AppData\Local\Programs\Python\Python311\Lib\site-packages\openai\_utils\_utils.py", line 298, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shara\AppData\Local\Programs\Python\Python311\Lib\site-packages\openai\resources\chat\completions\completions.py", line 1281, in create
+    return self._post(
+           ^^^^^^^^^^^
+  File "C:\Users\shara\AppData\Local\Programs\Python\Python311\Lib\site-packages\openai\_base_client.py", line 1332, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\shara\AppData\Local\Programs\Python\Python311\Lib\site-packages\openai\_base_client.py", line 1072, in request
+    raise APIConnectionError(request=request) from err
+openai.APIConnectionError: Connection error.
+data\phase4_screen\calibration\results.json
+calib exit 0
+data\phase4_screen\clean_experience\results.json
+clean exit 0
+data\phase4_s3_fpr\results.json
+sibling exit 0

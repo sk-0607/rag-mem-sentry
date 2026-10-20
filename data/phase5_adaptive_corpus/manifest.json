@@ -1,0 +1,42 @@
+{
+  "sha256": "4e2a8ec210b95727b1663ef9a6284632045ec94211608544965a4cf26e5873db",
+  "frozen": "2026-10-15",
+  "counts": {
+    "1": {
+      "adaptive": 16
+    },
+    "2": {
+      "adaptive": 16
+    },
+    "3": {
+      "adaptive": 16
+    }
+  },
+  "groups": {
+    "c1_target_01": "adaptive",
+    "c1_target_04": "adaptive",
+    "c1_target_08": "adaptive",
+    "c1_target_12": "adaptive",
+    "c1_target_14": "adaptive",
+    "c1_target_22": "adaptive",
+    "c1_target_33": "adaptive",
+    "c1_target_39": "adaptive",
+    "c2_target_01": "adaptive",
+    "c2_target_04": "adaptive",
+    "c2_target_08": "adaptive",
+    "c2_target_12": "adaptive",
+    "c2_target_14": "adaptive",
+    "c2_target_22": "adaptive",
+    "c2_target_33": "adaptive",
+    "c2_target_39": "adaptive",
+    "c3_target_01": "adaptive",
+    "c3_target_04": "adaptive",
+    "c3_target_08": "adaptive",
+    "c3_target_12": "adaptive",
+    "c3_target_14": "adaptive",
+    "c3_target_22": "adaptive",
+    "c3_target_33": "adaptive",
+    "c3_target_39": "adaptive"
+  },
+  "kind": "adaptive"
+}

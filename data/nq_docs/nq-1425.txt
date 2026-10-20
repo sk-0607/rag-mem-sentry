@@ -1,0 +1,1 @@
+In some languages there are mechanisms to override access modifies to gain access to the private components of an object. One such example is the friend class in C++.
