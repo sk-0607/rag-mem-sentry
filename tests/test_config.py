@@ -26,13 +26,16 @@ def test_phase2a_constants():
     assert config.MAX_SUBQUERIES == 3
 
 def test_judge_model_defaults_to_llm_model(monkeypatch):
-    monkeypatch.delenv("JUDGE_MODEL", raising=False)
-    import importlib
-    importlib.reload(config)
-    try:
-        assert config.JUDGE_MODEL == config.LLM_MODEL
-    finally:
+    # Same trap as above: the reload re-reads .env, which may set JUDGE_MODEL.
+    with monkeypatch.context() as m:
+        m.setattr("dotenv.load_dotenv", lambda *a, **k: None)
+        m.delenv("JUDGE_MODEL", raising=False)
         importlib.reload(config)
+        try:
+            assert config.JUDGE_MODEL == config.LLM_MODEL
+        finally:
+            m.undo()
+            importlib.reload(config)
 
 def test_judge_batch_max_is_five():
     assert config.JUDGE_BATCH_MAX == 5
