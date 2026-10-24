@@ -10,6 +10,9 @@ numbers (23–27) are stale; this phase is Tasks 32–47.
 phase produces. The answer model for the final gate-off / gate-on pair is a smaller model the
 owner names at run time (§0).
 
+*Note, 2026-10-24:* the gate (S2 and S3) ran on `gemini-flash-lite-latest`, the calibrated model
+recorded in `eval/frozen_gate.json`; `gemini-3.1-flash-lite` was the answer model of Task 47.
+
 ---
 
 ## 0. Owner decisions this phase is built on
