@@ -72,7 +72,7 @@ Phase 6 (demo and report). Plan: `docs/plans/2026-10-15-phase-6-demo-and-report.
 | 69 | Demo recording; purge | done 2026-10-15 |
 | 70 | Evaluation report, `docs/report.md` | done 2026-10-15 |
 | 71 | Cleanup decision | owner decides |
-| 72 | Merge to `main` | not done |
-| 73 | Push | not done |
+| 72 | Merge to `main` | done 2026-10-24 |
+| 73 | Push | done 2026-10-24 |
 
 Later: multi-turn memory, tracing panel, larger corpus + eval set.
