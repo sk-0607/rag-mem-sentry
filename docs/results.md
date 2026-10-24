@@ -35,7 +35,8 @@ pace requests under the per-minute cap — eval defaults it to 4s.
 ## Content Gate: False-Positive Measurement and Threshold Calibration
 
 The write-time gate (`gate/`) screens every chunk before it reaches the index.
-`ingest/run_ingest.py` runs it against the real 22-paper AI-security corpus,
+`ingest/run_ingest.py` ran it against the 22-paper AI-security placeholder corpus (the NQ
+re-measurement is in "Final corpus: BEIR NQ" below),
 and the result is the project's hard-negative false-positive set **by
 construction**: the papers contain no real attacks, only quoted examples of
 them inside academic prose, so any non-`admit` verdict on this corpus is a
@@ -497,7 +498,7 @@ the three trials show.
 R5 asks whether the S2 policy judge (`gate/signals/judge.py`, corpus rubric: a passage that quotes
 or analyses an attack is `quotes`, one that steers the reader's model is `instructs`) flags
 clean-but-attack-quoting corpus chunks. Same argument as the write-time measurement above: the
-22-paper corpus holds no real attacks, so every read-time non-admit is a false positive by
+22-paper placeholder corpus held no real attacks, so every read-time non-admit is a false positive by
 construction. This run measures **false positives only**. It contains no real attack, so it says
 nothing about whether the judge catches one — that needs the Task 29 harness, which had not been
 run at the time (see "Phase 3: Gate-Off Vs Gate-On Harnesses" below; it ran on 2026-10-15, "Phase 6:

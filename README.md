@@ -1,11 +1,13 @@
 # RAG Mem Sentry
 
-Agentic RAG over a BEIR NQ Wikipedia corpus (the AI-security papers the figures before "Final corpus:
-BEIR NQ" were measured on were a placeholder; see that section in [docs/results.md](docs/results.md)), with hybrid retrieval +
-reranking, cited answers, and a RAGAS evaluation scorecard — plus a
+Agentic RAG over a BEIR NQ Wikipedia-passage subset (50 questions, 1726 documents, 1784 chunks),
+with hybrid retrieval + reranking, cited answers, and a RAGAS evaluation scorecard — plus a
 content trust gate that screens documents and agent memory records for
 poisoned content, write-time and read-time, before an LLM trusts and uses
 them. See `docs/specs/2026-08-16-poisoned-content-trust-gate-design.md`.
+
+Every figure in [docs/results.md](docs/results.md) above its "Final corpus: BEIR NQ" section was
+measured on a placeholder corpus of 22 AI-security papers; that section says why NQ replaced it.
 
 ## Architecture
 
