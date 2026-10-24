@@ -1817,9 +1817,20 @@ Phase 6 starts at Task 62 and is renumbered when it is planned.
 
 | Task | Deliverable |
 |---|---|
-| 31 | `app/ui.py` trust panel — per-candidate score, firing signal, highlighted evidence span |
-| 32 | Full evaluation run — ASR, ablation, clean-task regression, overhead (cold and warm) |
-| 33 | Evaluation report — all four measurements, both attacker settings, limitations |
-| 34 | README, demo recording, repo cleanup |
+| 62 | Freeze guard and real reference in the three Phase 3 harnesses |
+| 63 | Trust panel and UI flags |
+| 64 | Demo plant tool |
+| 65 | Class-1 trial, gate off and on |
+| 66 | Class-3 trial, `--arm off` and `--arm on` |
+| 67 | Overhead, off / cold / warm |
+| 68 | Demo prep: plant and rehearsal |
+| 69 | Demo recording; purge |
+| 70 | Evaluation report, `docs/report.md` |
+| 71 | Cleanup decision |
+| 72 | Merge to `main` |
+| 73 | Push |
+
+*Renumbered 2026-10-24 (Task 71, C7) from the planning-time rows 31–34, to match
+`docs/plans/2026-10-15-phase-6-demo-and-report.md`.*
 
 Week 12 is the only slack in the schedule.
