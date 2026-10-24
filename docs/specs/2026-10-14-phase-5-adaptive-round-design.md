@@ -9,6 +9,9 @@ numbers (28–30) are stale; this phase is Tasks 48–61.
 **Model:** S2 and S3 run on `JUDGE_MODEL`, `gemini-3.1-flash-lite`, pinned by the freeze (§5).
 The answer model for the adaptive class-2 trial is the one the owner named for Task 47.
 
+*Note, 2026-10-24:* the gate (S2 and S3) ran on `gemini-flash-lite-latest`, the calibrated model
+recorded in `eval/frozen_gate.json`; `gemini-3.1-flash-lite` was the answer model of Task 60.
+
 ---
 
 ## 0. Owner decisions this phase is built on
